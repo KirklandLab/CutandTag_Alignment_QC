@@ -2,7 +2,7 @@
 
 ## 1. Clone repository
 ```
-git clone https://
+git clone https://github.com/JK-Cobre-Help/CutandTag_Analysis_Sankemake.git
 ```
 ## 2. Load modules
 ```
