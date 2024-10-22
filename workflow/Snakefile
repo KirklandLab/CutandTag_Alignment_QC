@@ -235,6 +235,6 @@ rule macs2_peak_calling:
         """
         macs2 callpeak -t {input.bam} \
         -g {params.genome} -f BAMPE -n {params.sample_name}_{params.qvalue} \
-        --outdir {output.output_dir} -q {params.qvalue} --keep-dup all --nomodel \
+        --outdir {params.output_dir} -q {params.qvalue} --keep-dup all --nomodel \
         2>{params.output_dir}/{params.sample_name}_macs2Peak_summary.txt
         """
