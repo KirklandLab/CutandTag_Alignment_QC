@@ -58,8 +58,8 @@ rule fastqc_reads:
         zip1="results/qc/fastqc/{sample}_R1_fastqc.zip",
         html2="results/qc/fastqc/{sample}_R2_fastqc.html",
         zip2="results/qc/fastqc/{sample}_R2_fastqc.zip"
-    conda:
-        "envs/qc_trim_align.yml"
+    envmodules:
+        config["fastqc"]
     log: "results/logs/snakelogs/fastqc_reads.{sample}.log"
     shell:
         """
@@ -81,6 +81,8 @@ rule fastq_screen:
         unpack(fq_dict_from_sample)
     output:
         fastq_screen_out="results/qc/fastq_screen/{sample}_screen.txt"
+    envmodules:
+        config["fastq_screen"]
     log: projPath + "/logs/fastq_screen_{sample}.log"
     shell:
         """
@@ -97,6 +99,8 @@ rule align_with_bowtie2:
     output:
         sam_file="results/alignment/sam/{sample}_bowtie2.sam",
         bowtie2_summary="results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt"
+    envmodules:
+        config["bowtie2"]
     log: "results/logs/align_with_bowtie2_{sample}.log"
     shell:
         """
@@ -114,6 +118,8 @@ rule sam_to_bam:
         sam_file="results/alignment/sam/{sample}_bowtie2.sam"
     output:
         bam_file="results/alignment/bam/{sample}_bowtie2.bam"
+    envmodules:
+        config["samtools"]
     log: "results/logs/sam_to_bam_{sample}.log"
     shell:
         """
@@ -129,6 +135,8 @@ rule sort_bam:
         bam_file="results/alignment/bam/{sample}_bowtie2.bam"
     output:
         sorted_bam="results/alignment/bam/{sample}.sorted.bam"
+    envmodules:
+        config["samtools"]
     log: "results/logs/sort_bam_{sample}.log"
     shell:
         """
@@ -140,6 +148,8 @@ rule index_bam:
         sorted_bam="results/alignment/bam/{sample}.sorted.bam"
     output:
         bai="results/alignment/bam/{sample}.sorted.bam.bai"
+    envmodules:
+        config["samtools"]
     log: "results/logs/index_bam_{sample}.log"
     shell:
         """
@@ -155,6 +165,8 @@ rule make_bigwig_raw:
         sorted_bam="results/alignment/bam/{sample}.sorted.bam"
     output:
         bigwig="results/alignment/bigwig/{sample}_raw.bw"
+    envmodules:
+        config["deeptools"]
     log: "results/logs/make_bigwig_raw_{sample}.log"
     shell:
         """
@@ -171,6 +183,8 @@ rule calculate_total_reads:
     output:
         total_reads="results/alignment/{sample}_total_reads.txt",
         scale_factor="results/alignment/{sample}_scale_factor.txt"
+    envmodules:
+        config["samtools"]
     log: "results/logs/calculate_total_reads_{sample}.log"
     shell:
         """
@@ -190,6 +204,8 @@ rule make_bigwig_scaled:
         scale_factor="results/alignment/{sample}_scale_factor.txt"
     output:
         bigwig_scaled="results/alignment/bigwig/scale_reads/{sample}_scaled.bw"
+    envmodules:
+        config["deeptools"]
     log: "results/logs/make_bigwig_scaled_{sample}.log"
     shell:
         """
