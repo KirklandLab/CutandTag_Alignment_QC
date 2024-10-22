@@ -1,28 +1,33 @@
-# Snakefile for Cut and Tag Pipeline to Generate SAM/BAM/BIGWIG files
-# Author: Kevin Boyd
-# Adapted for Snakemake by <Your Name>
-
 configfile: "config/config.yml"
 
 ##################################################################
 ##                    Define input functions                    ##
 ##################################################################
 
+# Author: Kevin Boyd
+# Date: Oct 18, 2024
+
 import pandas as pd
 
-# Load sample information from ids.txt
-samples_table = pd.read_csv("config/ids.txt", header=None, names=["R1", "R2"]).set_index("R1", drop=False)
+# read the CSV file and set an index using the values in the "sample" column.
+samples_table = pd.read_csv("config/samples.csv").set_index("sample", drop=False)
 
-# Define fastq input function
+# fastq filename input function definition set to Python dictionary
 def fq_dict_from_sample(wildcards):
-    return {
-        "fq1": config["fastqPath"] + "/" + wildcards.sample + "_R1_001.fastq.gz",
-        "fq2": config["fastqPath"] + "/" + wildcards.sample + "_R2_001.fastq.gz"
-    }
+  return {
+    "fq1": samples_table.loc[wildcards.sample, "fastq1"],
+    "fq2": samples_table.loc[wildcards.sample, "fastq2"]
+  }
 
-# Define project directories
-fastqPath = config["fastqPath"]
-projPath = config["projPath"]
+# make a new sample table with only the 'treatment' sample rows
+samples_table2 = samples_table.loc[samples_table['sampleType'] == 'treatment']
+
+# sample_type input function definition set to Python dictionary
+def sample_type_dict_from_sample(wildcards):
+  return {
+    "treatment": 'results/aligned/' + samples_table2.loc[wildcards.sample, "sample"] + '.bam',
+    "control": 'results/aligned/' + samples_table2.loc[wildcards.sample, "Control"] + '.bam'
+  }
 
 ##################################################################
 ##                          Rule All                            ##
@@ -30,38 +35,56 @@ projPath = config["projPath"]
 
 rule all:
     input:
-        expand("{projPath}/fastqc/{sample}_fastqc.html", sample=samples_table.index),
-        expand("{projPath}/fastq_screen/{sample}_screen.txt", sample=samples_table.index),
-        expand("{projPath}/alignment/sam/{sample}_bowtie2.sam", sample=samples_table.index),
-        expand("{projPath}/alignment/bam/{sample}_bowtie2.bam", sample=samples_table.index),
-        expand("{projPath}/alignment/bam/{sample}.sorted.bam", sample=samples_table.index),
-        expand("{projPath}/alignment/bigwig/{sample}_raw.bw", sample=samples_table.index),
-        expand("{projPath}/alignment/bigwig/scale_reads/{sample}_scaled.bw", sample=samples_table.index)
+        expand("results/qc/fastqc/{sample}_R1_fastqc.html", sample=samples_table.index),
+        expand("results/qc/fastq_screen/{sample}_screen.txt", sample=samples_table.index),
+        expand("results/alignment/sam/{sample}_bowtie2.sam", sample=samples_table.index),
+        expand("results/alignment/bam/{sample}_bowtie2.bam", sample=samples_table.index),
+        expand("results/alignment/bam/{sample}.sorted.bam", sample=samples_table.index),
+        expand("results/alignment/bigwig/{sample}_raw.bw", sample=samples_table.index),
+        expand("results/alignment/{sample}_total_reads.txt", sample=samples_table.index),
+        expand("results/alignment/{sample}_scale_factor.txt", sample=samples_table.index),
+        expand("results/alignment/bigwig/scale_reads/{sample}_scaled.bw", sample=samples_table.index)
 
 ##################################################################
 ##                       Quality Control                        ##
 ##################################################################
 
-rule fastqc:
+# run fastqc on fastq.gz files before trimming
+rule fastqc_reads:
     input:
-        fq1=fastqPath + "/{sample}_R1_001.fastq.gz"
+        unpack(fq_dict_from_sample)   # <--- we need to wrap our input function inside a special Snakemake function called unpack() which turns the dict into a collection of named inputs
     output:
-        fastqc_report=projPath + "/fastqc/{sample}_fastqc.html"
-    log: projPath + "/logs/fastqc_{sample}.log"
+        html1="results/qc/fastqc/{sample}_R1_fastqc.html",
+        zip1="results/qc/fastqc/{sample}_R1_fastqc.zip",
+        html2="results/qc/fastqc/{sample}_R2_fastqc.html",
+        zip2="results/qc/fastqc/{sample}_R2_fastqc.zip"
+    conda:
+        "envs/qc_trim_align.yml"
+    log: "results/logs/snakelogs/fastqc_reads.{sample}.log"
     shell:
         """
-        fastqc {input.fq1} -o {projPath}/fastqc
+        fastqc {input.fq1}
+        fastqc {input.fq2}
+        dir=$(dirname {input.fq1})
+        bsename=$(basename {input.fq1} .gz)
+        bsename=$(basename ${{bsename}} .fastq)
+        mv ${{dir}}/${{bsename}}_fastqc.html {output.html1}
+        mv ${{dir}}/${{bsename}}_fastqc.zip {output.zip1}
+        bsename=$(basename {input.fq2} .gz)
+        bsename=$(basename ${{bsename}} .fastq)
+        mv ${{dir}}/${{bsename}}_fastqc.html {output.html2}
+        mv ${{dir}}/${{bsename}}_fastqc.zip {output.zip2}
         """
 
 rule fastq_screen:
     input:
-        fq1=fastqPath + "/{sample}_R1_001.fastq.gz"
+        unpack(fq_dict_from_sample)
     output:
-        fastq_screen_out=projPath + "/fastq_screen/{sample}_screen.txt"
+        fastq_screen_out="results/qc/fastq_screen/{sample}_screen.txt"
     log: projPath + "/logs/fastq_screen_{sample}.log"
     shell:
         """
-        fastq_screen --conf /hpc-prj/kirkland/shared/scripts/fastq_screen.conf --threads 16 --outdir {projPath}/fastq_screen {input.fq1}
+        fastq_screen --conf /hpc-prj/kirkland/shared/scripts/fastq_screen.conf --threads 16 --outdir {output.fastq_screen_out} {input.fq1}
         """
 
 ##################################################################
@@ -70,17 +93,16 @@ rule fastq_screen:
 
 rule align_with_bowtie2:
     input:
-        fq1=fastqPath + "/{sample}_R1_001.fastq.gz",
-        fq2=fastqPath + "/{sample}_R2_001.fastq.gz"
+        unpack(fq_dict_from_sample)
     output:
-        sam=projPath + "/alignment/sam/{sample}_bowtie2.sam",
-        bowtie2_summary=projPath + "/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt"
-    log: projPath + "/logs/align_with_bowtie2_{sample}.log"
+        sam_file="results/alignment/sam/{sample}_bowtie2.sam",
+        bowtie2_summary="results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt"
+    log: "results/logs/align_with_bowtie2_{sample}.log"
     shell:
         """
         bowtie2 --end-to-end --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 -p 8 \
         -x /hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10 \
-        -1 {input.fq1} -2 {input.fq2} -S {output.sam} &> {output.bowtie2_summary}
+        -1 {input.fq1} -2 {input.fq2} -S {output.sam_file} &> {output.bowtie2_summary}
         """
 
 ##################################################################
@@ -89,13 +111,13 @@ rule align_with_bowtie2:
 
 rule sam_to_bam:
     input:
-        sam=projPath + "/alignment/sam/{sample}_bowtie2.sam"
+        sam_file="results/alignment/sam/{sample}_bowtie2.sam"
     output:
-        bam=projPath + "/alignment/bam/{sample}_bowtie2.bam"
-    log: projPath + "/logs/sam_to_bam_{sample}.log"
+        bam_file="results/alignment/bam/{sample}_bowtie2.bam"
+    log: "results/logs/sam_to_bam_{sample}.log"
     shell:
         """
-        samtools view -bS {input.sam} > {output.bam}
+        samtools view -bS {input.sam_file} > {output.bam_file}
         """
 
 ##################################################################
@@ -104,21 +126,21 @@ rule sam_to_bam:
 
 rule sort_bam:
     input:
-        bam=projPath + "/alignment/bam/{sample}_bowtie2.bam"
+        bam_file="results/alignment/bam/{sample}_bowtie2.bam"
     output:
-        sorted_bam=projPath + "/alignment/bam/{sample}.sorted.bam"
-    log: projPath + "/logs/sort_bam_{sample}.log"
+        sorted_bam="results/alignment/bam/{sample}.sorted.bam"
+    log: "results/logs/sort_bam_{sample}.log"
     shell:
         """
-        samtools sort -o {output.sorted_bam} {input.bam}
+        samtools sort -o {output.sorted_bam} {input.bam_file}
         """
 
 rule index_bam:
     input:
-        sorted_bam=projPath + "/alignment/bam/{sample}.sorted.bam"
+        sorted_bam="results/alignment/bam/{sample}.sorted.bam"
     output:
-        bai=projPath + "/alignment/bam/{sample}.sorted.bam.bai"
-    log: projPath + "/logs/index_bam_{sample}.log"
+        bai="results/alignment/bam/{sample}.sorted.bam.bai"
+    log: "results/logs/index_bam_{sample}.log"
     shell:
         """
         samtools index {input.sorted_bam}
@@ -130,10 +152,10 @@ rule index_bam:
 
 rule make_bigwig_raw:
     input:
-        sorted_bam=projPath + "/alignment/bam/{sample}.sorted.bam"
+        sorted_bam="results/alignment/bam/{sample}.sorted.bam"
     output:
-        bigwig=projPath + "/alignment/bigwig/{sample}_raw.bw"
-    log: projPath + "/logs/make_bigwig_raw_{sample}.log"
+        bigwig="results/alignment/bigwig/{sample}_raw.bw"
+    log: "results/logs/make_bigwig_raw_{sample}.log"
     shell:
         """
         bamCoverage -b {input.sorted_bam} -o {output.bigwig}
@@ -145,11 +167,11 @@ rule make_bigwig_raw:
 
 rule calculate_total_reads:
     input:
-        sorted_bam=projPath + "/alignment/bam/{sample}.sorted.bam"
+        sorted_bam="results/alignment/bam/{sample}.sorted.bam"
     output:
-        total_reads=temp(projPath + "/alignment/{sample}_total_reads.txt"),
-        scale_factor=temp(projPath + "/alignment/{sample}_scale_factor.txt")
-    log: projPath + "/logs/calculate_total_reads_{sample}.log"
+        total_reads="results/alignment/{sample}_total_reads.txt",
+        scale_factor="results/alignment/{sample}_scale_factor.txt"
+    log: "results/logs/calculate_total_reads_{sample}.log"
     shell:
         """
         total_reads=$(samtools view -c -F 4 {input.sorted_bam})
@@ -164,11 +186,11 @@ rule calculate_total_reads:
 
 rule make_bigwig_scaled:
     input:
-        sorted_bam=projPath + "/alignment/bam/{sample}.sorted.bam",
-        scale_factor=projPath + "/alignment/{sample}_scale_factor.txt"
+        sorted_bam="results/alignment/bam/{sample}.sorted.bam",
+        scale_factor="results/alignment/{sample}_scale_factor.txt"
     output:
-        bigwig_scaled=projPath + "/alignment/bigwig/scale_reads/{sample}_scaled.bw"
-    log: projPath + "/logs/make_bigwig_scaled_{sample}.log"
+        bigwig_scaled="results/alignment/bigwig/scale_reads/{sample}_scaled.bw"
+    log: "results/logs/make_bigwig_scaled_{sample}.log"
     shell:
         """
         scale_factor=$(cat {input.scale_factor})
