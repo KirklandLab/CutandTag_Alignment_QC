@@ -1,3 +1,3 @@
 sample,fastq1,fastq2,sampleType,Control
-1_K27ac,resources/trimmed_1_K27ac_S18_R1_001.fastq.gz,resources/trimmed_1_K27ac_S18_R2_001.fastq.gz,control,NA
-1_K27me3,resources/trimmed_1_K27me3_S15_R1_001.fastq.gz,resources/trimmed_1_K27me3_S15_R2_001.fastq.gz,control,NA
+H3.3_A,/archive/kirkland/Aging/E14/22F3FMLT4/H3.3_A_S1_R1_001.fastq.gz,/archive/kirkland/Aging/E14/22F3FMLT4/H3.3_A_S1_R2_001.fastq.gz,control,NA
+H3.3_B,/archive/kirkland/Aging/E14/22F3FMLT4/H3.3_B_S2_R1_001.fastq.gz,/archive/kirkland/Aging/E14/22F3FMLT4/H3.3_B_S2_R2_001.fastq.gz,control,NA
