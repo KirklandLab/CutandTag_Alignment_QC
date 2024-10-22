@@ -84,7 +84,7 @@ rule fastq_screen:
         fastq_screen_out="results/qc/fastq_screen/{sample}_screen.txt"
     envmodules:
         config["fastq_screen"]
-    log: projPath + "/logs/fastq_screen_{sample}.log"
+    log: "results/logs/fastq_screen_{sample}.log"
     shell:
         """
         fastq_screen --conf /hpc-prj/kirkland/shared/scripts/fastq_screen.conf --threads 16 --outdir {output.fastq_screen_out} {input.fq1}
