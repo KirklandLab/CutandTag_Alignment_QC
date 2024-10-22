@@ -6,7 +6,7 @@ bin_size: 10000
 min_mapping_quality: 30
 effective_genome_size: 2730871774  # mm10 genome size
 
-# Modules (for loading software dependencies)
+# EnvModules
 fastqc: "fastqc/0.12.1"
 fastq_screen: "fastq_screen/0.14.0"
 samtools: "samtools/1.18"
