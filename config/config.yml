@@ -15,6 +15,6 @@ effective_genome_size: 2730871774  # mm10 genome size
 fastqc: "fastqc/0.12.1"
 fastq_screen: "fastq_screen/0.14.0"
 samtools: "samtools/1.18"
-bowtie2: "bowtie2/2.4.5"
+bowtie2: "bowtie2/2.5.0"
 deeptools: "deeptools/3.4.3"
 macs2: "macs2/2.2.7.1"
