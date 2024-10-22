@@ -121,26 +121,15 @@ rule sort_bam:
     input:
         bam_file="results/alignment/bam/{sample}_bowtie2.bam"
     output:
-        sorted_bam="results/alignment/bam/{sample}.sorted.bam"
+        sorted_bam="results/alignment/bam/{sample}.sorted.bam",
+        bai="results/alignment/bam/{sample}sorted.bam.bai"
     envmodules:
         config["samtools"]
     log: "results/logs/sort_bam_{sample}.log"
     shell:
         """
         samtools sort -o {output.sorted_bam} {input.bam_file}
-        """
-
-rule index_bam:
-    input:
-        sorted_bam="results/alignment/bam/{sample}.sorted.bam"
-    output:
-        bai="results/alignment/bam/{sample}.sorted.bam.bai"
-    envmodules:
-        config["samtools"]
-    log: "results/logs/index_bam_{sample}.log"
-    shell:
-        """
-        samtools index {input.sorted_bam}
+        samtools index -@ 12 {output.sorted_bam} > {output.bai}
         """
 
 ##################################################################
@@ -152,13 +141,16 @@ rule make_bigwig_raw:
         sorted_bam="results/alignment/bam/{sample}.sorted.bam"
     output:
         bigwig="results/alignment/bigwig/{sample}_raw.bw"
+    params:
+        genome_size=config["effective_genome_size"]
     envmodules:
         config["deeptools"]
     log: "results/logs/make_bigwig_raw_{sample}.log"
     shell:
         """
-        bamCoverage -b {input.sorted_bam} -o {output.bigwig}
+        bamCoverage -b {input.sorted_bam} -o {output.bigwig} --effectiveGenomeSize {params.genome_size} -p 8
         """
+
 
 ##################################################################
 ##                  Total Reads and Scale Factor                ##
