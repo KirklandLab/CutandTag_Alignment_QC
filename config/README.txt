@@ -1,6 +1,7 @@
 Run hg38 samples in snakemake pipeline
 - config.csv 
-    + change parameters to mm10 (ex: bowtie2 genome index & effective genome size)
+    + change bowtie2 genome index
+    + change effective genome size
 - samples.csv
     + change samples.csv to ones provided below
 
