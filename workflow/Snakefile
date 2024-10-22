@@ -87,7 +87,7 @@ rule align_with_bowtie2:
         sam_file="results/alignment/sam/{sample}_bowtie2.sam",
         bowtie2_summary="results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt"
     params:
-        bowtie2_genome=config["bowtie2_genome"}
+        bowtie2_genome=config["bowtie2_genome"]
     envmodules:
         config["bowtie2"]
     log: "results/logs/align_with_bowtie2_{sample}.log"
