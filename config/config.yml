@@ -1,16 +1,15 @@
 # Bowtie2 genome index path
-bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"
+bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"   # mm10 genome index file path = "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"
+                                                                             # GRCh38 genome index file path = "/hpc-prj/kirkland/shared/scripts/hg38_bowtie2_index/hg38"
 
 # MACS2 parameters for peak calling
-genome_size: "mm"  # For human genome; use "mm" for mouse genome if needed
-macs2_qvalue: 0.05  # q-value cutoff for significant peaks
-macs2_output_dir: "/s/cobre-dev-bio/boydk/Kirkland_Lab/KLab12/peakCalling/MACS2"
+genome_size: "mm"                                                            # For human genome - "hs" / for mouse genome - "mm"
+macs2_qvalue: 0.05                                                           # q-value cutoff for significant peaks
 
 # bamCoverage parameters for BigWig generation
-bin_size: 10000
-min_mapping_quality: 30
-effective_genome_size: 2730871774  # mm10 genome size
-
+bin_size: 50                                                                 # default bin = 50 
+effective_genome_size: 2730871774                                            # mm10 genome size - 2730871774       
+                                                                             # GRCh38 genome size - 2913022398
 # Modules (for loading software dependencies)
 fastqc: "fastqc/0.12.1"
 fastq_screen: "fastq-screen/0.15.2"
