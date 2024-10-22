@@ -44,7 +44,7 @@ rule all:
         expand("results/alignment/{sample}_total_reads.txt", sample=samples_table.index),
         expand("results/alignment/{sample}_scale_factor.txt", sample=samples_table.index),
         expand("results/alignment/bigwig/scale_reads/{sample}_scaled.bw", sample=samples_table.index),
-        expand("results/peakCalling/{sample}_macs2_peak_q{params.qvalue}", sample=samples_table.index)
+        expand("results/peakCalling/{sample}_peaks.narrowPeak", sample=samples_table.index)
 
 ##################################################################
 ##                       Quality Control                        ##
@@ -222,18 +222,19 @@ rule macs2_peak_calling:
     input:
         bam="results/alignment/bam/{sample}.sorted.bam"
     output:
-        peaks="results/peakCalling/{sample}_macs2_peak_q{params.qvalue}"
+        peaks="results/peakCalling/{sample}_peaks.narrowPeak"
     params:
         genome=config["genome_size"],
         qvalue=config["macs2_qvalue"],
-        output_dir=config["macs2_output_dir"]
+        sample_name="{sample}",
+        output_dir="results/peakCalling/"
     envmodules:
         config["macs2"]
     log: "results/logs/snakelogs/macs2_peak_calling.{sample}.log"
     shell:
         """
         macs2 callpeak -t {input.bam} \
-        -g {params.genome} -f BAMPE -n {wildcards.sample}_macs2_peak_q{params.qvalue} \
-        --outdir {params.output_dir} -q {params.qvalue} --keep-dup all --nomodel \
-        2>{params.output_dir}/{wildcards.sample}_macs2Peak_summary.txt
+        -g {params.genome} -f BAMPE -n {params.sample_name}_{params.qvalue} \
+        --outdir {output.output_dir} -q {params.qvalue} --keep-dup all --nomodel \
+        2>{params.output_dir}/{params.sample_name}_macs2Peak_summary.txt
         """
