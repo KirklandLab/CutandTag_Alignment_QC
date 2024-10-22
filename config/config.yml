@@ -7,7 +7,7 @@ genome_size: "mm"                                                            # F
 macs2_qvalue: 0.05                                                           # q-value cutoff for significant peaks
 
 # bamCoverage parameters for BigWig generation
-bin_size: 50                                                                 # default bin = 50 
+binSize: 50                                                                 # default bin = 50 
 effective_genome_size: 2730871774                                            # mm10 genome size - 2730871774       
                                                                              # GRCh38 genome size - 2913022398
 # Modules (for loading software dependencies)
