@@ -35,7 +35,7 @@ def sample_type_dict_from_sample(wildcards):
 
 rule all:
     input:
-        expand("results/qc/fastqc/{sample}_R1_fastqc.html", sample=samples_table.index),
+        #expand("results/qc/fastqc/{sample}_R1_fastqc.html", sample=samples_table.index),
         expand("results/alignment/sam/{sample}_bowtie2.sam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}_bowtie2.bam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}.sorted.bam", sample=samples_table.index),
