@@ -144,7 +144,7 @@ rule make_bigwig_raw:
     output:
         bigwig="results/alignment/bigwig/{sample}_raw.bw"
     params:
-        genome_size=config["effective_genome_size"]
+        genome_size=config["effective_genome_size"],
         binSize=config["binSize"]
     envmodules:
         config["deeptools"]
@@ -187,7 +187,7 @@ rule make_bigwig_scaled:
     output:
         bigwig_scaled="results/alignment/bigwig/scale_reads/{sample}_scaled.bw"
     params:
-        genome_size=config["effective_genome_size"]
+        genome_size=config["effective_genome_size"],
         binSize=config["binSize"]
     envmodules:
         config["deeptools"]
