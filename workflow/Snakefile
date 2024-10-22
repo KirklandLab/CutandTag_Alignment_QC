@@ -145,12 +145,13 @@ rule make_bigwig_raw:
         bigwig="results/alignment/bigwig/{sample}_raw.bw"
     params:
         genome_size=config["effective_genome_size"]
+        binSize=config["binSize"]
     envmodules:
         config["deeptools"]
     log: "results/logs/make_bigwig_raw_{sample}.log"
     shell:
         """
-        bamCoverage -b {input.sorted_bam} -o {output.bigwig} --effectiveGenomeSize {params.genome_size} -p 8
+        bamCoverage -b {input.sorted_bam} -o {output.bigwig} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize}
         """
 
 
@@ -186,6 +187,7 @@ rule make_bigwig_scaled:
     output:
         bigwig_scaled="results/alignment/bigwig/scale_reads/{sample}_scaled.bw"
     params:
+        genome_size=config["effective_genome_size"]
         binSize=config["binSize"]
     envmodules:
         config["deeptools"]
@@ -193,7 +195,7 @@ rule make_bigwig_scaled:
     shell:
         """
         scale_factor=$(cat {input.scale_factor})
-        bamCoverage -b {input.sorted_bam} -o {output.bigwig_scaled} --binSize {params.binSize} --scaleFactor $scale_factor
+        bamCoverage -b {input.sorted_bam} -o {output.bigwig_scaled} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize} --scaleFactor $scale_factor
         """
 
 ##################################################################
