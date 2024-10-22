@@ -1,18 +1,14 @@
-# aligner params
-bwa_genome: "/Volumes/shared-refs/hg19/bwa_7_6_indexed/hg19.fasta"
-# macs2 params
-effective_genome_size: 2913022398
-macs2_minimum_fdr: 0.05
-# bamCoverage params
+# Bowtie2 genome index path
+bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"
+
+# bamCoverage parameters for BigWig generation
 bin_size: 10000
 min_mapping_quality: 30
-effective_genome_size: 2913022398
-blacklistFile: "/s/cobre-dev-bio/boydk/Sansam_Lab/EdUSeqAnalysis_HCT_Biotin/resources/ENCFF356LFX.bed"
-# Modules
-bwa: "bwa/0.7.17"
+effective_genome_size: 2730871774  # mm10 genome size
+
+# Modules (for loading software dependencies)
 fastqc: "fastqc/0.12.1"
-fastp: "fastp/0.23.2"
+fastq_screen: "fastq_screen/0.14.0"
 samtools: "samtools/1.18"
-macs2: "macs2/2.2.7.1"
+bowtie2: "bowtie2/2.4.5"
 deeptools: "deeptools/3.4.3"
-Bioconductor: "bioconductor/3.14"
