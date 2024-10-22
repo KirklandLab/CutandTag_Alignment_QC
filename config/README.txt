@@ -2,7 +2,7 @@ Run hg38 samples in snakemake pipeline
 - config.csv 
     + change bowtie2 genome index
     + change effective genome size
-    + change macs2 
+    + change macs2 genome size
 - samples.csv
     + change samples.csv to ones provided below
 
