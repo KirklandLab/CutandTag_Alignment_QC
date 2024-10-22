@@ -183,13 +183,15 @@ rule make_bigwig_scaled:
         scale_factor="results/alignment/{sample}_scale_factor.txt"
     output:
         bigwig_scaled="results/alignment/bigwig/scale_reads/{sample}_scaled.bw"
+    params:
+        binSize=config["binSize"]
     envmodules:
         config["deeptools"]
     log: "results/logs/make_bigwig_scaled_{sample}.log"
     shell:
         """
         scale_factor=$(cat {input.scale_factor})
-        bamCoverage -b {input.sorted_bam} -o {output.bigwig_scaled} --scaleFactor $scale_factor
+        bamCoverage -b {input.sorted_bam} -o {output.bigwig_scaled} --binSize {params.binSize} --scaleFactor $scale_factor
         """
 
 ##################################################################
