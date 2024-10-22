@@ -36,7 +36,6 @@ def sample_type_dict_from_sample(wildcards):
 rule all:
     input:
         expand("results/qc/fastqc/{sample}_R1_fastqc.html", sample=samples_table.index),
-        expand("results/qc/fastq_screen/{sample}_screen.txt", sample=samples_table.index),
         expand("results/alignment/sam/{sample}_bowtie2.sam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}_bowtie2.bam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}.sorted.bam", sample=samples_table.index),
@@ -75,19 +74,6 @@ rule fastqc_reads:
         bsename=$(basename ${{bsename}} .fastq)
         mv ${{dir}}/${{bsename}}_fastqc.html {output.html2}
         mv ${{dir}}/${{bsename}}_fastqc.zip {output.zip2}
-        """
-
-rule fastq_screen:
-    input:
-        unpack(fq_dict_from_sample)
-    output:
-        fastq_screen_out="results/qc/fastq_screen/{sample}_screen.txt"
-    envmodules:
-        config["fastq_screen"]
-    log: "results/logs/fastq_screen_{sample}.log"
-    shell:
-        """
-        fastq_screen --conf /hpc-prj/kirkland/shared/scripts/fastq_screen.conf --threads 16 --outdir {output.fastq_screen_out} {input.fq1}
         """
 
 ##################################################################
