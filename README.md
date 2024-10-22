@@ -1,4 +1,4 @@
-# CutandTag_Analysis_Sankemake
+# CutandTag_Analysis_Snakemake
 
 ## 1. Clone repository
 ```
