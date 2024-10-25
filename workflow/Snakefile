@@ -41,7 +41,7 @@ rule all:
         expand("results/alignment/bam/{sample}.sorted.bam", sample=samples_table.index),
         expand("results/alignment/bigwig/{sample}_raw.bw", sample=samples_table.index),
         expand("results/alignment/{sample}_total_reads.txt", sample=samples_table.index),
-        expand("results/alignment/{sample}_scale_factor.txt", sample=samples_table.index),
+        expand("results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt", sample=samples_table.index),
         expand("results/alignment/bigwig/scale_reads/{sample}_scaled.bw", sample=samples_table.index),
         expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index)
 
@@ -169,7 +169,7 @@ rule calculate_total_reads:
         sorted_bam="results/alignment/bam/{sample}.sorted.bam"
     output:
         total_reads="results/alignment/{sample}_total_reads.txt",
-        scale_factor="results/alignment/{sample}_scale_factor.txt"
+        scale_factor="results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt"
     envmodules:
         config["samtools"]
     log: "results/logs/calculate_total_reads_{sample}.log"
