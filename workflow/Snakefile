@@ -200,7 +200,7 @@ rule make_bigwig_scaled:
     shell:
         """
         scale_factor=$(cat {input.scale_factor})
-        bamCoverage -b {input.sorted_bam} -o {output.bigwig_scaled} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize} --scaleFactor {input.scale_factor}
+        bamCoverage -b {input.sorted_bam} -o {output.bigwig_scaled} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize} --scaleFactor $scale_factor
         """
 
 ##################################################################
