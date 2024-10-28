@@ -129,7 +129,7 @@ rule sort_bam:
         bam_file="results/alignment/bam/{sample}_bowtie2.bam"
     output:
         sorted_bam="results/alignment/bam/{sample}.sorted.bam",
-        bai="results/alignment/bam/{sample}sorted.bam.bai"
+        bai="results/alignment/bam/{sample}.sorted.bam.bai"
     envmodules:
         config["samtools"]
     log: "results/logs/sort_bam_{sample}.log"
