@@ -7,7 +7,7 @@ git clone https://github.com/JK-Cobre-Help/CutandTag_Analysis_Snakemake.git
 ## 2. Load modules
 ```
 module purge
-module load slurm python/3.10 pandas/2.2.3 numpy/1.22.3 matplotlib/3.7.1
+module load slurm python/3.10 pandas/2.2.3 numpy/1.22.3
 ```
 ## 3. Modify Samples file
 ```
