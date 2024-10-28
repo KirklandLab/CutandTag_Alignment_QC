@@ -240,7 +240,7 @@ rule generate_alignment_plots:
         "results/alignment_summary_plot.png"
     envmodules:
         config["R"],
-        config["Bioconductor"]
+        config["bioconductor"]
     log: "results/logs/snakelogs/generate_alignment_plots.{sample}.log
     script:
         "scripts/plot_alignment.R"
