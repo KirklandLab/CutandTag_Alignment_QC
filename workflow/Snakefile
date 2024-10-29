@@ -257,7 +257,7 @@ rule generate_alignment_plots:
 rule generate_fragmentLength_files:
     input:
         # Input for each Bowtie2 sam
-        bowtie2_sam="results/alignment/sam/{sample}_bowtie2.sam"
+        sam_file="results/alignment/sam/{sample}_bowtie2.sam"
     output:
         fragLen="results/alignment/sam/{sample}_fragmentLen.txt"
     envmodules:
@@ -265,7 +265,7 @@ rule generate_fragmentLength_files:
     log: "results/logs/snakelogs/generate_fragmentLength_files.{sample}.log"
     shell:
         """
-        samtools view -F 0x04 {input.bowtie2_sam} | awk -F'\t' '{print ($9 < 0 ? -$9 : $9)}' | sort | uniq -c | awk -v OFS="\t" '{print $2, $1/2}' > {output.fragLen}                 # Extract the 9th column from the alignment sam file which is the fragment length
+        samtools view -F 0x04 {input.sam_file} | awk -F'\t' '{print ($9 < 0 ? -$9 : $9)}' | sort | uniq -c | awk -v OFS="\t" '{print $2, $1/2}' > {output.fragLen}                 # Extract the 9th column from the alignment sam file which is the fragment length
         """
 
 ##################################################################
