@@ -236,7 +236,7 @@ rule macs2_peak_calling:
 rule generate_alignment_plots:
     input:
         # Input for each Bowtie2 summary
-        expand("results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt", sample=samples_table.index)
+        sample_list=expand("results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt", sample=samples_table.index)
     output:
         "results/alignment/sam/bowtie2_summary/alignment_summary_plot.png"
     params:
