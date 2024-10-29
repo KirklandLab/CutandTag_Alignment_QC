@@ -249,3 +249,24 @@ rule generate_alignment_plots:
         """
         Rscript scripts/plot_alignment.R {input.sample_list} {params.work_dir}
         """
+
+##################################################################
+##                    Fragment Length Plot                      ##
+##################################################################
+
+rule generate_fragLen_plots:
+    input:
+        # Input for each fragmentLen file
+        sample_list=expand("results/alignment/sam/{sample}_fragmentLen.txt", sample=samples_table.index)
+    output:
+        "results/alignment/sam/fragLen_plot.png"
+    params:
+        work_dir="results/alignment/sam"
+    envmodules:
+        config["R"],
+        config["bioconductor"]
+    log: "results/logs/snakelogs/generate_fragLen_plots.log"
+    shell:
+        """
+        Rscript scripts/plot_fragLength.R {input.sample_list} {params.work_dir}
+        """
