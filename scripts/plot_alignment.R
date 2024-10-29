@@ -5,24 +5,20 @@ library(ggplot2)
 library(dplyr)
 library(ggpubr)
 
-# Define the path to the Bowtie2 summary files
-projPath <- "results/alignment/sam/bowtie2_summary"
+# Capture command-line arguments
+args <- commandArgs(trailingOnly = TRUE)
+input_files <- strsplit(args[1], ",")[[1]]  # Split the input files
+output_dir <- args[2]
 
-# List all summary files in the directory
-summary_files <- list.files(projPath, pattern = "_bowtie2.txt", full.names = TRUE)
-
-# Extract sample names from file names (e.g., "K27me3_rep1" from "K27me3_rep1_bowtie2.txt")
-sampleList <- gsub("_bowtie2.txt", "", basename(summary_files))
-
-# Extract unique histone names (e.g., "K27me3", "K4me3", "IgG") for ordering purposes
+# Extract sample names and unique histone names
+sampleList <- gsub("_bowtie2.txt", "", basename(input_files))
 histList <- unique(sapply(strsplit(sampleList, "_"), `[`, 2))
 
 # Initialize an empty data frame to store alignment results
 alignResult <- data.frame()
 
 # Loop through each file to collect alignment results
-for (file_path in summary_files) {
-  # Read Bowtie2 summary file
+for (file_path in input_files) {
   alignRes <- read.table(file_path, header = FALSE, fill = TRUE, stringsAsFactors = FALSE)
   
   # Extract metrics from the summary file
@@ -49,7 +45,7 @@ for (file_path in summary_files) {
 # Convert Histone to a factor for ordered plotting based on histList
 alignResult$Histone <- factor(alignResult$Histone, levels = histList)
 
-# Plot 1: Sequencing Depth
+# Create individual plots for each metric
 fig1 <- ggplot(alignResult, aes(x = Histone, y = SequencingDepth / 1e6, fill = Histone)) +
   geom_boxplot() +
   geom_jitter(aes(color = Replicate), position = position_jitter(0.15)) +
@@ -58,7 +54,6 @@ fig1 <- ggplot(alignResult, aes(x = Histone, y = SequencingDepth / 1e6, fill = H
   xlab("") +
   ggtitle("Sequencing Depth per Histone")
 
-# Plot 2: Mapped Fragments (Alignable Fragment Count)
 fig2 <- ggplot(alignResult, aes(x = Histone, y = MappedFragNum / 1e6, fill = Histone)) +
   geom_boxplot() +
   geom_jitter(aes(color = Replicate), position = position_jitter(0.15)) +
@@ -67,7 +62,6 @@ fig2 <- ggplot(alignResult, aes(x = Histone, y = MappedFragNum / 1e6, fill = His
   xlab("") +
   ggtitle("Mapped Fragments per Histone")
 
-# Plot 3: Alignment Rate
 fig3 <- ggplot(alignResult, aes(x = Histone, y = AlignmentRate, fill = Histone)) +
   geom_boxplot() +
   geom_jitter(aes(color = Replicate), position = position_jitter(0.15)) +
@@ -76,7 +70,6 @@ fig3 <- ggplot(alignResult, aes(x = Histone, y = AlignmentRate, fill = Histone))
   xlab("") +
   ggtitle("Alignment Rate per Histone")
 
-# Plot 4: Unaligned Rate
 fig4 <- ggplot(alignResult, aes(x = Histone, y = UnalignedRate, fill = Histone)) +
   geom_boxplot() +
   geom_jitter(aes(color = Replicate), position = position_jitter(0.15)) +
@@ -88,5 +81,6 @@ fig4 <- ggplot(alignResult, aes(x = Histone, y = UnalignedRate, fill = Histone))
 # Arrange the four plots into a single figure
 final_plot <- ggarrange(fig1, fig2, fig3, fig4, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
 
-# Save the arranged plot to a file
-ggsave("results/alignment/alignment_summary_plot.png", final_plot, width = 14, height = 10)
+# Save the arranged plot to a file in the specified output directory
+output_file <- file.path(output_dir, "alignment_summary_plot.png")
+ggsave(output_file, final_plot, width = 14, height = 10)
