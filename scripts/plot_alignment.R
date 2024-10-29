@@ -7,10 +7,10 @@ library(ggpubr)
 
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
-input_files <- strsplit(args[1], ",")[[1]]  # Comma-separated list of input files
-output_dir <- args[2]
+input_files <- strsplit(args[1], ",")[[1]]  # Interpret first argument as comma-separated input files
+output_dir <- args[2]  # Second argument is the output directory
 
-# Ensure the output directory exists
+# Ensure the output directory exists (no longer creating a directory with input file names)
 if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
 }
