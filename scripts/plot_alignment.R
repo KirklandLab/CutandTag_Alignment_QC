@@ -7,8 +7,13 @@ library(ggpubr)
 
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
-input_files <- strsplit(args[1], ",")[[1]]  # Split the input files
+input_files <- strsplit(args[1], ",")[[1]]  # Comma-separated list of input files
 output_dir <- args[2]
+
+# Ensure the output directory exists
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
 
 # Extract sample names and unique histone names
 sampleList <- gsub("_bowtie2.txt", "", basename(input_files))
@@ -83,6 +88,4 @@ final_plot <- ggarrange(fig1, fig2, fig3, fig4, ncol = 2, nrow = 2, common.legen
 
 # Save the arranged plot to a file in the specified output directory
 output_file <- file.path(output_dir, "alignment_summary_plot.png")
-png(output_file, width = 1400, height = 1000, res = 150)  # Use png() for device compatibility
-print(final_plot)
-dev.off()
+ggsave(output_file, final_plot, width = 14, height = 10)
