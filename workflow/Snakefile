@@ -247,5 +247,5 @@ rule generate_alignment_plots:
     log: "results/logs/snakelogs/generate_alignment_plots.log"
     shell:
         """
-        Rscript scripts/plot_alignment.R "{input.sample_list}" "{params.work_dir}"
+        Rscript scripts/plot_alignment.R {input.sample_list} {params.work_dir}
         """
