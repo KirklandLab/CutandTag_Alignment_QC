@@ -43,7 +43,8 @@ rule all:
         expand("results/alignment/{sample}_total_reads.txt", sample=samples_table.index),
         expand("results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt", sample=samples_table.index),
         expand("results/alignment/bigwig/scale_reads/{sample}_scaled.bw", sample=samples_table.index),
-        expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index)
+        expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index),
+        "results/alignment/alignment_summary_plot.png"
 
 ##################################################################
 ##                       Quality Control                        ##
