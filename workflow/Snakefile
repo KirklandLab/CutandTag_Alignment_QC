@@ -239,9 +239,13 @@ rule generate_alignment_plots:
         expand("results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt", sample=samples_table.index)
     output:
         "results/alignment/sam/bowtie2_summary/alignment_summary_plot.png"
+    params:
+        work_dir="results/alignment/sam/bowtie2_summary"
     envmodules:
         config["R"],
         config["bioconductor"]
     log: "results/logs/snakelogs/generate_alignment_plots.{sample}.log"
-    script:
-        "scripts/plot_alignment.R"
+    shell:
+        """
+        Rscript scripts/plot_alignment.R {input.sample_list} {params.work_dir}
+        """
