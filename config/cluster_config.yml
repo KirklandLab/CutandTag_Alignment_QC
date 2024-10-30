@@ -15,18 +15,10 @@ fastqc_reads:
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
 
-fastq_screen:
-    cpus-per-task: 4
-    mem: 32G
-    cores: 4
-    name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
-
 align_with_bowtie2:
-    cpus-per-task: 8
-    mem: 64G
-    cores: 8
+    cpus-per-task: 16
+    mem: 128G
+    cores: 16
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
