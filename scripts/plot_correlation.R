@@ -41,8 +41,9 @@ M <- cor(fragCount %>% select(-chrom, -bin) %>% log2(), use = "complete.obs")
 
 # Generate correlation plot with ggcorrplot
 output_file <- file.path(output_dir, "fragCount_correlation_plot.png")
-p <- ggcorrplot(M, method = "color", outline.col = "darkgray", hc.order = TRUE, 
+p <- ggcorrplot(M, method = "circle", outline.col = "darkgray", hc.order = TRUE, 
                 type = "full", lab = TRUE, lab_size = 3, colors = c("midnightblue", "white", "darkred"))
 
 # Save plot with ggsave
 ggsave(output_file, plot = p, width = 8, height = 8)
+
