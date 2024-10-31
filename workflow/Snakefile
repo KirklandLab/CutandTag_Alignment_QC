@@ -45,8 +45,10 @@ rule all:
         expand("results/alignment/bigwig/scale_reads/{sample}_scaled.bw", sample=samples_table.index),
         expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index),
         expand("results/alignment/sam/{sample}_fragmentLen.txt", sample=samples_table.index),
-        "results/alignment/sam/bowtie2_summary/alignment_summary_plot.png",
-        "results/alignment/sam/fragment_length_plot.png"
+        "results/plots/alignment_summary_plot.png",
+        "results/plots/fragment_length_plot.png",
+        expand("results/alignment/bed/{sample}_bowtie2.fragmentsCount.bin500.bed", sample=samples_table.index),
+        "results/plots/fragCount_correlation_plot.pdf"
 
 ##################################################################
 ##                       Quality Control                        ##
@@ -240,16 +242,16 @@ rule generate_alignment_plots:
         # Input for each Bowtie2 summary
         sample_list=expand("results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt", sample=samples_table.index)
     output:
-        "results/alignment/sam/bowtie2_summary/alignment_summary_plot.png"
+        "results/plots/alignment_summary_plot.png"
     params:
-        work_dir="results/alignment/sam/bowtie2_summary"
+        out_dir="results/plots"
     envmodules:
         config["R"],
         config["bioconductor"]
     log: "results/logs/snakelogs/generate_alignment_plots.log"
     shell:
         """
-        Rscript scripts/plot_alignment.R {input.sample_list} {params.work_dir}
+        Rscript scripts/plot_alignment.R {input.sample_list} {params.out_dir}
         """
 
 ##################################################################
@@ -282,14 +284,77 @@ rule generate_fragLen_plots:
         # Input for each fragmentLen file
         sample_list=expand("results/alignment/sam/{sample}_fragmentLen.txt", sample=samples_table.index)
     output:
-        "results/alignment/sam/fragment_length_plot.png"
+        "results/plots/fragment_length_plot.png"
     params:
-        work_dir="results/alignment/sam"
+        out_dir="results/plots"
     envmodules:
         config["R"],
         config["bioconductor"]
     log: "results/logs/snakelogs/generate_fragLen_plots.log"
     shell:
         """
-        Rscript scripts/plot_fragLength.R {input.sample_list} {params.work_dir}
+        Rscript scripts/plot_fragLength.R {input.sample_list} {params.out_dir}
+        """
+
+##################################################################
+##                   Fragment Length Processing                 ##
+##################################################################
+
+rule process_fragment_length:
+    input:
+        sam_file="results/alignment/sam/{sample}_bowtie2.sam"
+    output:
+        mapped_bam="results/alignment/bam/{sample}_bowtie2.mapped.bam",
+        bed_file="results/alignment/bed/{sample}_bowtie2.bed",
+        clean_bed="results/alignment/bed/{sample}_bowtie2.clean.bed",
+        fragments_bed="results/alignment/bed/{sample}_bowtie2.fragments.bed",
+        binned_counts="results/alignment/bed/{sample}_bowtie2.fragmentsCount.bin500.bed"
+    params:
+        binLen=500
+    envmodules:
+        config["samtools"],
+        config["bedtools"]
+    log: "results/logs/snakelogs/process_fragment_length.{sample}.log"
+    shell:
+        """
+        # Set variables
+        sampleName={wildcards.sample}
+        histName=$(basename "{input.sam_file}")
+
+        # Filter and keep the mapped read pairs
+        samtools view -bS -F 0x04 {input.sam_file} -o {output.mapped_bam}
+
+        # Convert into bed file format
+        bedtools bamtobed -i {output.mapped_bam} -bedpe > {output.bed_file}
+
+        # Keep the read pairs that are on the same chromosome and fragment length less than 1000bp
+        awk '$1==$4 && $6-$2 < 1000 {{print $0}}' {output.bed_file} > {output.clean_bed}
+
+        # Only extract the fragment-related columns
+        cut -f 1,2,6 {output.clean_bed} | sort -k1,1 -k2,2n -k3,3n > {output.fragments_bed}
+
+        # Bin the fragment counts
+        awk -v w={params.binLen} '{{print $1, int(($2 + $3)/(2*w))*w + w/2}}' {output.fragments_bed} | \
+        sort -k1,1V -k2,2n | uniq -c | \
+        awk -v OFS="\\t" '{{print $2, $3, $1}}' | sort -k1,1V -k2,2n > {output.binned_counts}
+        """
+
+##################################################################
+##                    Correlation Plot                          ##
+##################################################################
+
+rule generate_correlation_plot:
+    input:
+        # Input for each fragment count file
+        sample_list=expand("results/alignment/bed/{sample}_bowtie2.fragmentsCount.bin500.bed", sample=samples_table.index)
+    output:
+        "results/plots/fragCount_correlation_plot.pdf"
+    params:
+        work_dir="results/plots"
+    envmodules:
+        config["R"]
+    log: "results/logs/snakelogs/generate_correlation_plot.log"
+    shell:
+        """
+        Rscript scripts/plot_correlation.R {input.sample_list} {params.work_dir}
         """

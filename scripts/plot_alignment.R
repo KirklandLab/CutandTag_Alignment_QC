@@ -17,7 +17,7 @@ if (!dir.exists(output_dir)) {
 
 # Extract sample names and unique histone names
 sampleList <- gsub("_bowtie2.txt", "", basename(input_files))
-histList <- unique(sapply(strsplit(sampleList, "_"), `[`, 2))
+histList <- unique(sapply(strsplit(sampleList, "_"), `[`, 1))
 
 # Initialize an empty data frame to store alignment results
 alignResult <- data.frame()
@@ -36,8 +36,8 @@ for (file_path in input_files) {
   # Extract histone and replicate information from file name
   sample_name <- gsub("_bowtie2.txt", "", basename(file_path))
   histInfo <- strsplit(sample_name, "_")[[1]]
-  histone <- histInfo[2]
-  replicate <- histInfo[1]
+  histone <- histInfo[1]
+  replicate <- histInfo[2]
   
   # Append results to the data frame
   alignResult <- rbind(alignResult, data.frame(Histone = histone, Replicate = replicate, 
@@ -46,6 +46,10 @@ for (file_path in input_files) {
                                                AlignmentRate = alignmentRate, 
                                                UnalignedRate = unalignedRate))
 }
+
+# Debugging: Print alignResult and histList to check assignments
+print(alignResult)
+print(histList)
 
 # Convert Histone to a factor for ordered plotting based on histList
 alignResult$Histone <- factor(alignResult$Histone, levels = histList)
