@@ -31,8 +31,8 @@ for (file_path in input_files) {
   # Extract histone and replicate information from file name
   sample_name <- gsub("_fragmentLen.txt", "", basename(file_path))
   histInfo <- strsplit(sample_name, "_")[[1]]
-  histone <- histInfo[2]
-  replicate <- histInfo[1]
+  histone <- histInfo[1]
+  replicate <- histInfo[2]
   
   # Add calculated columns and combine with previous data
   fragData <- fragData %>%
