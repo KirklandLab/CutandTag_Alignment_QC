@@ -47,7 +47,7 @@ rule all:
         expand("results/alignment/sam/{sample}_fragmentLen.txt", sample=samples_table.index),
         "results/alignment/sam/bowtie2_summary/alignment_summary_plot.png",
         "results/alignment/sam/fragment_length_plot.png",
-        expand("results/alignment/bed/{sample}_bowtie2.fragmentsCount.bin500.bed"
+        expand("results/alignment/bed/{sample}_bowtie2.fragmentsCount.bin500.bed", sample=samples_table.index)
 
 ##################################################################
 ##                       Quality Control                        ##
