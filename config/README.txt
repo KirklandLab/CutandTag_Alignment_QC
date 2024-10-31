@@ -18,6 +18,8 @@ K27me3_50_trimmed,resources/trimmed_50_K27me3_S9_R1_001.fastq.gz,resources/trimm
 Sample naming recommendation for correct plot output
 - "Histone" + "_" + "Replicate" + "Any other identifier"
 - Example:
+    + K27ac_50
+    + K27me3_5
     + H3K27me3_rep1
     + H3K4me3_rep2_set1
     + H3K27ac_rep3_control
