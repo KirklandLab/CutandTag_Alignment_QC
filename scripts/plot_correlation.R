@@ -2,8 +2,7 @@
 
 # Load required libraries
 library(dplyr)
-library(ggplot2)
-library(ggcorrplot)
+library(corrplot)
 
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
@@ -39,11 +38,11 @@ for (file_path in input_files) {
 # Calculate correlation matrix
 M <- cor(fragCount %>% select(-chrom, -bin) %>% log2(), use = "complete.obs")
 
-# Generate correlation plot with ggcorrplot
-output_file <- file.path(output_dir, "fragCount_correlation_plot.png")
-p <- ggcorrplot(M, method = "circle", outline.col = "darkgray", hc.order = TRUE, 
-                type = "full", lab = TRUE, lab_size = 3, colors = c("midnightblue", "white", "darkred"))
-
-# Save plot with ggsave
-ggsave(output_file, plot = p, width = 8, height = 8)
-
+# Generate correlation plot
+output_file <- file.path(output_dir, "fragCount_correlation_plot.pdf")
+pdf(output_file, width = 8, height = 8)
+corrplot(M, method = "color", outline = TRUE, addgrid.col = "darkgray", order = "hclust",
+         addrect = 3, rect.col = "black", rect.lwd = 3, cl.pos = "b", tl.col = "indianred4",
+         tl.cex = 1, cl.cex = 1, addCoef.col = "black", number.digits = 2, number.cex = 1,
+         col = colorRampPalette(c("midnightblue", "white", "darkred"))(100))
+dev.off()
