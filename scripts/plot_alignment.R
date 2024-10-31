@@ -36,8 +36,8 @@ for (file_path in input_files) {
   # Extract histone and replicate information from file name
   sample_name <- gsub("_bowtie2.txt", "", basename(file_path))
   histInfo <- strsplit(sample_name, "_")[[1]]
-  histone <- histInfo[1]
-  replicate <- histInfo[2]
+  histone <- histInfo[2]
+  replicate <- histInfo[1]
   
   # Append results to the data frame
   alignResult <- rbind(alignResult, data.frame(Histone = histone, Replicate = replicate, 
