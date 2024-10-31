@@ -355,5 +355,5 @@ rule generate_correlation_plot:
     log: "results/logs/snakelogs/generate_correlation_plot.log"
     shell:
         """
-        Rscript scripts/generate_correlation_plot.R {input.sample_list} {params.work_dir}
+        Rscript scripts/plot_correlation.R {input.sample_list} {params.work_dir}
         """
