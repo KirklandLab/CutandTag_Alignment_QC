@@ -17,7 +17,7 @@ if (!dir.exists(output_dir)) {
 
 # Extract sample names and unique histone names
 sampleList <- gsub("_bowtie2.txt", "", basename(input_files))
-histList <- unique(sapply(strsplit(sampleList, "_"), `[`, 2))
+histList <- unique(sapply(strsplit(sampleList, "_"), `[`, 1))
 
 # Initialize an empty data frame to store alignment results
 alignResult <- data.frame()
@@ -46,10 +46,6 @@ for (file_path in input_files) {
                                                AlignmentRate = alignmentRate, 
                                                UnalignedRate = unalignedRate))
 }
-
-# Ensure that Histone has valid levels
-histList <- unique(alignResult$Histone)
-alignResult$Histone <- factor(alignResult$Histone, levels = histList)
 
 # Debugging: Print alignResult and histList to check assignments
 print(alignResult)
