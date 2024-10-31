@@ -313,8 +313,7 @@ rule process_fragment_length:
     envmodules:
         config["samtools"],
         config["bedtools"]
-    log:
-        "results/logs/snakelogs/process_fragment_length.{sample}.log"
+    log: "results/logs/snakelogs/process_fragment_length.{sample}.log"
     shell:
         """
         # Set variables
