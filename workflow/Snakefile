@@ -48,7 +48,7 @@ rule all:
         "results/alignment/sam/bowtie2_summary/alignment_summary_plot.png",
         "results/alignment/sam/fragment_length_plot.png",
         expand("results/alignment/bed/{sample}_bowtie2.fragmentsCount.bin500.bed", sample=samples_table.index),
-        "results/plots/fragCount_correlation_plot.png",
+        "results/plots/fragCount_correlation_plot.pdf",
 
 ##################################################################
 ##                       Quality Control                        ##
@@ -348,7 +348,7 @@ rule generate_correlation_plot:
         # Input for each fragment count file
         sample_list=expand("results/alignment/bed/{sample}_bowtie2.fragmentsCount.bin500.bed", sample=samples_table.index)
     output:
-        "results/plots/fragCount_correlation_plot.png"
+        "results/plots/fragCount_correlation_plot.pdf"
     params:
         work_dir="results/plots"
     envmodules:
