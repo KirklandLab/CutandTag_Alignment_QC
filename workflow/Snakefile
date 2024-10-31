@@ -48,7 +48,7 @@ rule all:
         "results/plots/alignment_summary_plot.png",
         "results/plots/fragment_length_plot.png",
         expand("results/alignment/bed/{sample}_bowtie2.fragmentsCount.bin500.bed", sample=samples_table.index),
-        "results/plots/fragCount_correlation_plot.pdf",
+        "results/plots/fragCount_correlation_plot.pdf"
 
 ##################################################################
 ##                       Quality Control                        ##
