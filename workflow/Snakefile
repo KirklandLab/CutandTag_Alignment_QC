@@ -337,3 +337,23 @@ rule process_fragment_length:
         sort -k1,1V -k2,2n | uniq -c | \
         awk -v OFS="\\t" '{{print $2, $3, $1}}' | sort -k1,1V -k2,2n > {output.binned_counts}
         """
+
+##################################################################
+##                    Correlation Plot                          ##
+##################################################################
+
+rule generate_correlation_plot:
+    input:
+        # Input for each fragment count file
+        sample_list=expand("results/alignment/bed/{sample}_bowtie2.fragmentsCount.bin500.bed", sample=samples_table.index)
+    output:
+        "results/plots/fragCount_correlation_plot.png"
+    params:
+        work_dir="results/alignment/bed"
+    envmodules:
+        config["R"]
+    log: "results/logs/snakelogs/generate_correlation_plot.log"
+    shell:
+        """
+        Rscript scripts/generate_correlation_plot.R {input.sample_list} {params.work_dir}
+        """
