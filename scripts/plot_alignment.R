@@ -47,6 +47,9 @@ for (file_path in input_files) {
                                                UnalignedRate = unalignedRate))
 }
 
+# Debugging: Print alignResult to check assignments
+print(alignResult)
+
 # Convert Histone to a factor for ordered plotting based on histList
 alignResult$Histone <- factor(alignResult$Histone, levels = histList)
 
