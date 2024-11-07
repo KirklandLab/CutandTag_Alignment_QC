@@ -6,6 +6,8 @@ configfile: "config/config.yml"
 
 # Author: Kevin Boyd
 # Date: Oct 18, 2024
+# Adapted from: Ye Zheng, Kami Ahmad, Steven Henikoff
+# Original Protocol DOI: dx.doi.org/10.17504/protocols.io.bjk2kkye
 
 import pandas as pd
 
