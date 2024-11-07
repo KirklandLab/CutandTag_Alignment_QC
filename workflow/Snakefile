@@ -342,7 +342,7 @@ rule process_fragment_length:
         """
 
 ##################################################################
-##                    Correlation Plot                          ##
+##                       Correlation Plot                       ##
 ##################################################################
 
 rule generate_correlation_plot:
@@ -359,4 +359,24 @@ rule generate_correlation_plot:
     shell:
         """
         Rscript scripts/plot_correlation.R {input.sample_list} {params.work_dir}
+        """
+
+##################################################################
+##                       Peak Summary Plot                      ##
+##################################################################
+
+rule generate_peak_summary_plots:
+    input:
+        peak_list=expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index)
+    output:
+        "results/plots/peak_summary_plot.png"
+    params:
+        out_dir="results/plots"
+    envmodules:
+        config["R"],
+        config["bioconductor"]
+    log: "results/logs/snakelogs/generate_peak_summary_plots.log"
+    shell:
+        """
+        Rscript scripts/plot_peakSummary.R {input.peak_list} {params.out_dir}
         """
