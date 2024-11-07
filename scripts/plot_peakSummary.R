@@ -40,28 +40,54 @@ for (file_path in input_files) {
   peakData <- rbind(peakData, peakInfo)
 }
 
+# Print the structure of the data
+print("Summary of peakData:")
+print(summary(peakData))
+print("First few rows of peakData:")
+print(head(peakData))
+
 # Convert columns to factors for ordered plotting
 peakData$sampleInfo <- factor(peakData$sampleInfo, levels = sampleList)
 peakData$Histone <- factor(peakData$Histone, levels = histList)
 
 # Plot: Number of Peaks (similar to fig7A)
-fig7A <- peakData %>%
-  group_by(Histone, Replicate) %>%
-  summarise(peakN = n()) %>%
-  ggplot(aes(x = Histone, y = peakN, fill = Histone)) +
-  geom_boxplot() +
-  geom_jitter(aes(color = Replicate), position = position_jitter(0.15)) +
-  theme_bw(base_size = 18) +
-  ylab("Number of Peaks") +
-  xlab("")
+if (nrow(peakData) > 0) {
+  fig7A <- peakData %>%
+    group_by(Histone, Replicate) %>%
+    summarise(peakN = n(), .groups = "drop") %>%
+    ggplot(aes(x = Histone, y = peakN, fill = Histone)) +
+    geom_boxplot() +
+    geom_jitter(aes(color = Replicate), position = position_jitter(0.15)) +
+    theme_bw(base_size = 18) +
+    ylab("Number of Peaks") +
+    xlab("")
+  
+  # Print the peak counts per Histone and Replicate
+  print("Peak counts per Histone and Replicate:")
+  print(peakData %>% group_by(Histone, Replicate) %>% summarise(peakN = n(), .groups = "drop"))
+} else {
+  fig7A <- ggplot() + 
+           ggtitle("No Data for Number of Peaks Plot") +
+           theme_minimal()
+}
 
 # Plot: Peak Widths (similar to fig7B)
-fig7B <- ggplot(peakData, aes(x = Histone, y = width, fill = Histone)) +
-  geom_violin() +
-  facet_grid(Replicate ~ .) +
-  theme_bw(base_size = 18) +
-  ylab("Width of Peaks") +
-  xlab("")
+if (nrow(peakData) > 0) {
+  fig7B <- ggplot(peakData, aes(x = Histone, y = width, fill = Histone)) +
+           geom_violin() +
+           facet_grid(Replicate ~ .) +
+           theme_bw(base_size = 18) +
+           ylab("Width of Peaks") +
+           xlab("")
+  
+  # Print peak widths summary
+  print("Peak width summary:")
+  print(summary(peakData$width))
+} else {
+  fig7B <- ggplot() + 
+           ggtitle("No Data for Peak Widths Plot") +
+           theme_minimal()
+}
 
 # Arrange and save the final plot
 final_plot <- ggarrange(fig7A, fig7B, ncol = 2)
