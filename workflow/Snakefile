@@ -88,6 +88,24 @@ rule fastqc_reads:
         mv ${{dir}}/${{bsename}}_fastqc.zip {output.zip2}
         """
 
+##################################################################
+##                         Fastq Screen                         ##
+##################################################################
+
+rule fastq_screen:
+    input:
+        unpack(fq_dict_from_sample)
+    output:
+        fastq_info="results/qc/fastq_screen/{sample}_screen.png"
+    params:
+        out_dir="results/qc/fastq_screen"
+    envmodules:
+        config["fastq_screen"]
+    log: "results/logs/snakelogs/fastq_screen.{sample}.log"
+    shell:
+        """
+        fastq_screen --conf /hpc-prj/kirkland/shared/scripts/fastq_screen.conf --threads 16 --outdir {params.out_dir} {input.fq1}
+        """
 
 ##################################################################
 ##                       Read Alignment                         ##
