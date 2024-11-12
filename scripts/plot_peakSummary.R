@@ -88,39 +88,40 @@ for (hist in histList) {
   }
 }
 
-fig3 <- ggplot(reproducibility_data, aes(x = Histone, y = ReproducibilityRate, fill = Histone)) +
-  geom_bar(stat = "identity") +
-  geom_text(aes(label = round(ReproducibilityRate, 2)), vjust = -0.5) +
-  theme_bw(base_size = 18) +
-  ylab("% of Peaks Reproduced") +
-  xlab("")
+#fig3 <- ggplot(reproducibility_data, aes(x = Histone, y = ReproducibilityRate, fill = Histone)) +
+#  geom_bar(stat = "identity") +
+#  geom_text(aes(label = round(ReproducibilityRate, 2)), vjust = -0.5) +
+#  theme_bw(base_size = 18) +
+#  ylab("% of Peaks Reproduced") +
+#  xlab("")
 
 # Plot 4: Fraction of Reads in Peaks (FRiP)
-frip_data <- data.frame()
-for (hist in histList) {
-  for (rep in unique(peakData$Replicate[peakData$Histone == hist])) {
-    peakInfo <- peakData %>%
-      filter(Histone == hist & Replicate == rep)
-    peak_gr <- GRanges(seqnames = peakInfo$chrom, 
-                       ranges = IRanges(start = peakInfo$start, end = peakInfo$end))
+#frip_data <- data.frame()
+#for (hist in histList) {
+#  for (rep in unique(peakData$Replicate[peakData$Histone == hist])) {
+#    peakInfo <- peakData %>%
+#      filter(Histone == hist & Replicate == rep)
+#    peak_gr <- GRanges(seqnames = peakInfo$chrom, 
+#                       ranges = IRanges(start = peakInfo$start, end = peakInfo$end))
     
     # Assuming total number of mapped fragments (mapped_fragments) is provided
     # Here we'll use width of peaks as a proxy for simplicity
-    in_peak_fragments <- sum(peakInfo$width)  # Summing widths as proxy for fragments in peaks
-    total_fragments <- in_peak_fragments  # Update with actual total fragments if available
-    frip_score <- (in_peak_fragments / total_fragments) * 100
-    frip_data <- rbind(frip_data, data.frame(Histone = hist, Replicate = rep, FRiP = frip_score))
-  }
-}
+#    in_peak_fragments <- sum(peakInfo$width)  # Summing widths as proxy for fragments in peaks
+#    total_fragments <- in_peak_fragments  # Update with actual total fragments if available
+#    frip_score <- (in_peak_fragments / total_fragments) * 100
+#    frip_data <- rbind(frip_data, data.frame(Histone = hist, Replicate = rep, FRiP = frip_score))
+#  }
+#}
 
-fig4 <- ggplot(frip_data, aes(x = Histone, y = FRiP, fill = Histone)) +
-  geom_boxplot() +
-  geom_jitter(aes(color = Replicate), position = position_jitter(0.15)) +
-  theme_bw(base_size = 18) +
-  ylab("% of Fragments in Peaks (FRiP)") +
-  xlab("")
+#fig4 <- ggplot(frip_data, aes(x = Histone, y = FRiP, fill = Histone)) +
+#  geom_boxplot() +
+#  geom_jitter(aes(color = Replicate), position = position_jitter(0.15)) +
+#  theme_bw(base_size = 18) +
+#  ylab("% of Fragments in Peaks (FRiP)") +
+#  xlab("")
 
 # Arrange and save all plots
-final_plot <- ggarrange(fig1, fig2, fig3, fig4, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
+final_plot <- ggarrange(fig1, fig2, #fig3, fig4, 
+                        ncol = 2, nrow = 1, common.legend = TRUE, legend = "bottom")
 output_file <- file.path(output_dir, "peak_summary_plot.png")
 ggsave(output_file, final_plot, width = 14, height = 10)
