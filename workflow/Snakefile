@@ -106,7 +106,12 @@ rule fastq_screen:
     shell:
         """
         fastq_screen --conf /hpc-prj/kirkland/shared/scripts/fastq_screen.conf --threads 16 --outdir {params.out_dir} {input.fq1}
-        mv {params.out_dir}/{input.fq1}_screen.png {output.fastq_info}
+        
+        # Extract the base name without .fastq.gz
+        base_name=$(basename {input.fq1} .fastq.gz)
+        
+        # Move or link the output file to the expected output
+        mv {params.out_dir}/${{base_name}}_screen.png {output.fastq_info}
         """
 
 ##################################################################
