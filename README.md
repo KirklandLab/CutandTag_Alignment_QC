@@ -35,11 +35,21 @@ Note. Make sure to check sample.csv before each run
 
 The samples.csv file in the config folder has paths to the test fastq files. You must replace those paths with those for your own fastq files. The first column of each row is the sample name. This name will be used for all output files. Columns 2 and 3 are the paths to the paired fastq files. Column 4 is the sample type (either "treatment" or "control"). Column 5 is the name of the corresponding Control sample for each treated sample (use "NA" if the sample is a control).
 
-| sample      | fastq1              | fastq2              | sampleType | Control   |
-|-------------|---------------------|---------------------|------------|-----------|
-| testSample  | sample_R1.fastq.gz  | sample_R2.fastq.gz  | treatment  | testInput |
-| testInput   | sample2_R1.fastq.gz | sample2_R2.fastq.gz | control    | NA        |
+| sample             | fastq1                        | fastq2                        | sampleType | Control   |
+|--------------------|-------------------------------|-------------------------------|------------|-----------|
+| K27ac_50_trimmed   | K27ac_50_trimmed_R1.fastq.gz  | K27ac_50_trimmed_R2.fastq.gz  | control    | NA        |
+| K27me3_50_trimmed  | K27me3_50_trimmed_R1.fastq.gz | K27me3_50_trimmed_R1.fastq.gz | control    | NA        |
 
+
+Sample naming recommendation for correct plot output
+- "Histone" + "_" + "Replicate" + "Any other identifier"
+- Examples:
+    + K27ac_50
+    + K27me3_5
+    + H3K27me3_rep1
+    + H3K4me3_rep2_set1
+    + H3K27ac_rep3_control
+    + H3K27ac_rep3_treatment
 
 # 4) Citations
 Zheng, Y., Ahmad, K., & Henikoff, S. (2019). CUT&Tag for efficient epigenomic profiling of small samples and single cells. Protocols.io, dx.doi.org/10.17504/protocols.io.bjk2kkye
