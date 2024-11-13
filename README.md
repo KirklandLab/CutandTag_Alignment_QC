@@ -58,7 +58,7 @@ Sample naming recommendation for correct plot output
 # 4) Explanation of config.yml
 Note. Make sure to check config.yml for the appropriate genome alignment
 
-The config.yml is used to specify the file path of the bowtie2 genome index, specify effective genome size, and specify genome for macs2. There is also information about specific modules and version numbers to maintain dependencies in the snakemake workflow. Running the mm10 genome does not require any modifications to the config.yml. When using the hg38 genome the following need to be modified with the information provided in the config.yml but commented out.
+The config.yml is used to identify the file path of the bowtie2 genome index, specify effective genome size and genome for macs2. There is also information about specific modules and version numbers to maintain dependencies in the snakemake workflow. Running the mm10 genome does not require any modifications to the config.yml. When using the hg38 genome the following need to be modified with the information provided in the config.yml but commented out.
 
 Run hg38 samples in snakemake pipeline
 - config.yml 
