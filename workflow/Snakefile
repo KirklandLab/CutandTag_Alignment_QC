@@ -99,8 +99,8 @@ rule fastq_screen:
     output:
         fastq_info="results/qc/fastq_screen/{sample}_screen.png"
     params:
-        out_dir="results/qc/fastq_screen"
-        config_file="resources/fastq_screen.conf
+        out_dir="results/qc/fastq_screen",
+        config_file="resources/fastq_screen.conf"
     envmodules:
         config["fastq_screen"]
     log: "results/logs/snakelogs/fastq_screen.{sample}.log"
