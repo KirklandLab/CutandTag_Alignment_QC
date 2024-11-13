@@ -100,12 +100,13 @@ rule fastq_screen:
         fastq_info="results/qc/fastq_screen/{sample}_screen.png"
     params:
         out_dir="results/qc/fastq_screen"
+        config_file="resources/fastq_screen.conf
     envmodules:
         config["fastq_screen"]
     log: "results/logs/snakelogs/fastq_screen.{sample}.log"
     shell:
         """
-        fastq_screen --conf /hpc-prj/kirkland/shared/scripts/fastq_screen.conf --threads 16 --outdir {params.out_dir} {input.fq1}
+        fastq_screen --conf {params.config_file} --threads 16 --outdir {params.out_dir} {input.fq1}
         
         # Extract the base name without .fastq.gz
         base_name=$(basename {input.fq1} .fastq.gz)
