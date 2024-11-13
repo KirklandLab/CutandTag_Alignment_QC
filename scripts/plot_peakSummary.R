@@ -6,7 +6,7 @@ library(ggplot2)
 library(viridis)
 library(ggpubr)
 library(GenomicRanges)
-library(Rsamtools)
+library(chromVAR)
 
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
