@@ -55,5 +55,16 @@ Sample naming recommendation for correct plot output
     + H3K27ac_rep3_control
     + H3K27ac_rep3_treatment
 
-# 4) Citations
+# 4) Explanation of config.yml
+Note. Make sure to check config.yml for the appropriate genome alignment
+
+The config.yml is used to specify the file path of the bowtie2 genome index, specify effective genome size, and specify genome for macs2. There is also information about specific modules and version numbers to maintain dependencies in the snakemake workflow. Running the mm10 genome does not require any modifications to the config.yml. When using the hg38 genome the following need to be modified with the information provided in the config.yml but commented out.
+
+Run hg38 samples in snakemake pipeline
+- config.csv 
+    + change bowtie2 genome index file path
+    + change bamCoverage effective genome size
+    + change macs2 genome size
+
+# 5) Citations
 Zheng, Y., Ahmad, K., & Henikoff, S. (2019). CUT&Tag for efficient epigenomic profiling of small samples and single cells. Protocols.io, dx.doi.org/10.17504/protocols.io.bjk2kkye
