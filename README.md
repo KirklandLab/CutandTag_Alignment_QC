@@ -19,9 +19,10 @@ git clone https://github.com/JK-Cobre-Help/CutandTag_Analysis_Snakemake.git
 module purge
 module load slurm python/3.10 pandas/2.2.3 numpy/1.22.3 matplotlib/3.7.1
 ```
-2C. Modify Samples file
+2C. Modify samples and config file
 ```
 vim samples.csv
+vim config.yml
 ```
 2D. Dry Run
 ```
