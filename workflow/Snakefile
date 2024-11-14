@@ -398,7 +398,7 @@ rule generate_peak_summary_plots:
     output:
         "results/plots/peak_summary_plot.png"
     params:
-        sample_name=lambda wildcards: [sample for sample in samples_table.index],  # Pass list of sample names
+        sample_names=" ".join(samples_table.index),  # Pass sample names as a space-separated string
         bamDir="results/alignment/bam",
         out_dir="results/plots"
     envmodules:
