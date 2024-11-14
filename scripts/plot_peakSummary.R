@@ -109,15 +109,22 @@ for (hist in histList) {
 }
 
 # Adjust your plotting code to accommodate the new data structure
-fig3 <- ggplot(reproducibility_data, aes(x = Histone, y = ReproducibilityRate, fill = Histone)) +
-  geom_bar(stat = "identity", position = position_dodge()) +
-  geom_text(aes(label = round(ReproducibilityRate, 2), group = ReplicatePair), 
-            vjust = -0.5, position = position_dodge(0.9)) +
-  theme_bw(base_size = 18) +
-  ylab("% of Peaks Reproduced") +
-  xlab("") +
-  facet_wrap(~ ReplicatePair)
-
+if (nrow(reproducibility_data) > 0) {
+  fig3 <- ggplot(reproducibility_data, aes(x = Histone, y = ReproducibilityRate, fill = Histone)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    geom_text(aes(label = round(ReproducibilityRate, 2), group = ReplicatePair), 
+              vjust = -0.5, position = position_dodge(0.9)) +
+    theme_bw(base_size = 18) +
+    ylab("% of Peaks Reproduced") +
+    xlab("") +
+    facet_wrap(~ ReplicatePair)
+} else {
+  # Placeholder plot if reproducibility_data is empty
+  fig3 <- ggplot() +
+    geom_blank() +
+    theme_void() +
+    ggtitle("No Reproducibility Data Available")
+}
 
 # Arrange and save all plots
 final_plot <- ggarrange(fig1, fig2, fig3, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
