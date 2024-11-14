@@ -132,7 +132,7 @@ for (hist in histList) {
                        strand = "*")
     
     # Path to the BAM file for the current histone and replicate
-    bamFile <- file.path(bam_dir, paste0(hist, "_", rep, "_bowtie2.mapped.bam"))
+    bamFile <- file.path(bam_dir, paste0(hist, "_", rep, "_trimmed_bowtie2.mapped.bam"))
     print(paste("Reading in file:", bamFile))
     
     # Use chromVAR to get fragment counts within peaks and total fragments
