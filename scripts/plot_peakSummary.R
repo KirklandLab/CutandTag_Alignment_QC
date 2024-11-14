@@ -11,8 +11,8 @@ library(chromVAR)
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
 input_files <- args[-c(length(args) - 1, length(args))]  # All but last two arguments are input files
-output_dir <- args[length(args) - 1]                    # Second-to-last argument is the output directory
-bam_dir <- args[length(args)]                           # Last argument is the BAM directory
+bam_dir <- args[length(args) - 1]                        # Second-to-last argument is the BAM directory
+output_dir <- args[length(args)]                         # Last argument is the output directory
 
 # Ensure the output directory exists
 if (!dir.exists(output_dir)) {
