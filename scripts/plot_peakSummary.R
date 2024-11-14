@@ -10,9 +10,9 @@ library(chromVAR)
 
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
-input_files <- args[-(length(args)-1)]      # All but last two arguments are input files
-bamDir <- args[length(args)-1]              # Second last argument is the BAM directory
-output_dir <- args[length(args)]            # Last argument is the output directory
+input_files <- args[-c(length(args) - 1, length(args))]  # All but last two arguments are input files
+output_dir <- args[length(args) - 1]                    # Second-to-last argument is the output directory
+bam_dir <- args[length(args)]                           # Last argument is the BAM directory
 
 # Ensure the output directory exists
 if (!dir.exists(output_dir)) {
@@ -132,7 +132,7 @@ for (hist in histList) {
                        strand = "*")
     
     # Path to the BAM file for the current histone and replicate
-    bamFile <- file.path(bamDir, paste0(hist, "_", rep, "_bowtie2.mapped.bam"))
+    bamFile <- file.path(bam_dir, paste0(hist, "_", rep, "_bowtie2.mapped.bam"))
     print(paste("Reading in file:", bamFile))
     
     # Use chromVAR to get fragment counts within peaks and total fragments
