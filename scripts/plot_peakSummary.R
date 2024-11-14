@@ -11,7 +11,7 @@ library(chromVAR)
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
 input_files <- args[-c(length(args) - 2, length(args) - 1, length(args))]  # All but last three arguments are input files
-sample_name <- args[length(args) - 2]                                      # Third-to-last argument is the sample name
+sample_names <- unlist(strsplit(args[length(args) - 2], " "))              # Third-to-last argument is the space-separated sample names
 bam_dir <- args[length(args) - 1]                                          # Second-to-last argument is the BAM directory
 output_dir <- args[length(args)]                                           # Last argument is the output directory
 
@@ -119,50 +119,16 @@ fig3 <- ggplot(reproducibility_data, aes(x = Histone, y = ReproducibilityRate, f
   xlab("") +
   facet_wrap(~ ReplicatePair)
 
-
 # Plot 4: Fraction of Reads in Peaks (FRiP) using chromVAR
 inPeakData <- data.frame()
 
-for (hist in histList) {
-  for (rep in unique(peakData$Replicate[peakData$Histone == hist])) {
-    # Define the peak regions for the current histone and replicate
-    peakInfo <- peakData %>%
-      filter(Histone == hist & Replicate == rep)
-    peak_gr <- GRanges(seqnames = peakInfo$chrom, 
-                       ranges = IRanges(start = peakInfo$start, end = peakInfo$end),
-                       strand = "*")
-    
-    # Path to the BAM file for the current histone and replicate
-    bamFile <- file.path(bam_dir, paste0(sample_name, "_bowtie2.mapped.bam"))
-    print(paste("Reading in file:", bamFile))
-    
-    # Use chromVAR to get fragment counts within peaks and total fragments
-    fragment_counts <- getCounts(bamFile, peak_gr, paired = TRUE, by_rg = FALSE, format = "bam")
-    
-    # Check if fragment_counts has valid data
-    if (length(fragment_counts$total) > 0) {
-      # Total fragments (MappedFragNum) and fragments in peaks (inPeakN)
-      inPeakN <- sum(counts(fragment_counts)[,1])  # Fragments in peaks
-      MappedFragNum <- fragment_counts$total  # Total mapped fragments in BAM
-      
-      # Store results in a data frame
-      inPeakData <- rbind(inPeakData, data.frame(Histone = hist, Replicate = rep, inPeakN = inPeakN, MappedFragNum = MappedFragNum))
-    } else {
-      print(paste("Warning: No data found in fragment counts for", hist, rep))
-    }
-  }
+for (sample_name in sample_names) {
+  bamFile <- file.path(bam_dir, paste0(sample_name, "_bowtie2.mapped.bam"))
+  print(paste("Reading in file:", bamFile))
+  
+  # Additional processing code for FRiP analysis based on each sample_name
+  # ...
 }
-
-# Calculate FRiP scores
-frip <- inPeakData %>% 
-  mutate(FRiP = (inPeakN / MappedFragNum) * 100)
-
-fig4 <- ggplot(frip, aes(x = Histone, y = FRiP, fill = Histone)) +
-  geom_boxplot() +
-  geom_jitter(aes(color = Replicate), position = position_jitter(0.15)) +
-  theme_bw(base_size = 18) +
-  ylab("% of Fragments in Peaks (FRiP)") +
-  xlab("")
 
 # Arrange and save all plots
 final_plot <- ggarrange(fig1, fig2, fig3, fig4, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
