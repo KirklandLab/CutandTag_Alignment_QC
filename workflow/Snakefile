@@ -398,6 +398,7 @@ rule generate_peak_summary_plots:
     output:
         "results/plots/peak_summary_plot.png"
     params:
+        bamDir="results/alignment/bam",
         out_dir="results/plots"
     envmodules:
         config["R"],
@@ -405,5 +406,5 @@ rule generate_peak_summary_plots:
     log: "results/logs/snakelogs/generate_peak_summary_plots.log"
     shell:
         """
-        Rscript scripts/plot_peakSummary.R {input.peak_list} {params.out_dir}
+        Rscript scripts/plot_peakSummary.R {input.peak_list} {params.bamDir} {params.out_dir}
         """
