@@ -9,8 +9,8 @@ library(GenomicRanges)
 
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
-input_files <- args[-c(length(args) - 1, length(args))]     # All but last two arguments are input files
-frip_files <- args[length(args) - 1]                        # Second-to-last argument is the BAM directory
+peak_files <- args[1:(length(args) - 2)]                    # All but last two arguments are narrowPeak files
+frip_files <- strsplit(args[length(args) - 1], ",")[[1]]    # Second-to-last argument is a comma-separated list of FRiP files
 output_dir <- args[length(args)]                            # Last argument is the output directory
 
 # Ensure the output directory exists
@@ -19,7 +19,7 @@ if (!dir.exists(output_dir)) {
 }
 
 # Extract sample names and unique histone names
-sampleList <- gsub("_0.05_peaks.narrowPeak", "", basename(input_files))
+sampleList <- gsub("_0.05_peaks.narrowPeak", "", basename(peak_files))
 histList <- unique(sapply(strsplit(sampleList, "_"), `[`, 1))
 
 # Initialize an empty data frame to store peak information
@@ -28,7 +28,7 @@ peakData <- data.frame()
 # Load peak data and convert to GRanges
 peak_granges_list <- list()
 
-for (file_path in input_files) {
+for (file_path in peak_files) {
   # Read the peak data with MACS2 narrowPeak format columns
   peakInfo <- read.table(file_path, header = FALSE, 
                          col.names = c("chrom", "start", "end", "name", "score", 
@@ -107,7 +107,6 @@ for (hist in histList) {
   }
 }
 
-# Adjust your plotting code to accommodate the new data structure
 if (nrow(reproducibility_data) > 0) {
   fig3 <- ggplot(reproducibility_data, aes(x = Histone, y = ReproducibilityRate, fill = Histone)) +
     geom_bar(stat = "identity", position = position_dodge()) +
@@ -118,23 +117,28 @@ if (nrow(reproducibility_data) > 0) {
     xlab("") +
     facet_wrap(~ ReplicatePair)
 } else {
-  # Placeholder plot if reproducibility_data is empty
   fig3 <- ggplot() +
     geom_blank() +
     theme_void() +
     ggtitle("No Reproducibility Data Available")
 }
 
-# Read FRiP data
-frip_data <- tryCatch({
-  read.table(frip_files, header = TRUE, sep = "\t")
-}, error = function(e) {
-  data.frame(Sample = character(), FRiP = numeric())
-})
+# Process FRiP data
+frip_data <- data.frame()
+for (file_path in frip_files) {
+  temp <- tryCatch({
+    read.table(file_path, header = TRUE, sep = "\t")
+  }, error = function(e) {
+    message(paste("Error reading FRiP file:", file_path))
+    return(NULL)
+  })
+  
+  if (!is.null(temp)) {
+    frip_data <- rbind(frip_data, temp)
+  }
+}
 
-# Check if FRiP data is available
 if (nrow(frip_data) > 0) {
-  # Plot FRiP scores
   fig4 <- ggplot(frip_data, aes(x = Sample, y = FRiP, fill = Sample)) +
     geom_boxplot() +
     geom_jitter(position = position_jitter(0.15)) +
@@ -142,7 +146,6 @@ if (nrow(frip_data) > 0) {
     ylab("% of Fragments in Peaks (FRiP)") +
     xlab("")
 } else {
-  # Placeholder plot if FRiP data is empty
   fig4 <- ggplot() +
     geom_blank() +
     theme_void() +
