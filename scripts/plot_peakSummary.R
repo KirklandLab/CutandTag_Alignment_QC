@@ -9,9 +9,9 @@ library(GenomicRanges)
 
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
-peak_files <- strsplit(args[1], ",")[[1]]                   # First argument: comma-separated list of narrowPeak files
-frip_files <- strsplit(args[2], ",")[[1]]                   # Second argument: comma-separated list of FRiP files
-output_dir <- args[3]                                       # Third argument: output directory
+peak_files <- strsplit(args[1], ",")[[1]]  # First argument: comma-separated list of narrowPeak files
+frip_files <- strsplit(args[2], ",")[[1]]  # Second argument: comma-separated list of FRiP files
+output_dir <- args[3]                      # Third argument: output directory
 
 # Ensure the output directory exists
 if (!dir.exists(output_dir)) {
@@ -116,32 +116,17 @@ if (nrow(reproducibility_data) > 0) {
 frip_data <- data.frame()
 
 for (file_path in frip_files) {
-  temp <- tryCatch({
-    read.table(file_path, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
-  }, error = function(e) {
-    message(paste("Error reading FRiP file:", file_path))
-    return(NULL)
-  })
-  
-  if (!is.null(temp) && all(c("Sample", "TotalMapped", "InPeaks", "FRiP") %in% colnames(temp))) {
-    frip_data <- rbind(frip_data, temp)
-  }
+  temp <- read.table(file_path, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  frip_data <- rbind(frip_data, temp)
 }
 
-if (nrow(frip_data) > 0) {
-  fig4 <- ggplot(frip_data, aes(x = Sample, y = FRiP, fill = Sample)) +
-    geom_boxplot() +
-    geom_jitter(position = position_jitter(0.15)) +
-    theme_bw(base_size = 18) +
-    ylab("% of Fragments in Peaks (FRiP)") +
-    xlab("")
-} else {
-  message("No valid FRiP data found or 'Sample' column is missing.")
-  fig4 <- ggplot() +
-    geom_blank() +
-    theme_void() +
-    ggtitle("No FRiP Data Available")
-}
+# Generate FRiP plot
+fig4 <- ggplot(frip_data, aes(x = Sample, y = FRiP, fill = Sample)) +
+  geom_boxplot() +
+  geom_jitter(position = position_jitter(0.15)) +
+  theme_bw(base_size = 18) +
+  ylab("% of Fragments in Peaks (FRiP)") +
+  xlab("")
 
 # --- Arrange and Save Plots ---
 final_plot <- ggarrange(fig1, fig2, fig3, fig4, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
