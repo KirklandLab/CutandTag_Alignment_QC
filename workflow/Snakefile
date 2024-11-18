@@ -371,6 +371,37 @@ rule process_fragment_length:
         """
 
 ##################################################################
+##                        Calculate FRiP                        ##
+##################################################################
+
+rule calculate_frip:
+    input:
+        mapped_bam="results/alignment/bam/{sample}_bowtie2.mapped.bam",
+        clean_bed="results/alignment/bed/{sample}_bowtie2.clean.bed",
+        peak_bed="results/peakCalling/{sample}_0.05_peaks.narrowPeak"
+    output:
+        frip_data="results/metrics/{sample}_frip.txt"
+    envmodules:
+        config["samtools"],
+        config["bedtools"]
+    log: "results/logs/snakelogs/calculate_frip.{sample}.log"
+    shell:
+        """
+        # Count total mapped reads
+        total_mapped=$(samtools view -c {input.mapped_bam})
+        
+        # Intersect fragments with peaks
+        intersected=$(bedtools intersect -a {input.clean_bed} -b {input.peak_bed} -u | wc -l)
+        
+        # Calculate FRiP value
+        frip=$(echo "scale=4; ($intersected / $total_mapped) * 100" | bc)
+        
+        # Write to output
+        echo -e "Sample\\tTotalMapped\\tInPeaks\\tFRiP" > {output.frip_data}
+        echo -e "{wildcards.sample}\\t$total_mapped\\t$intersected\\t$frip" >> {output.frip_data}
+        """
+
+##################################################################
 ##                       Correlation Plot                       ##
 ##################################################################
 
