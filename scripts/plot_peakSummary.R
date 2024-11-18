@@ -9,9 +9,9 @@ library(GenomicRanges)
 
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
-peak_files <- strsplit(args[1], ",")[[1]]                   # First argument: comma-separated list of narrowPeak files
-frip_files <- strsplit(args[2], ",")[[1]]                   # Second argument: comma-separated list of FRiP files
-output_dir <- args[3]                                       # Third argument: output directory
+peak_files <- strsplit(args[1], ",")[[1]]  # First argument: comma-separated list of narrowPeak files
+frip_files <- strsplit(args[2], ",")[[1]]  # Second argument: comma-separated list of FRiP files
+output_dir <- args[3]                      # Third argument: output directory
 
 # Ensure the output directory exists
 if (!dir.exists(output_dir)) {
@@ -46,7 +46,7 @@ for (file_path in peak_files) {
 peakData$sampleInfo <- factor(peakData$sampleInfo, levels = sampleList)
 peakData$Histone <- factor(peakData$Histone, levels = histList)
 
-# Plot 1: Number of Peaks
+# --- Plot 1: Number of Peaks ---
 fig1 <- peakData %>%
   group_by(Histone, Replicate) %>%
   summarise(peakN = n(), .groups = "drop") %>%
@@ -57,7 +57,7 @@ fig1 <- peakData %>%
   ylab("Number of Peaks") +
   xlab("")
 
-# Plot 2: Width of Peaks
+# --- Plot 2: Width of Peaks ---
 fig2 <- ggplot(peakData, aes(x = Histone, y = width, fill = Histone)) +
   geom_violin() +
   facet_grid(Replicate ~ .) +
@@ -65,7 +65,7 @@ fig2 <- ggplot(peakData, aes(x = Histone, y = width, fill = Histone)) +
   ylab("Width of Peaks") +
   xlab("")
 
-# Plot 3: % of Peaks Reproduced (Overlap Between Replicates)
+# --- Plot 3: % of Peaks Reproduced ---
 reproducibility_data <- data.frame()
 for (hist in histList) {
   reps <- unique(peakData$Replicate[peakData$Histone == hist])
@@ -92,8 +92,8 @@ for (hist in histList) {
   }
 }
 
-if (nrow(reproducibility_data) > 0) {
-  fig3 <- ggplot(reproducibility_data, aes(x = Histone, y = ReproducibilityRate, fill = Histone)) +
+fig3 <- if (nrow(reproducibility_data) > 0) {
+  ggplot(reproducibility_data, aes(x = Histone, y = ReproducibilityRate, fill = Histone)) +
     geom_bar(stat = "identity", position = position_dodge()) +
     geom_text(aes(label = round(ReproducibilityRate, 2), group = ReplicatePair), 
               vjust = -0.5, position = position_dodge(0.9)) +
@@ -102,20 +102,16 @@ if (nrow(reproducibility_data) > 0) {
     xlab("") +
     facet_wrap(~ ReplicatePair)
 } else {
-  fig3 <- ggplot() +
+  ggplot() +
     geom_blank() +
     theme_void() +
     ggtitle("No Reproducibility Data Available")
 }
 
 # --- Process FRiP Files ---
-print("FRiP Files:")
-print(frip_files)  # Debugging to ensure correct file paths are being passed
-
 frip_data <- data.frame()
 
 for (file_path in frip_files) {
-  print(paste("Reading FRiP file:", file_path))  # Debugging
   temp <- tryCatch({
     read.table(file_path, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
   }, error = function(e) {
@@ -128,10 +124,6 @@ for (file_path in frip_files) {
   }
 }
 
-# Debugging: Print the FRiP data after reading
-print("Final FRiP Data:")
-print(frip_data)
-
 if ("Sample" %in% colnames(frip_data) && nrow(frip_data) > 0) {
   fig4 <- ggplot(frip_data, aes(x = Sample, y = FRiP, fill = Sample)) +
     geom_boxplot() +
@@ -140,7 +132,6 @@ if ("Sample" %in% colnames(frip_data) && nrow(frip_data) > 0) {
     ylab("% of Fragments in Peaks (FRiP)") +
     xlab("")
 } else {
-  message("No valid FRiP data found or 'Sample' column is missing.")
   fig4 <- ggplot() +
     geom_blank() +
     theme_void() +
