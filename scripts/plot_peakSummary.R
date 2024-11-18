@@ -151,6 +151,6 @@ if (nrow(frip_data) > 0) {
 
 
 # Arrange and save all plots
-final_plot <- ggarrange(fig1, fig2, fig3, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
+final_plot <- ggarrange(fig1, fig2, fig3, fig4, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
 output_file <- file.path(output_dir, "peak_summary_plot.png")
 ggsave(output_file, final_plot, width = 14, height = 10)
