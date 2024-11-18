@@ -334,7 +334,7 @@ rule process_fragment_length:
         sam_file="results/alignment/sam/{sample}_bowtie2.sam"
     output:
         mapped_bam="results/alignment/bam/{sample}_bowtie2.mapped.bam",
-        mapped_bai="results/alignment/bam/{sample}_bowtie2.mapped.bai",
+        mapped_bai="results/alignment/bam/{sample}_bowtie2.mapped.bam.bai",
         bed_file="results/alignment/bed/{sample}_bowtie2.bed",
         clean_bed="results/alignment/bed/{sample}_bowtie2.clean.bed",
         fragments_bed="results/alignment/bed/{sample}_bowtie2.fragments.bed",
