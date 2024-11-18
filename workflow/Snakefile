@@ -426,11 +426,11 @@ rule generate_correlation_plot:
 
 rule generate_peak_summary_plots:
     input:
-        peak_list=expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index)
+        peak_list=expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index),
+        frip_data="results/metrics/all_frip_values.txt"
     output:
         "results/plots/peak_summary_plot.png"
     params:
-        sample_names=" ".join(samples_table.index),  # Pass sample names as a space-separated string
         bamDir="results/alignment/bam",
         out_dir="results/plots"
     envmodules:
@@ -439,5 +439,5 @@ rule generate_peak_summary_plots:
     log: "results/logs/snakelogs/generate_peak_summary_plots.log"
     shell:
         """
-        Rscript scripts/plot_peakSummary.R {input.peak_list} {params.bamDir} {params.out_dir}
+        Rscript scripts/plot_peakSummary.R {input.peak_list} {input.frip_data} {params.bamDir} {params.out_dir}
         """
