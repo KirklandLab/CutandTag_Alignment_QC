@@ -109,9 +109,13 @@ if (nrow(reproducibility_data) > 0) {
 }
 
 # --- Process FRiP Files ---
+print("FRiP Files:")
+print(frip_files)  # Debugging to ensure correct file paths are being passed
+
 frip_data <- data.frame()
 
 for (file_path in frip_files) {
+  print(paste("Reading FRiP file:", file_path))  # Debugging
   temp <- tryCatch({
     read.table(file_path, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
   }, error = function(e) {
@@ -124,15 +128,11 @@ for (file_path in frip_files) {
   }
 }
 
-# Debugging: Print FRiP data
-if (nrow(frip_data) > 0) {
-  print("FRiP data successfully read:")
-  print(head(frip_data))
-} else {
-  message("No FRiP data found.")
-}
+# Debugging: Print the FRiP data after reading
+print("Final FRiP Data:")
+print(frip_data)
 
-if (nrow(frip_data) > 0) {
+if ("Sample" %in% colnames(frip_data) && nrow(frip_data) > 0) {
   fig4 <- ggplot(frip_data, aes(x = Sample, y = FRiP, fill = Sample)) +
     geom_boxplot() +
     geom_jitter(position = position_jitter(0.15)) +
@@ -140,6 +140,7 @@ if (nrow(frip_data) > 0) {
     ylab("% of Fragments in Peaks (FRiP)") +
     xlab("")
 } else {
+  message("No valid FRiP data found or 'Sample' column is missing.")
   fig4 <- ggplot() +
     geom_blank() +
     theme_void() +
