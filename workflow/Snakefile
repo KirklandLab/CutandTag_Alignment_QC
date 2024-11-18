@@ -51,6 +51,7 @@ rule all:
         "results/plots/alignment_summary_plot.png",
         "results/plots/fragment_length_plot.png",
         expand("results/alignment/bed/{sample}_bowtie2.fragmentsCount.bin500.bed", sample=samples_table.index),
+        expand("results/alignment/bam/{sample}_frip.txt", sample=samples_table.index),
         "results/plots/fragCount_correlation_plot.pdf",
         "results/plots/peak_summary_plot.png"
 
@@ -380,7 +381,7 @@ rule calculate_frip:
         clean_bed="results/alignment/bed/{sample}_bowtie2.clean.bed",
         peak_bed="results/peakCalling/{sample}_0.05_peaks.narrowPeak"
     output:
-        frip_data="results/metrics/{sample}_frip.txt"
+        frip_data="results/alignment/bam/{sample}_frip.txt"
     envmodules:
         config["samtools"],
         config["bedtools"]
