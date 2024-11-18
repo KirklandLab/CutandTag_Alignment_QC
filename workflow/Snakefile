@@ -438,8 +438,5 @@ rule generate_peak_summary_plots:
     log: "results/logs/snakelogs/generate_peak_summary_plots.log"
     shell:
         """
-        Rscript scripts/plot_peakSummary.R \
-            "{input.peak_list}" \
-            "{input.frip_data}" \
-            {params.out_dir}
+        Rscript scripts/plot_peakSummary.R {input.peak_list} {input.frip_data} {params.out_dir}
         """
