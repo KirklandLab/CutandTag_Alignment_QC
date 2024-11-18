@@ -127,7 +127,8 @@ if (nrow(reproducibility_data) > 0) {
 }
 
 # Read FRiP data
-frip_data <- frip_files
+frip_data <- tryCatch({
+  read.table(frip_files, header = TRUE, sep = "\t")
 }, error = function(e) {
   data.frame(Sample = character(), FRiP = numeric())
 })
@@ -148,7 +149,6 @@ if (nrow(frip_data) > 0) {
     theme_void() +
     ggtitle("No FRiP Data Available")
 }
-
 
 # Arrange and save all plots
 final_plot <- ggarrange(fig1, fig2, fig3, fig4, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
