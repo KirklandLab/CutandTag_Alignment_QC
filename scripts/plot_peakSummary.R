@@ -9,9 +9,9 @@ library(GenomicRanges)
 
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
-peak_files <- strsplit(args[1], ",")[[1]]                   # First argument is a comma-separated list of narrowPeak files
-frip_files <- strsplit(args[2], ",")[[1]]                   # Second argument is a comma-separated list of FRiP files
-output_dir <- args[3]                                       # Third argument is the output directory
+peak_files <- strsplit(args[1], ",")[[1]]                   # First argument: comma-separated list of narrowPeak files
+frip_files <- strsplit(args[2], ",")[[1]]                   # Second argument: comma-separated list of FRiP files
+output_dir <- args[3]                                       # Third argument: output directory
 
 # Ensure the output directory exists
 if (!dir.exists(output_dir)) {
@@ -113,7 +113,7 @@ frip_data <- data.frame()
 
 for (file_path in frip_files) {
   temp <- tryCatch({
-    read.table(file_path, header = TRUE, sep = "\t")
+    read.table(file_path, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
   }, error = function(e) {
     message(paste("Error reading FRiP file:", file_path))
     return(NULL)
@@ -122,6 +122,14 @@ for (file_path in frip_files) {
   if (!is.null(temp)) {
     frip_data <- rbind(frip_data, temp)
   }
+}
+
+# Debugging: Print FRiP data
+if (nrow(frip_data) > 0) {
+  print("FRiP data successfully read:")
+  print(head(frip_data))
+} else {
+  message("No FRiP data found.")
 }
 
 if (nrow(frip_data) > 0) {
