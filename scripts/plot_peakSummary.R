@@ -9,9 +9,9 @@ library(GenomicRanges)
 
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
-peak_files <- strsplit(args[1], ",")[[1]]  # First argument: comma-separated list of narrowPeak files
-frip_files <- strsplit(args[2], ",")[[1]]  # Second argument: comma-separated list of FRiP files
-output_dir <- args[3]                      # Third argument: output directory
+peak_files <- strsplit(args[1], ",")[[1]]                   # First argument: comma-separated list of narrowPeak files
+frip_files <- strsplit(args[2], ",")[[1]]                   # Second argument: comma-separated list of FRiP files
+output_dir <- args[3]                                       # Third argument: output directory
 
 # Ensure the output directory exists
 if (!dir.exists(output_dir)) {
@@ -26,19 +26,23 @@ peakData <- data.frame()
 peak_granges_list <- list()
 
 for (file_path in peak_files) {
+  # Read and validate peak file
   peakInfo <- read.table(file_path, header = FALSE, 
                          col.names = c("chrom", "start", "end", "name", "score", 
                                        "strand", "signalValue", "pValue", "qValue", "peak"))
   
+  # Extract histone and replicate information from filename
   sample_name <- gsub("_0.05_peaks.narrowPeak", "", basename(file_path))
   histInfo <- strsplit(sample_name, "_")[[1]]
   histone <- histInfo[1]
   replicate <- histInfo[2]
   
+  # Process peak data
   peakInfo <- peakInfo %>%
     mutate(width = end - start, Histone = histone, Replicate = replicate, sampleInfo = sample_name)
   peakData <- rbind(peakData, peakInfo)
   
+  # Store GRanges for reproducibility analysis
   peak_granges_list[[sample_name]] <- GRanges(seqnames = peakInfo$chrom, 
                                               ranges = IRanges(start = peakInfo$start, end = peakInfo$end))
 }
@@ -46,7 +50,7 @@ for (file_path in peak_files) {
 peakData$sampleInfo <- factor(peakData$sampleInfo, levels = sampleList)
 peakData$Histone <- factor(peakData$Histone, levels = histList)
 
-# --- Plot 1: Number of Peaks ---
+# Plot 1: Number of Peaks
 fig1 <- peakData %>%
   group_by(Histone, Replicate) %>%
   summarise(peakN = n(), .groups = "drop") %>%
@@ -57,7 +61,7 @@ fig1 <- peakData %>%
   ylab("Number of Peaks") +
   xlab("")
 
-# --- Plot 2: Width of Peaks ---
+# Plot 2: Width of Peaks
 fig2 <- ggplot(peakData, aes(x = Histone, y = width, fill = Histone)) +
   geom_violin() +
   facet_grid(Replicate ~ .) +
@@ -65,7 +69,7 @@ fig2 <- ggplot(peakData, aes(x = Histone, y = width, fill = Histone)) +
   ylab("Width of Peaks") +
   xlab("")
 
-# --- Plot 3: % of Peaks Reproduced ---
+# Plot 3: % of Peaks Reproduced (Overlap Between Replicates)
 reproducibility_data <- data.frame()
 for (hist in histList) {
   reps <- unique(peakData$Replicate[peakData$Histone == hist])
@@ -92,8 +96,8 @@ for (hist in histList) {
   }
 }
 
-fig3 <- if (nrow(reproducibility_data) > 0) {
-  ggplot(reproducibility_data, aes(x = Histone, y = ReproducibilityRate, fill = Histone)) +
+if (nrow(reproducibility_data) > 0) {
+  fig3 <- ggplot(reproducibility_data, aes(x = Histone, y = ReproducibilityRate, fill = Histone)) +
     geom_bar(stat = "identity", position = position_dodge()) +
     geom_text(aes(label = round(ReproducibilityRate, 2), group = ReplicatePair), 
               vjust = -0.5, position = position_dodge(0.9)) +
@@ -102,7 +106,7 @@ fig3 <- if (nrow(reproducibility_data) > 0) {
     xlab("") +
     facet_wrap(~ ReplicatePair)
 } else {
-  ggplot() +
+  fig3 <- ggplot() +
     geom_blank() +
     theme_void() +
     ggtitle("No Reproducibility Data Available")
@@ -119,12 +123,12 @@ for (file_path in frip_files) {
     return(NULL)
   })
   
-  if (!is.null(temp)) {
+  if (!is.null(temp) && all(c("Sample", "TotalMapped", "InPeaks", "FRiP") %in% colnames(temp))) {
     frip_data <- rbind(frip_data, temp)
   }
 }
 
-if ("Sample" %in% colnames(frip_data) && nrow(frip_data) > 0) {
+if (nrow(frip_data) > 0) {
   fig4 <- ggplot(frip_data, aes(x = Sample, y = FRiP, fill = Sample)) +
     geom_boxplot() +
     geom_jitter(position = position_jitter(0.15)) +
@@ -132,6 +136,7 @@ if ("Sample" %in% colnames(frip_data) && nrow(frip_data) > 0) {
     ylab("% of Fragments in Peaks (FRiP)") +
     xlab("")
 } else {
+  message("No valid FRiP data found or 'Sample' column is missing.")
   fig4 <- ggplot() +
     geom_blank() +
     theme_void() +
