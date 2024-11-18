@@ -11,7 +11,7 @@ library(chromVAR)
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
 input_files <- args[-c(length(args) - 1, length(args))]  # All but last two arguments are input files
-bam_dir <- args[length(args) - 1]                        # Second-to-last argument is the BAM directory
+frip_files <- args[length(args) - 1]                        # Second-to-last argument is the BAM directory
 output_dir <- args[length(args)]                         # Last argument is the output directory
 
 # Ensure the output directory exists
@@ -125,6 +125,30 @@ if (nrow(reproducibility_data) > 0) {
     theme_void() +
     ggtitle("No Reproducibility Data Available")
 }
+
+# Read FRiP data
+frip_data <- frip_files
+}, error = function(e) {
+  data.frame(Sample = character(), FRiP = numeric())
+})
+
+# Check if FRiP data is available
+if (nrow(frip_data) > 0) {
+  # Plot FRiP scores
+  fig4 <- ggplot(frip_data, aes(x = Sample, y = FRiP, fill = Sample)) +
+    geom_boxplot() +
+    geom_jitter(position = position_jitter(0.15)) +
+    theme_bw(base_size = 18) +
+    ylab("% of Fragments in Peaks (FRiP)") +
+    xlab("")
+} else {
+  # Placeholder plot if FRiP data is empty
+  fig4 <- ggplot() +
+    geom_blank() +
+    theme_void() +
+    ggtitle("No FRiP Data Available")
+}
+
 
 # Arrange and save all plots
 final_plot <- ggarrange(fig1, fig2, fig3, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
