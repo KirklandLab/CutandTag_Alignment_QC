@@ -9,47 +9,40 @@ library(GenomicRanges)
 
 # Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
-input_files <- args[-length(args)]  # All but last argument are input files
-output_dir <- args[length(args)]    # Last argument is the output directory
+peak_files <- strsplit(args[1], " ")[[1]]                   # First argument: space-separated list of narrowPeak files
+frip_files <- strsplit(args[2], " ")[[1]]                   # Second argument: space-separated list of FRiP files
+output_dir <- args[3]                                       # Third argument: output directory
 
 # Ensure the output directory exists
 if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
 }
 
-# Extract sample names and unique histone names
-sampleList <- gsub("_0.05_peaks.narrowPeak", "", basename(input_files))
+# --- Process Peak Files ---
+sampleList <- gsub("_0.05_peaks.narrowPeak", "", basename(peak_files))
 histList <- unique(sapply(strsplit(sampleList, "_"), `[`, 1))
 
-# Initialize an empty data frame to store peak information
 peakData <- data.frame()
-
-# Load peak data and convert to GRanges
 peak_granges_list <- list()
 
-for (file_path in input_files) {
-  # Read the peak data with MACS2 narrowPeak format columns
+for (file_path in peak_files) {
   peakInfo <- read.table(file_path, header = FALSE, 
                          col.names = c("chrom", "start", "end", "name", "score", 
                                        "strand", "signalValue", "pValue", "qValue", "peak"))
   
-  # Extract histone and replicate information from file name
   sample_name <- gsub("_0.05_peaks.narrowPeak", "", basename(file_path))
   histInfo <- strsplit(sample_name, "_")[[1]]
   histone <- histInfo[1]
   replicate <- histInfo[2]
   
-  # Add calculated columns and combine with previous data
   peakInfo <- peakInfo %>%
     mutate(width = end - start, Histone = histone, Replicate = replicate, sampleInfo = sample_name)
   peakData <- rbind(peakData, peakInfo)
   
-  # Add to GRanges list for overlap analysis
   peak_granges_list[[sample_name]] <- GRanges(seqnames = peakInfo$chrom, 
                                               ranges = IRanges(start = peakInfo$start, end = peakInfo$end))
 }
 
-# Convert columns to factors for ordered plotting
 peakData$sampleInfo <- factor(peakData$sampleInfo, levels = sampleList)
 peakData$Histone <- factor(peakData$Histone, levels = histList)
 
@@ -72,7 +65,68 @@ fig2 <- ggplot(peakData, aes(x = Histone, y = width, fill = Histone)) +
   ylab("Width of Peaks") +
   xlab("")
 
-# Arrange and save all plots
-final_plot <- ggarrange(fig1, fig2, ncol = 2, nrow = 1, common.legend = TRUE, legend = "bottom")
+# Plot 3: % of Peaks Reproduced (Overlap Between Replicates)
+reproducibility_data <- data.frame()
+for (hist in histList) {
+  reps <- unique(peakData$Replicate[peakData$Histone == hist])
+  if (length(reps) >= 2) {
+    rep_combinations <- combn(reps, 2)
+    for (k in 1:ncol(rep_combinations)) {
+      rep1_id <- rep_combinations[1, k]
+      rep2_id <- rep_combinations[2, k]
+      rep1 <- paste0(hist, "_", rep1_id)
+      rep2 <- paste0(hist, "_", rep2_id)
+      
+      if (rep1 %in% names(peak_granges_list) && rep2 %in% names(peak_granges_list)) {
+        overlaps <- findOverlaps(peak_granges_list[[rep1]], peak_granges_list[[rep2]])
+        reproducible_count <- length(unique(queryHits(overlaps)))
+        total_peaks <- (length(peak_granges_list[[rep1]]) + length(peak_granges_list[[rep2]])) / 2
+        reproducibility_rate <- (reproducible_count / total_peaks) * 100
+        
+        reproducibility_data <- rbind(reproducibility_data, 
+                                      data.frame(Histone = hist, 
+                                                 ReplicatePair = paste(rep1_id, rep2_id, sep = "-"),
+                                                 ReproducibilityRate = reproducibility_rate))
+      }
+    }
+  }
+}
+
+if (nrow(reproducibility_data) > 0) {
+  fig3 <- ggplot(reproducibility_data, aes(x = Histone, y = ReproducibilityRate, fill = Histone)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    geom_text(aes(label = round(ReproducibilityRate, 2), group = ReplicatePair), 
+              vjust = -0.5, position = position_dodge(0.9)) +
+    theme_bw(base_size = 18) +
+    ylab("% of Peaks Reproduced") +
+    xlab("") +
+    facet_wrap(~ ReplicatePair)
+} else {
+  fig3 <- ggplot() +
+    geom_blank() +
+    theme_void() +
+    ggtitle("No Reproducibility Data Available")
+}
+
+# --- Process FRiP Files ---
+frip_data <- do.call(rbind, lapply(frip_files, function(file_path) {
+  read.table(file_path, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+}))
+
+# Check for missing Sample column
+if (!"Sample" %in% colnames(frip_data)) {
+  stop("Error: 'Sample' column missing in FRiP data.")
+}
+
+# Generate FRiP plot
+fig4 <- ggplot(frip_data, aes(x = Sample, y = FRiP, fill = Sample)) +
+  geom_boxplot() +
+  geom_jitter(position = position_jitter(0.15)) +
+  theme_bw(base_size = 18) +
+  ylab("% of Fragments in Peaks (FRiP)") +
+  xlab("")
+
+# --- Arrange and Save Plots ---
+final_plot <- ggarrange(fig1, fig2, fig3, fig4, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
 output_file <- file.path(output_dir, "peak_summary_plot.png")
 ggsave(output_file, final_plot, width = 14, height = 10)
