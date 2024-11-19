@@ -7,10 +7,11 @@ library(viridis)
 library(ggpubr)
 library(GenomicRanges)
 
+# Capture command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
-peak_files <- args[1:(length(args) - 2)]  # All but last two are peak files
-frip_files <- args[(length(args) - 1):(length(args) - 1)]  # Second-to-last is frip files
-output_dir <- args[length(args)]  # Last argument is the output dir
+peak_files <- strsplit(args[1], " ")[[1]]                   # First argument: space-separated list of narrowPeak files
+frip_files <- strsplit(args[2], " ")[[1]]                   # Second argument: space-separated list of FRiP files
+output_dir <- args[3]                                       # Third argument: output directory
 
 # Ensure the output directory exists
 if (!dir.exists(output_dir)) {
