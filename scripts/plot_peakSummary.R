@@ -113,12 +113,13 @@ if (nrow(reproducibility_data) > 0) {
 }
 
 # --- Process FRiP Files ---
-frip_data <- data.frame()
+frip_data <- do.call(rbind, lapply(frip_files, function(file_path) {
+  read.table(file_path, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+}))
 
-for (file_path in frip_files) {
-  temp <- read.table(file_path, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
-  frip_data <- rbind(frip_data, temp)
-}
+# Verify FRiP data
+print("FRiP Data After Reading:")
+print(frip_data)
 
 # Generate FRiP plot
 fig4 <- ggplot(frip_data, aes(x = Sample, y = FRiP, fill = Sample)) +
@@ -127,6 +128,7 @@ fig4 <- ggplot(frip_data, aes(x = Sample, y = FRiP, fill = Sample)) +
   theme_bw(base_size = 18) +
   ylab("% of Fragments in Peaks (FRiP)") +
   xlab("")
+
 
 # --- Arrange and Save Plots ---
 final_plot <- ggarrange(fig1, fig2, fig3, fig4, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
