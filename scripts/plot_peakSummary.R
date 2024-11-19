@@ -26,23 +26,19 @@ peakData <- data.frame()
 peak_granges_list <- list()
 
 for (file_path in peak_files) {
-  # Read and validate peak file
   peakInfo <- read.table(file_path, header = FALSE, 
                          col.names = c("chrom", "start", "end", "name", "score", 
                                        "strand", "signalValue", "pValue", "qValue", "peak"))
   
-  # Extract histone and replicate information from filename
   sample_name <- gsub("_0.05_peaks.narrowPeak", "", basename(file_path))
   histInfo <- strsplit(sample_name, "_")[[1]]
   histone <- histInfo[1]
   replicate <- histInfo[2]
   
-  # Process peak data
   peakInfo <- peakInfo %>%
     mutate(width = end - start, Histone = histone, Replicate = replicate, sampleInfo = sample_name)
   peakData <- rbind(peakData, peakInfo)
   
-  # Store GRanges for reproducibility analysis
   peak_granges_list[[sample_name]] <- GRanges(seqnames = peakInfo$chrom, 
                                               ranges = IRanges(start = peakInfo$start, end = peakInfo$end))
 }
@@ -117,9 +113,10 @@ frip_data <- do.call(rbind, lapply(frip_files, function(file_path) {
   read.table(file_path, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
 }))
 
-# Verify FRiP data
-print("FRiP Data After Reading:")
-print(frip_data)
+# Check for missing Sample column
+if (!"Sample" %in% colnames(frip_data)) {
+  stop("Error: 'Sample' column missing in FRiP data.")
+}
 
 # Generate FRiP plot
 fig4 <- ggplot(frip_data, aes(x = Sample, y = FRiP, fill = Sample)) +
@@ -128,7 +125,6 @@ fig4 <- ggplot(frip_data, aes(x = Sample, y = FRiP, fill = Sample)) +
   theme_bw(base_size = 18) +
   ylab("% of Fragments in Peaks (FRiP)") +
   xlab("")
-
 
 # --- Arrange and Save Plots ---
 final_plot <- ggarrange(fig1, fig2, fig3, fig4, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
