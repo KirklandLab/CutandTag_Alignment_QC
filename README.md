@@ -9,6 +9,8 @@ The pipeline provides automated quality checks, including FastQC and FastQ Scree
 
 A compact dataset is included within the repository for testing purposes, along with example scripts for analyzing publicly available Cut-and-Tag datasets. This pipeline extends the original protocol, offering a robust framework for both routine analysis and more complex studies.
 
+Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](https://github.com/JK-Cobre-Help/CutandTag_ReplicatePeak_Analysis) snakemake pipeline. This pipeline starts with already aligned and filtered BAM files, focusing on the identification of reproducible peaks, the generation of consensus peak sets, and the visualization of overlaps and signal distributions across multiple samples or experimental conditions.
+
 # 2) Instructions to run on Slurm managed HPC
 2A. Clone repository
 ```
