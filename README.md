@@ -38,7 +38,8 @@ sbatch --wrap="snakemake -j 999 --use-envmodules --latency-wait 60 --cluster-con
 # 3) Explanation of samples.csv
 Note. Make sure to check sample.csv before each run
 
-The samples.csv file in the config folder has paths to the test fastq files. You must replace those paths with those for your own fastq files. The first column of each row is the sample name. This name will be used for all output files. Columns 2 and 3 are the paths to the paired fastq files. Column 4 is the sample type (either "treatment" or "control"). Column 5 is the name of the corresponding Control sample for each treated sample (use "NA" if the sample is a control).
+The samples.csv file in the config folder has paths to the test fastq files. You must replace those paths with those for your own fastq files. The first column of each row is the sample name. This name will be used for all output files. Columns 2 and 3 are the paths to the paired fastq files.
+
 
 | sample             | fastq1                        | fastq2                        | sampleType | Control   |
 |--------------------|-------------------------------|-------------------------------|------------|-----------|
