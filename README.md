@@ -17,10 +17,10 @@ Note. Make sure to check sample.csv before each run
 The samples.csv file in the config folder has paths to the test fastq files. You must replace those paths with those for your own fastq files. The first column of each row is the sample name. This name will be used for all output files. Columns 2 and 3 are the paths to the paired fastq files.
 
 
-| sample             | fastq1                        | fastq2                        | sampleType | Control   |
-|--------------------|-------------------------------|-------------------------------|------------|-----------|
-| K27ac_50_trimmed   | K27ac_50_trimmed_R1.fastq.gz  | K27ac_50_trimmed_R2.fastq.gz  | control    | NA        |
-| K27me3_50_trimmed  | K27me3_50_trimmed_R1.fastq.gz | K27me3_50_trimmed_R1.fastq.gz | control    | NA        |
+| sample             | fastq1                        | fastq2                        |
+|--------------------|-------------------------------|-------------------------------|
+| K27ac_50_trimmed   | K27ac_50_trimmed_R1.fastq.gz  | K27ac_50_trimmed_R2.fastq.gz  |
+| K27me3_50_trimmed  | K27me3_50_trimmed_R1.fastq.gz | K27me3_50_trimmed_R1.fastq.gz |
 
 
 Sample naming recommendation for correct plot output
