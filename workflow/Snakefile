@@ -43,6 +43,7 @@ rule all:
         expand("results/alignment/bam/{sample}_bowtie2.bam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}.sorted.bam", sample=samples_table.index),
         expand("results/alignment/bigwig/{sample}_raw.bw", sample=samples_table.index),
+        expand("results/alignment/bigwig/{sample}_cpm.bw", sample=samples_table.index),
         expand("results/alignment/{sample}_total_reads.txt", sample=samples_table.index),
         expand("results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt", sample=samples_table.index),
         expand("results/alignment/bigwig/scale_reads/{sample}_scaled.bw", sample=samples_table.index),
@@ -183,6 +184,7 @@ rule make_bigwig_raw:
         sorted_bam="results/alignment/bam/{sample}.sorted.bam"
     output:
         bigwig="results/alignment/bigwig/{sample}_raw.bw"
+        bigwig_cpm="results/alignment/bigwig/{sample}_cpm.bw"
     params:
         genome_size=config["effective_genome_size"],
         binSize=config["binSize"]
@@ -192,6 +194,7 @@ rule make_bigwig_raw:
     shell:
         """
         bamCoverage -b {input.sorted_bam} -o {output.bigwig} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize}
+        bamCoverage -b {input.sorted_bam} -o {output.bigwig_cpm} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize} --normalizeUsing CPM
         """
 
 
