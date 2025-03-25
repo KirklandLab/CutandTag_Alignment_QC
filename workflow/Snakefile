@@ -183,7 +183,7 @@ rule make_bigwig_raw:
     input:
         sorted_bam="results/alignment/bam/{sample}.sorted.bam"
     output:
-        bigwig="results/alignment/bigwig/{sample}_raw.bw"
+        bigwig="results/alignment/bigwig/{sample}_raw.bw",
         bigwig_cpm="results/alignment/bigwig/{sample}_cpm.bw"
     params:
         genome_size=config["effective_genome_size"],
