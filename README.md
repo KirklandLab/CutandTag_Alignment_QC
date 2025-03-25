@@ -11,31 +11,7 @@ A compact dataset is included within the repository for testing purposes, along 
 
 Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](https://github.com/JK-Cobre-Help/CutandTag_ReplicatePeak_Analysis) snakemake pipeline. This pipeline starts with already aligned and filtered BAM files, focusing on the identification of reproducible peaks, the generation of consensus peak sets, and the visualization of overlaps and signal distributions across multiple samples or experimental conditions.
 
-# 2) Instructions to run on Slurm managed HPC
-2A. Clone repository
-```
-git clone https://github.com/JK-Cobre-Help/CutandTag_Analysis_Snakemake.git
-```
-2B. Load modules
-```
-module purge
-module load slurm python/3.10 pandas/2.2.3 numpy/1.22.3 matplotlib/3.7.1
-```
-2C. Modify samples and config file
-```
-vim samples.csv
-vim config.yml
-```
-2D. Dry Run
-```
-snakemake -npr
-```
-2E. Run on HPC with config.yml options
-```
-sbatch --wrap="snakemake -j 999 --use-envmodules --latency-wait 60 --cluster-config config/cluster_config.yml --cluster 'sbatch -A {cluster.account} -p {cluster.partition} --cpus-per-task {cluster.cpus-per-task}  -t {cluster.time} --mem {cluster.mem} --output {cluster.output}'"
-```
-
-# 3) Explanation of samples.csv
+# 2) Explanation of samples.csv
 Note. Make sure to check sample.csv before each run
 
 The samples.csv file in the config folder has paths to the test fastq files. You must replace those paths with those for your own fastq files. The first column of each row is the sample name. This name will be used for all output files. Columns 2 and 3 are the paths to the paired fastq files.
@@ -58,7 +34,7 @@ Sample naming recommendation for correct plot output
     + H3K27ac_rep3_control
     + H3K27ac_rep3_treatment
 
-# 4) Explanation of config.yml
+# 3) Explanation of config.yml
 Note. Make sure to check config.yml for the appropriate genome alignment
 
 The config.yml is used to identify the file path of the bowtie2 genome index, specify effective genome size and genome for macs2. There is also information about specific modules and version numbers to maintain dependencies in the snakemake workflow. Running the mm10 genome does not require any modifications to the config.yml. When using the hg38 genome the following need to be modified with the information provided in the config.yml but commented out.
@@ -68,6 +44,30 @@ Run hg38 samples in snakemake pipeline
     + change bowtie2 genome index file path
     + change bamCoverage effective genome size
     + change macs2 genome size
+
+# 4) Instructions to run on Slurm managed HPC
+2A. Clone repository
+```
+git clone https://github.com/JK-Cobre-Help/CutandTag_Analysis_Snakemake.git
+```
+2B. Load modules
+```
+module purge
+module load slurm python/3.10 pandas/2.2.3 numpy/1.22.3 matplotlib/3.7.1
+```
+2C. Modify samples and config file
+```
+vim samples.csv
+vim config.yml
+```
+2D. Dry Run
+```
+snakemake -npr
+```
+2E. Run on HPC with config.yml options
+```
+sbatch --wrap="snakemake -j 999 --use-envmodules --latency-wait 60 --cluster-config config/cluster_config.yml --cluster 'sbatch -A {cluster.account} -p {cluster.partition} --cpus-per-task {cluster.cpus-per-task}  -t {cluster.time} --mem {cluster.mem} --output {cluster.output}'"
+```
 
 # 5) Citations
 Zheng, Y., Ahmad, K., & Henikoff, S. (2019). CUT&Tag for efficient epigenomic profiling of small samples and single cells. Protocols.io, dx.doi.org/10.17504/protocols.io.bjk2kkye
