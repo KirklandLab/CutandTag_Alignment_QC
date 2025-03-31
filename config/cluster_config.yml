@@ -17,7 +17,7 @@ fastqc_reads:
 
 align_with_bowtie2:
     cpus-per-task: 16
-    mem: 200G
+    mem: 64G
     cores: 16
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
