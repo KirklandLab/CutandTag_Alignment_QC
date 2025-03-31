@@ -122,6 +122,8 @@ rule align_with_bowtie2:
         bowtie2_genome=config["bowtie2_genome"]
     envmodules:
         config["bowtie2"]
+    threads: 16
+    resources: mem_mb=64000
     log: "results/logs/snakelogs/align_with_bowtie2.{sample}.log"
     shell:
         """
