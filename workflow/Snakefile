@@ -21,6 +21,34 @@ def fq_dict_from_sample(wildcards):
     "fq2": samples_table.loc[wildcards.sample, "fastq2"]
   }
 
+# make samples dictionary
+samples_df = pd.read_csv("config/samples.csv")
+samples_dict = {
+    row["sample"]: {
+        "fq1": row["fastq1"],
+        "fq2": row["fastq2"]
+    }
+    for _, row in samples_df.iterrows()
+}
+
+# function to return fastqc output paths based on real input file names
+def fastqc_output_from_sample(wildcards):
+    fq1 = samples_dict[wildcards.sample]["fq1"]
+    fq2 = samples_dict[wildcards.sample]["fq2"]
+
+    # Get the real base filenames used by FastQC
+    def get_fastqc_name(path):
+        base = os.path.basename(path)
+        base = re.sub(r"\.fastq\.gz$|\.fq\.gz$", "", base)
+        return f"results/qc/fastqc/{base}_fastqc"
+
+    return {
+        "html1": f"{get_fastqc_name(fq1)}.html",
+        "zip1": f"{get_fastqc_name(fq1)}.zip",
+        "html2": f"{get_fastqc_name(fq2)}.html",
+        "zip2": f"{get_fastqc_name(fq2)}.zip"
+    }
+
 
 ##################################################################
 ##                          Rule All                            ##
@@ -54,12 +82,9 @@ rule all:
 # run fastqc on fastq.gz files before trimming
 rule fastqc_reads:
     input:
-        unpack(fq_dict_from_sample)   # <--- we need to wrap our input function inside a special Snakemake function called unpack() which turns the dict into a collection of named inputs
+        unpack(fq_dict_from_sample)
     output:
-        html1="results/qc/fastqc/{sample}_R1_fastqc.html",
-        zip1="results/qc/fastqc/{sample}_R1_fastqc.zip",
-        html2="results/qc/fastqc/{sample}_R2_fastqc.html",
-        zip2="results/qc/fastqc/{sample}_R2_fastqc.zip"
+        fastqc_output_from_sample
     envmodules:
         config["fastqc"]
     log: "results/logs/snakelogs/fastqc_reads.{sample}.log"
@@ -68,20 +93,6 @@ rule fastqc_reads:
         # Run FastQC with output directed to writable folder
         fastqc -o results/qc/fastqc {input.fq1}
         fastqc -o results/qc/fastqc {input.fq2}
-
-        # set up directory to store fastqc
-        dir="results/qc/fastqc"
-        
-        # Use full basename (no stripping) because that matches FastQC outputs
-        base1=$(basename {input.fq1} .gz)
-        base1=$(basename ${{base1}} .fastq)
-        mv $dir/${{base1}}_fastqc.html {output.html1}
-        mv $dir/${{base1}}_fastqc.zip {output.zip1}
-
-        base2=$(basename {input.fq2} .gz)
-        base2=$(basename ${{base2}} .fastq)
-        mv $dir/${{base2}}_fastqc.html {output.html2}
-        mv $dir/${{base2}}_fastqc.zip {output.zip2}
         """
 
 ##################################################################
