@@ -103,7 +103,8 @@ rule fastq_screen:
         
         # Extract the base name without .fastq.gz
         base_name=$(basename {input.fq1} .fastq.gz)
-        
+        base_name=$(echo "$base_name" | sed -E 's/_S[0-9]+_001$//')
+
         # Move or link the output file to the expected output
         mv {params.out_dir}/${{base_name}}_screen.png {output.fastq_info}
         """
