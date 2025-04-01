@@ -99,13 +99,8 @@ rule fastq_screen:
     log: "results/logs/snakelogs/fastq_screen.{sample}.log"
     shell:
         """
-        fastq_screen --conf {params.config_file} --threads 16 --outdir {params.out_dir} {input.fq1}
-        
-        # Extract the base name without .fastq.gz
-        base_name=$(basename {input.fq1} .fastq.gz)
-        
-        # Move or link the output file to the expected output
-        mv {params.out_dir}/${{base_name}}_screen.png {output.fastq_info}
+        fastq_screen --conf {params.config_file} --threads 16 --outdir {params.out_dir} \
+                     --basename {wildcards.sample} {input.fq1}
         """
 
 ##################################################################
