@@ -69,17 +69,22 @@ rule fastqc_reads:
         fastqc -o results/qc/fastqc {input.fq1}
         fastqc -o results/qc/fastqc {input.fq2}
 
-        # Rename output files to match specified output paths
+        # set up directory to store fastqc
         dir="results/qc/fastqc"
-        bsename=$(basename {input.fq1} .gz)
-        bsename=$(basename ${{bsename}} .fastq)
-        mv ${{dir}}/${{bsename}}_fastqc.html {output.html1}
-        mv ${{dir}}/${{bsename}}_fastqc.zip {output.zip1}
         
-        bsename=$(basename {input.fq2} .gz)
-        bsename=$(basename ${{bsename}} .fastq)
-        mv ${{dir}}/${{bsename}}_fastqc.html {output.html2}
-        mv ${{dir}}/${{bsename}}_fastqc.zip {output.zip2}
+        # Clean base name for fq1
+        base1=$(basename {input.fq1})
+        base1=$(echo "$base1" | sed -E 's/\.(fastq|fq)\.gz$//')
+        base1=$(echo "$base1" | sed -E 's/_S[0-9]+_001$//')
+        mv $dir/${{base1}}_fastqc.html {output.html1}
+        mv $dir/${{base1}}_fastqc.zip {output.zip1}
+
+        # Clean base name for fq2
+        base2=$(basename {input.fq2})
+        base2=$(echo "$base2" | sed -E 's/\.(fastq|fq)\.gz$//')
+        base2=$(echo "$base2" | sed -E 's/_S[0-9]+_001$//')
+        mv $dir/${{base2}}_fastqc.html {output.html2}
+        mv $dir/${{base2}}_fastqc.zip {output.zip2}
         """
 
 ##################################################################
