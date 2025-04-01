@@ -49,6 +49,13 @@ def fastqc_output_from_sample(wildcards):
         "zip2": f"{get_fastqc_name(fq2)}.zip"
     }
 
+# fastq_screen function 
+def fastq_screen_output_from_sample(wildcards):
+    fq1 = samples_dict[wildcards.sample]["fq1"]
+    base = os.path.basename(fq1)
+    base = re.sub(r"\.(fastq|fq)\.gz$", "", base)
+    base = re.sub(r"_S[0-9]+_001$", "", base)  # if FastQ Screen removes this part
+    return f"results/qc/fastq_screen/{base}_screen.png"
 
 ##################################################################
 ##                          Rule All                            ##
@@ -103,7 +110,7 @@ rule fastq_screen:
     input:
         unpack(fq_dict_from_sample)
     output:
-        fastq_info="results/qc/fastq_screen/{sample}_screen.png"
+        fastq_info=fastq_screen_output_from_sample
     params:
         out_dir="results/qc/fastq_screen",
         config_file="resources/fastq_screen.conf"
@@ -113,13 +120,6 @@ rule fastq_screen:
     shell:
         """
         fastq_screen --conf {params.config_file} --threads 16 --outdir {params.out_dir} {input.fq1}
-        
-        base_name=$(basename {input.fq1})
-        base_name=$(echo "$base_name" | sed -E 's/\.(fastq|fq)\.gz$//')
-        base_name=$(echo "$base_name" | sed -E 's/_S[0-9]+_001$//')
-
-        # Move or link the output file to the expected output
-        mv {params.out_dir}/${{base_name}}_screen.png {output.fastq_info}
         """
 
 ##################################################################
