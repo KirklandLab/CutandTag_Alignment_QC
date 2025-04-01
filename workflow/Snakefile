@@ -9,52 +9,72 @@ configfile: "config/config.yml"
 # Adapted from: Ye Zheng, Kami Ahmad, Steven Henikoff
 # Original Protocol DOI: dx.doi.org/10.17504/protocols.io.bjk2kkye
 
+# load python packages
+import os
+import re
 import pandas as pd
 
-# read the CSV file and set an index using the values in the "sample" column.
+# Load the sample table
 samples_table = pd.read_csv("config/samples.csv").set_index("sample", drop=False)
 
-# fastq filename input function definition set to Python dictionary
-def fq_dict_from_sample(wildcards):
-  return {
-    "fq1": samples_table.loc[wildcards.sample, "fastq1"],
-    "fq2": samples_table.loc[wildcards.sample, "fastq2"]
-  }
-
-# make samples dictionary
-samples_df = pd.read_csv("config/samples.csv")
+# Build a dict for easy access
 samples_dict = {
     row["sample"]: {
         "fq1": row["fastq1"],
         "fq2": row["fastq2"]
     }
-    for _, row in samples_df.iterrows()
+    for _, row in samples_table.iterrows()
 }
 
-# function to return fastqc output paths based on real input file names
+# Helper to get base FASTQ name
+def get_fastq_basename(path):
+    base = os.path.basename(path)
+    base = re.sub(r"\.f(ast)?q\.gz$", "", base)
+    base = re.sub(r"_S[0-9]+_001$", "", base)
+    return base
+
+# build fastqc and fastq screen outputs for rule all
+fastqc_outputs = []
+fastq_screen_outputs = []
+
+for sample, paths in samples_dict.items():
+    fq1 = paths["fq1"]
+    fq2 = paths["fq2"]
+    base1 = get_fastq_basename(fq1)
+    base2 = get_fastq_basename(fq2)
+
+    fastqc_outputs.extend([
+        f"results/qc/fastqc/{base1}_fastqc.html",
+        f"results/qc/fastqc/{base2}_fastqc.html"
+    ])
+    fastq_screen_outputs.append(f"results/qc/fastq_screen/{base1}_screen.png")
+
+# return fastq paths per sample
+def fq_dict_from_sample(wildcards):
+    return {
+        "fq1": samples_dict[wildcards.sample]["fq1"],
+        "fq2": samples_dict[wildcards.sample]["fq2"]
+    }
+
+# fastqc output function
 def fastqc_output_from_sample(wildcards):
     fq1 = samples_dict[wildcards.sample]["fq1"]
     fq2 = samples_dict[wildcards.sample]["fq2"]
 
-    # Get the real base filenames used by FastQC
-    def get_fastqc_name(path):
-        base = os.path.basename(path)
-        base = re.sub(r"\.fastq\.gz$|\.fq\.gz$", "", base)
-        return f"results/qc/fastqc/{base}_fastqc"
+    base1 = get_fastq_basename(fq1)
+    base2 = get_fastq_basename(fq2)
 
     return {
-        "html1": f"{get_fastqc_name(fq1)}.html",
-        "zip1": f"{get_fastqc_name(fq1)}.zip",
-        "html2": f"{get_fastqc_name(fq2)}.html",
-        "zip2": f"{get_fastqc_name(fq2)}.zip"
+        "html1": f"results/qc/fastqc/{base1}_fastqc.html",
+        "zip1": f"results/qc/fastqc/{base1}_fastqc.zip",
+        "html2": f"results/qc/fastqc/{base2}_fastqc.html",
+        "zip2": f"results/qc/fastqc/{base2}_fastqc.zip"
     }
 
-# fastq_screen function 
+# fastq screen output function
 def fastq_screen_output_from_sample(wildcards):
     fq1 = samples_dict[wildcards.sample]["fq1"]
-    base = os.path.basename(fq1)
-    base = re.sub(r"\.(fastq|fq)\.gz$", "", base)
-    base = re.sub(r"_S[0-9]+_001$", "", base)  # if FastQ Screen removes this part
+    base = get_fastq_basename(fq1)
     return f"results/qc/fastq_screen/{base}_screen.png"
 
 ##################################################################
@@ -63,8 +83,8 @@ def fastq_screen_output_from_sample(wildcards):
 
 rule all:
     input:
-        expand("results/qc/fastqc/{sample}_R1_fastqc.html", sample=samples_table.index),
-        expand("results/qc/fastq_screen/{sample}_screen.png", sample=samples_table.index),
+        fastqc_outputs,
+        fastq_screen_outputs,
         expand("results/alignment/sam/{sample}_bowtie2.sam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}_bowtie2.bam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}.sorted.bam", sample=samples_table.index),
@@ -86,18 +106,18 @@ rule all:
 ##                       Quality Control                        ##
 ##################################################################
 
-# run fastqc on fastq.gz files before trimming
+# run fastqc on fastq.gz files
 rule fastqc_reads:
     input:
         unpack(fq_dict_from_sample)
     output:
-        fastqc_output_from_sample
+        lambda wildcards: fastqc_output_from_sample(wildcards)
     envmodules:
         config["fastqc"]
-    log: "results/logs/snakelogs/fastqc_reads.{sample}.log"
+    log:
+        lambda wildcards: f"results/logs/snakelogs/fastqc_reads.{wildcards.sample}.log"
     shell:
         """
-        # Run FastQC with output directed to writable folder
         fastqc -o results/qc/fastqc {input.fq1}
         fastqc -o results/qc/fastqc {input.fq2}
         """
@@ -110,13 +130,14 @@ rule fastq_screen:
     input:
         unpack(fq_dict_from_sample)
     output:
-        fastq_info=fastq_screen_output_from_sample
+        fastq_info=lambda wildcards: fastq_screen_output_from_sample(wildcards)
     params:
         out_dir="results/qc/fastq_screen",
         config_file="resources/fastq_screen.conf"
     envmodules:
         config["fastq_screen"]
-    log: "results/logs/snakelogs/fastq_screen.{sample}.log"
+    log:
+        lambda wildcards: f"results/logs/snakelogs/fastq_screen.{wildcards.sample}.log"
     shell:
         """
         fastq_screen --conf {params.config_file} --threads 16 --outdir {params.out_dir} {input.fq1}
@@ -130,8 +151,8 @@ rule align_with_bowtie2:
     input:
         unpack(fq_dict_from_sample)
     output:
-        sam_file="results/alignment/sam/{sample}_bowtie2.sam",
-        bowtie2_summary="results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt"
+        sam_file=lambda wildcards: f"results/alignment/sam/{wildcards.sample}_bowtie2.sam",
+        bowtie2_summary=lambda wildcards: f"results/alignment/sam/bowtie2_summary/{wildcards.sample}_bowtie2.txt"
     params:
         bowtie2_genome=config["bowtie2_genome"]
     envmodules:
