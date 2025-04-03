@@ -11,28 +11,32 @@ A compact dataset is included within the repository for testing purposes, along 
 
 Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](https://github.com/JK-Cobre-Help/CutandTag_ReplicatePeak_Analysis) snakemake pipeline. This pipeline starts with already aligned and filtered BAM files, focusing on the identification of reproducible peaks, the generation of consensus peak sets, and the visualization of overlaps and signal distributions across multiple samples or experimental conditions.
 
-# 2) Explanation of samples.csv
-Note. Make sure to check sample.csv before each run
+# 2) Explanation of `samples.csv`
 
-The samples.csv file in the config folder has paths to the test fastq files. You must replace those paths with those for your own fastq files. The first column of each row is the sample name. This name will be used for all output files. Columns 2 and 3 are the paths to the paired fastq files.
+**IMPORTANT:** Always update `samples.csv` with your sample, FASTQ file paths, histone, and replicate information before running.
 
+This file should be placed in the `config/` directory and must contain the following columns:
 
-| sample             | fastq1                        | fastq2                        |
-|--------------------|-------------------------------|-------------------------------|
-| K27ac_50_trimmed   | K27ac_50_trimmed_R1.fastq.gz  | K27ac_50_trimmed_R2.fastq.gz  |
-| K27me3_50_trimmed  | K27me3_50_trimmed_R1.fastq.gz | K27me3_50_trimmed_R1.fastq.gz |
+| sample             | fastq1                          | fastq2                          | histone          | replicate    |
+|--------------------|---------------------------------|---------------------------------|------------------|--------------|
+| K27ac_1_control    | K27ac_1_control_R1.fastq.gz     | K27ac_1_control_R2.fastq.gz     |H27ac_Control     |1             |
+| K27ac_2_control    | K27ac_2_contorl_R1.fastq.gz     | K27ac_2_control_R1.fastq.gz     |K27ac_Control     |2             |
+| K27me3_1_treatment | K27me3_1_treatment_R1.fastq.gz  | K27me3_1_treatment_R1.fastq.gz  |K27me3_Treatment  |1             |
+| K27me3_2_treatment | K27me3_2_treatment_R1.fastq.gz  | K27me3_2_treatment_R1.fastq.gz  |K27me3_Treatment  |2             |
 
++ **sample**: Unique name used for all output files.
++ **fastq1 / fastq2**: Paths to R1 and R2 FASTQ files.
++ **histone**: Mark name (used in plots). Include control or treatment label in `histone`_`control` format
++ **replicate**: Include replicate number (e.g., `1`, `2`, `A`, `B`, etc.)
 
-Sample naming recommendation for correct plot output
-- "Histone" + "_" + "Replicate" + "Any other identifier"
-- Examples:
-    + K27ac_50
-    + K27me3_5
-    + K27ac_50_trimmed
-    + H3K27me3_rep1
-    + H3K4me3_rep2_set1
-    + H3K27ac_rep3_control
-    + H3K27ac_rep3_treatment
+Use informative `sample` names that match your design. Examples:
+
++ `H3K27ac_rep1_control`
++ `H3K4me3_rep2_treatment`
++ `H3.3_A_trimmed`
++ `H2AX_1_H3K27ac`
+
+Include both the histone and samlpe type in `histone` column. This determines how samples are grouped together. Following these practices will improve downstream plot labeling and reproducibility metrics.
 
 # 3) Explanation of config.yml
 Note. Make sure to check config.yml for the appropriate genome alignment
