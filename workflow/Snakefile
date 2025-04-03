@@ -304,8 +304,8 @@ rule generate_fragmentLength_files:
 
 rule generate_fragLen_plots:
     input:
-        # Input for each fragmentLen file
-        sample_list=expand("results/alignment/sam/{sample}_fragmentLen.txt", sample=samples_table.index)
+        sample_list=expand("results/alignment/sam/{sample}_fragmentLen.txt", sample=samples_table.index),
+        metadata="config/samples.csv"
     output:
         "results/plots/fragment_length_plot.png"
     params:
@@ -313,10 +313,11 @@ rule generate_fragLen_plots:
     envmodules:
         config["R"],
         config["bioconductor"]
-    log: "results/logs/snakelogs/generate_fragLen_plots.log"
+    log:
+        "results/logs/snakelogs/generate_fragLen_plots.log"
     shell:
         """
-        Rscript scripts/plot_fragLength.R {input.sample_list} {params.out_dir}
+        Rscript scripts/plot_fragLength.R {input.sample_list} {input.metadata} {params.out_dir}
         """
 
 ##################################################################
