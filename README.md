@@ -17,12 +17,12 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
 
 This file should be placed in the `config/` directory and must contain the following columns:
 
-| sample             | fastq1                          | fastq2                          | histone          | replicate    |
-|--------------------|---------------------------------|---------------------------------|------------------|--------------|
-| K27ac_1_control    | K27ac_1_control_R1.fastq.gz     | K27ac_1_control_R2.fastq.gz     |H27ac_Control     |1             |
-| K27ac_2_control    | K27ac_2_contorl_R1.fastq.gz     | K27ac_2_control_R1.fastq.gz     |K27ac_Control     |2             |
-| K27me3_1_treatment | K27me3_1_treatment_R1.fastq.gz  | K27me3_1_treatment_R1.fastq.gz  |K27me3_Treatment  |1             |
-| K27me3_2_treatment | K27me3_2_treatment_R1.fastq.gz  | K27me3_2_treatment_R1.fastq.gz  |K27me3_Treatment  |2             |
+| sample             | fastq1                                 | fastq2                                 | histone          | replicate    |
+|--------------------|----------------------------------------|----------------------------------------|------------------|--------------|
+| K27ac_1_control    | path/to/K27ac_1_control_R1.fastq.gz    | path/to/K27ac_1_control_R2.fastq.gz    |H27ac_Control     |1             |
+| K27ac_2_control    | path/to/K27ac_2_contorl_R1.fastq.gz    | path/to/K27ac_2_control_R1.fastq.gz    |K27ac_Control     |2             |
+| K27me3_1_treatment | path/to/K27me3_1_treatment_R1.fastq.gz | path/to/K27me3_1_treatment_R1.fastq.gz |K27me3_Treatment  |1             |
+| K27me3_2_treatment | path/to/K27me3_2_treatment_R1.fastq.gz | path/to/K27me3_2_treatment_R1.fastq.gz |K27me3_Treatment  |2             |
 
 + **sample**: Unique name used for all output files.
 + **fastq1 / fastq2**: Paths to R1 and R2 FASTQ files.
