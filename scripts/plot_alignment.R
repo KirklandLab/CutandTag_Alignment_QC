@@ -67,6 +67,7 @@ for (file_path in input_files) {
 # Ensure consistent order
 # -------------------------
 alignResult$Histone <- factor(alignResult$Histone, levels = unique(alignResult$Histone))
+alignResult$Replicate <- as.factor(alignResult$Replicate)
 
 # -------------------------
 # Create plots
