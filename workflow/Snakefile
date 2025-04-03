@@ -261,8 +261,8 @@ rule macs2_peak_calling:
 
 rule generate_alignment_plots:
     input:
-        # Input for each Bowtie2 summary
-        sample_list=expand("results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt", sample=samples_table.index)
+        sample_list=expand("results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt", sample=samples_table.index),
+        metadata="config/samples.csv"
     output:
         "results/plots/alignment_summary_plot.png"
     params:
@@ -270,10 +270,11 @@ rule generate_alignment_plots:
     envmodules:
         config["R"],
         config["bioconductor"]
-    log: "results/logs/snakelogs/generate_alignment_plots.log"
+    log:
+        "results/logs/snakelogs/generate_alignment_plots.log"
     shell:
         """
-        Rscript scripts/plot_alignment.R {input.sample_list} {params.out_dir}
+        Rscript scripts/plot_alignment.R {input.sample_list} {input.metadata} {params.out_dir}
         """
 
 ##################################################################
