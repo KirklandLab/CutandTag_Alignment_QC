@@ -72,7 +72,8 @@ fig1 <- peakData %>%
   geom_jitter(aes(color = Replicate), position = position_jitter(0.15)) +
   theme_bw(base_size = 18) +
   ylab("Number of Peaks") +
-  xlab("")
+  xlab("") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
 # -------------------------
 # Plot 2: Width of Peaks
@@ -82,7 +83,8 @@ fig2 <- ggplot(peakData, aes(x = Histone, y = width, fill = Histone)) +
   facet_grid(Replicate ~ .) +
   theme_bw(base_size = 18) +
   ylab("Width of Peaks") +
-  xlab("")
+  xlab("") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
 # -------------------------
 # Plot 3: Reproducibility
@@ -122,7 +124,8 @@ if (nrow(reproducibility_data) > 0) {
     theme_bw(base_size = 18) +
     ylab("% of Peaks Reproduced") +
     xlab("") +
-    facet_wrap(~ ReplicatePair)
+    facet_wrap(~ ReplicatePair) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 } else {
   fig3 <- ggplot() +
     geom_blank() +
