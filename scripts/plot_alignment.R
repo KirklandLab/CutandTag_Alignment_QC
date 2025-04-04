@@ -79,7 +79,8 @@ fig1 <- ggplot(alignResult, aes(x = Histone, y = SequencingDepth / 1e6, fill = H
   theme_bw(base_size = 14) +
   ylab("Sequencing Depth (Millions)") +
   xlab("") +
-  ggtitle("Sequencing Depth per Histone")
+  ggtitle("Sequencing Depth per Histone") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
 fig2 <- ggplot(alignResult, aes(x = Histone, y = MappedFragNum / 1e6, fill = Histone)) +
   geom_boxplot() +
@@ -87,7 +88,8 @@ fig2 <- ggplot(alignResult, aes(x = Histone, y = MappedFragNum / 1e6, fill = His
   theme_bw(base_size = 14) +
   ylab("Mapped Fragments (Millions)") +
   xlab("") +
-  ggtitle("Mapped Fragments per Histone")
+  ggtitle("Mapped Fragments per Histone") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
 fig3 <- ggplot(alignResult, aes(x = Histone, y = AlignmentRate, fill = Histone)) +
   geom_boxplot() +
@@ -95,7 +97,8 @@ fig3 <- ggplot(alignResult, aes(x = Histone, y = AlignmentRate, fill = Histone))
   theme_bw(base_size = 14) +
   ylab("Alignment Rate (%)") +
   xlab("") +
-  ggtitle("Alignment Rate per Histone")
+  ggtitle("Alignment Rate per Histone") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
 fig4 <- ggplot(alignResult, aes(x = Histone, y = UnalignedRate, fill = Histone)) +
   geom_boxplot() +
@@ -103,7 +106,8 @@ fig4 <- ggplot(alignResult, aes(x = Histone, y = UnalignedRate, fill = Histone))
   theme_bw(base_size = 14) +
   ylab("Unaligned Rate (%)") +
   xlab("") +
-  ggtitle("Unaligned Rate per Histone")
+  ggtitle("Unaligned Rate per Histone") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
 # -------------------------
 # Arrange and save
