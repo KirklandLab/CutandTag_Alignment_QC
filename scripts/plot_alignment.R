@@ -9,9 +9,9 @@ library(ggpubr)
 # Capture command-line arguments
 # -------------------------
 args <- commandArgs(trailingOnly = TRUE)
-input_files <- args[1:(length(args) - 2)]         # All but last 2 args are the summary files
-metadata_file <- args[length(args) - 1]           # Second to last = samples.csv
-output_dir <- args[length(args)]                  # Last arg = output directory
+input_files <- args[1:(length(args) - 2)]
+metadata_file <- args[length(args) - 1]
+output_dir <- args[length(args)]
 
 # -------------------------
 # Ensure output directory exists
@@ -41,14 +41,29 @@ for (file_path in input_files) {
   # Read summary file
   alignRes <- read.table(file_path, header = FALSE, fill = TRUE, stringsAsFactors = FALSE)
   
-  # Extract alignment metrics (using line assumptions from Bowtie2 output)
-  sequencingDepth <- as.numeric(gsub("[^0-9]", "", alignRes$V1[1]))  # Total reads
-  mappedFragNum <- as.numeric(gsub("[^0-9]", "", alignRes$V1[4])) + 
-                   as.numeric(gsub("[^0-9]", "", alignRes$V1[5]))    # Mapped fragments
-  alignmentRate <- as.numeric(gsub("[^0-9.]", "", alignRes$V1[6]))   # Aligned %
+  # Use keyword matching to extract data safely
+  total_reads_line <- alignRes$V1[grepl("reads; of these:", alignRes$V1)]
+  sequencingDepth <- as.numeric(gsub(" .*", "", total_reads_line))
+  
+  mapped1_line <- alignRes$V1[grepl("aligned concordantly exactly 1 time", alignRes$V1)]
+  mapped1 <- as.numeric(gsub("[^0-9]", "", mapped1_line))
+  
+  mapped2_line <- alignRes$V1[grepl("aligned concordantly >1 times", alignRes$V1)]
+  mapped2 <- as.numeric(gsub("[^0-9]", "", mapped2_line))
+  
+  alignmentRate_line <- alignRes$V1[grepl("overall alignment rate", alignRes$V1)]
+  alignmentRate <- as.numeric(gsub("[^0-9.]", "", alignmentRate_line))
+  
+  # Handle missing values
+  if (any(is.na(c(sequencingDepth, mapped1, mapped2, alignmentRate)))) {
+    warning(paste("Skipping sample", sample_name, "due to missing values."))
+    next
+  }
+  
+  mappedFragNum <- mapped1 + mapped2
   unalignedRate <- 100 - alignmentRate
-
-  # Append results
+  
+  # Append to results
   alignResult <- rbind(
     alignResult,
     data.frame(
@@ -113,8 +128,8 @@ fig4 <- ggplot(alignResult, aes(x = Histone, y = UnalignedRate, fill = Histone))
 # Arrange and save
 # -------------------------
 
-final_plot <- ggarrange(fig1, fig2, fig3, fig4, 
-                        ncol = 2, nrow = 2, 
+final_plot <- ggarrange(fig1, fig2, fig3, fig4,
+                        ncol = 2, nrow = 2,
                         common.legend = TRUE, legend = "bottom")
 
 output_file <- file.path(output_dir, "alignment_summary_plot.png")
