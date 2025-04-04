@@ -2,12 +2,20 @@
 __default__:
     account: kirklandj-lab
     partition: serial
-    time: 08:00:00 # time limit for each job
+    time: 08:00:00
     cpus-per-task: 2
     mem: 16G
     output: results/logs/slurm-%x.%A.%a.log
 
 fastqc_reads:
+    cpus-per-task: 4
+    mem: 32G
+    cores: 4
+    name: "{rule}.{wildcards.sample}"
+    output: results/logs/{rule}.{wildcards.sample}.log
+    error: results/logs/{rule}.{wildcards.sample}.err
+
+fastq_screen:
     cpus-per-task: 4
     mem: 32G
     cores: 4
@@ -35,14 +43,6 @@ sort_bam:
     cpus-per-task: 4
     mem: 32G
     cores: 4
-    name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
-
-index_bam:
-    cpus-per-task: 2
-    mem: 16G
-    cores: 2
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
@@ -78,3 +78,52 @@ macs2_peak_calling:
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
+
+generate_alignment_plots:
+    cpus-per-task: 2
+    mem: 16G
+    name: "{rule}"
+    output: results/logs/{rule}.log
+    error: results/logs/{rule}.err
+
+generate_fragmentLength_files:
+    cpus-per-task: 2
+    mem: 16G
+    name: "{rule}.{wildcards.sample}"
+    output: results/logs/{rule}.{wildcards.sample}.log
+    error: results/logs/{rule}.{wildcards.sample}.err
+
+generate_fragLen_plots:
+    cpus-per-task: 2
+    mem: 16G
+    name: "{rule}"
+    output: results/logs/{rule}.log
+    error: results/logs/{rule}.err
+
+process_fragment_length:
+    cpus-per-task: 4
+    mem: 32G
+    name: "{rule}.{wildcards.sample}"
+    output: results/logs/{rule}.{wildcards.sample}.log
+    error: results/logs/{rule}.{wildcards.sample}.err
+
+calculate_frip:
+    cpus-per-task: 2
+    mem: 16G
+    name: "{rule}.{wildcards.sample}"
+    output: results/logs/{rule}.{wildcards.sample}.log
+    error: results/logs/{rule}.{wildcards.sample}.err
+
+generate_correlation_plot:
+    cpus-per-task: 2
+    mem: 16G
+    name: "{rule}"
+    output: results/logs/{rule}.log
+    error: results/logs/{rule}.err
+
+generate_peak_summary_plots:
+    cpus-per-task: 2
+    mem: 16G
+    name: "{rule}"
+    output: results/logs/{rule}.log
+    error: results/logs/{rule}.err

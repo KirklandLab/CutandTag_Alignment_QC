@@ -261,8 +261,8 @@ rule macs2_peak_calling:
 
 rule generate_alignment_plots:
     input:
-        # Input for each Bowtie2 summary
-        sample_list=expand("results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt", sample=samples_table.index)
+        sample_list=expand("results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt", sample=samples_table.index),
+        metadata="config/samples.csv"
     output:
         "results/plots/alignment_summary_plot.png"
     params:
@@ -270,10 +270,11 @@ rule generate_alignment_plots:
     envmodules:
         config["R"],
         config["bioconductor"]
-    log: "results/logs/snakelogs/generate_alignment_plots.log"
+    log:
+        "results/logs/snakelogs/generate_alignment_plots.log"
     shell:
         """
-        Rscript scripts/plot_alignment.R {input.sample_list} {params.out_dir}
+        Rscript scripts/plot_alignment.R {input.sample_list} {input.metadata} {params.out_dir}
         """
 
 ##################################################################
@@ -303,8 +304,8 @@ rule generate_fragmentLength_files:
 
 rule generate_fragLen_plots:
     input:
-        # Input for each fragmentLen file
-        sample_list=expand("results/alignment/sam/{sample}_fragmentLen.txt", sample=samples_table.index)
+        sample_list=expand("results/alignment/sam/{sample}_fragmentLen.txt", sample=samples_table.index),
+        metadata="config/samples.csv"
     output:
         "results/plots/fragment_length_plot.png"
     params:
@@ -312,10 +313,11 @@ rule generate_fragLen_plots:
     envmodules:
         config["R"],
         config["bioconductor"]
-    log: "results/logs/snakelogs/generate_fragLen_plots.log"
+    log:
+        "results/logs/snakelogs/generate_fragLen_plots.log"
     shell:
         """
-        Rscript scripts/plot_fragLength.R {input.sample_list} {params.out_dir}
+        Rscript scripts/plot_fragLength.R {input.sample_list} {input.metadata} {params.out_dir}
         """
 
 ##################################################################
@@ -419,7 +421,8 @@ rule generate_correlation_plot:
 rule generate_peak_summary_plots:
     input:
         peak_list=expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index),
-        frip_list=expand("results/alignment/bam/{sample}_frip.txt", sample=samples_table.index)
+        frip_list=expand("results/alignment/bam/{sample}_frip.txt", sample=samples_table.index),
+        metadata="config/samples.csv"
     output:
         "results/plots/peak_summary_plot.png"
     params:
@@ -427,8 +430,10 @@ rule generate_peak_summary_plots:
     envmodules:
         config["R"],
         config["bioconductor"]
-    log: "results/logs/snakelogs/generate_peak_summary_plots.log"
+    log:
+        "results/logs/snakelogs/generate_peak_summary_plots.log"
     shell:
         """
-        Rscript scripts/plot_peakSummary.R "{input.peak_list}" "{input.frip_list}" {params.out_dir}
+        Rscript scripts/plot_peakSummary.R "{input.peak_list}" "{input.frip_list}" {input.metadata} {params.out_dir}
         """
+
