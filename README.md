@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/873121124.svg)](https://doi.org/10.5281/zenodo.15232228)
+
 # CutandTag_Analysis_Snakemake
 ![Cut&Tag](/images/Cut&Tag.png)
 + OpenAI. (2024). Cartoon image of scissors cutting DNA and protein and DNA playing tag. DALL-E. Retrieved from OpenAI.
