@@ -5,7 +5,7 @@
 ![GitHub contributors](https://img.shields.io/github/contributors/JK-Cobre-Help/CutandTag_Analysis_Snakemake)
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/JK-Cobre-Help/CutandTag_Analysis_Snakemake/total)
 ![GitHub commits since latest release](https://img.shields.io/github/commits-since/JK-Cobre-Help/CutandTag_Analysis_Snakemake/latest)
-[![DOI](https://zenodo.org/badge/873121124.svg)](https://doi.org/10.5281/zenodo.15232228)
+[![DOI](https://zenodo.org/badge/898608902.svg)](https://doi.org/10.5281/zenodo.15232319)
 
 # CutandTag_Analysis_Snakemake
 ![Cut&Tag](/images/Cut&Tag.png)
