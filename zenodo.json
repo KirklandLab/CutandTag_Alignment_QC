@@ -1,0 +1,47 @@
+{
+  "title": "CutandTag_Analysis_Snakemake: A Snakemake Workflow for Cut-and-Tag Sequencing Data Processing",
+  "upload_type": "software",
+  "description": "CutandTag_Analysis_Snakemake is a Snakemake pipeline that automates the processing of Cut-and-Tag sequencing data, enabling analysis of chromatin accessibility and protein-DNA interactions. It includes steps for quality control, Bowtie2 alignment, BigWig generation, peak calling with MACS2, and visualization of fragment length and alignment statistics. FastQC and FastQ Screen are used for initial QC, and the pipeline supports module environments for reproducibility on HPC systems. This workflow serves as the upstream component to CutandTag_ReplicatePeak_Analysis, which performs downstream consensus peak and visualization analysis on aligned BAM files.",
+  "creators": [
+    {
+      "name": "Boyd, Kevin A.",
+      "affiliation": "Oklahoma Medical Research Foundation",
+      "orcid": "0000-0001-6739-8103"
+    }
+  ],
+  "license": "Apache-2.0",
+  "keywords": [
+    "Cut-and-Tag",
+    "Snakemake",
+    "chromatin profiling",
+    "MACS2",
+    "Bowtie2",
+    "FastQC",
+    "FastQ Screen",
+    "BigWig",
+    "peak calling",
+    "epigenomics",
+    "bioinformatics",
+    "workflow",
+    "fragment length",
+    "genomics",
+    "open science"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/JK-Cobre-Help/CutandTag_Analysis_Snakemake",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://github.com/JK-Cobre-Help/CutandTag_ReplicatePeak_Analysis",
+      "relation": "isPartOf",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://doi.org/10.17504/protocols.io.bjk2kkye",
+      "relation": "isDerivedFrom",
+      "scheme": "doi"
+    }
+  ]
+}
