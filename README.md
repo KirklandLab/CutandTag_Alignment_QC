@@ -85,7 +85,7 @@ cd CutandTag_Analysis_Snakemake-1.0.3
 5B. Load modules
 ```
 module purge
-module load slurm python/3.10 pandas/2.2.3 numpy/1.22.3 matplotlib/3.7.1
+module load slurm python/3.10 pandas/2.2.3 numpy/1.22.3 matplotlib/3.7.1 R/4.4.1-mkl bioconductor/3.19
 ```
 5C. Modify samples and config file
 ```
