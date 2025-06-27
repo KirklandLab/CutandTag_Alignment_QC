@@ -28,7 +28,7 @@ This file should be placed in the `config/` directory and must contain the follo
 
 | sample             | fastq1                                 | fastq2                                 | histone          | replicate    |
 |--------------------|----------------------------------------|----------------------------------------|------------------|--------------|
-| K27ac_1_control    | path/to/K27ac_1_control_R1.fastq.gz    | path/to/K27ac_1_control_R2.fastq.gz    |H27ac_Control     |1             |
+| K27ac_1_control    | path/to/K27ac_1_control_R1.fastq.gz    | path/to/K27ac_1_control_R2.fastq.gz    |K27ac_Control     |1             |
 | K27ac_2_control    | path/to/K27ac_2_contorl_R1.fastq.gz    | path/to/K27ac_2_control_R1.fastq.gz    |K27ac_Control     |2             |
 | K27me3_1_treatment | path/to/K27me3_1_treatment_R1.fastq.gz | path/to/K27me3_1_treatment_R1.fastq.gz |K27me3_Treatment  |1             |
 | K27me3_2_treatment | path/to/K27me3_2_treatment_R1.fastq.gz | path/to/K27me3_2_treatment_R1.fastq.gz |K27me3_Treatment  |2             |
