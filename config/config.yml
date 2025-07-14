@@ -12,6 +12,7 @@ effective_genome_size: 2730871774                                            # m
                                                                              # GRCh38 genome size - 2913022398
 # Modules (for loading software dependencies)
 fastqc: "fastqc/0.12.1"
+multiqc: "multiqc/1.21"
 fastq_screen: "fastq-screen/0.15.2"
 samtools: "samtools/1.18"
 bowtie2: "bowtie2/2.5.0"
