@@ -30,7 +30,7 @@
 # HEATMAP_OUT="results/heatmap/HeatPlots_Specific_Samples.png"   #
 #                                                                #
 # ============================================================== #
-# 4) Set your sample order (order of samples as presented):      #
+# 4) Set your sample order (1-n: order of samples as presented): #
 # -------------------------------------------------------------- #
 # SAMPLE_ORDER="1 2 3"                                           #
 #                                                                #
