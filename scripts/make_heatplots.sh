@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=generate_heatmap
 #SBATCH --cpus-per-task=8
-#SBATCH --time=8:00:00
+#SBATCH --time=16:00:00
 #SBATCH --mem=64G
 
 ##################################################################
