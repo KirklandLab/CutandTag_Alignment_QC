@@ -87,8 +87,8 @@ rule fastqc_reads:
 
 rule multiqc_raw:
     input:
-        expand("results/qc/fastqc/{sample}_R1_fastqc.zip", sample=SAMPLES),
-        expand("results/qc/fastqc/{sample}_R2_fastqc.zip", sample=SAMPLES)
+        expand("results/qc/fastqc/{sample}_R1_fastqc.zip", sample=samples_table.index),
+        expand("results/qc/fastqc/{sample}_R2_fastqc.zip", sample=samples_table.index)
     output:
         "results/qc/multiqc/multiqc_report.html"
     params:
