@@ -30,9 +30,9 @@
 # HEATMAP_OUT="results/heatmap/HeatPlots_Specific_Samples.png"   #
 #                                                                #
 # ============================================================== #
-# 4) Set your sample order (must match keys above):              #
+# 4) Set your sample order (order of samples as presented):      #
 # -------------------------------------------------------------- #
-# SAMPLE_ORDER="Sample1 Sample2 Sample3"                         #
+# SAMPLE_ORDER="1 2 3"                                           #
 #                                                                #
 # ============================================================== #
 # USAGE:                                                         #
@@ -70,8 +70,8 @@ PROCESSORS=8
 REFPOINT_NAME="Center"
 REGIONS_NAME="All Midpoints"
 
-# ---- Define sample order (space-separated sample names, matches keys above) ----
-SAMPLE_ORDER="H3K27ac_C H3K27ac_T H3K27me3_C H3K27me3_T"
+# ---- Define sample order (space-separated numbers, order matches bigwig input order) ----
+SAMPLE_ORDER="1 2 3 4"
 
 ##################################################################
 ##                      Generate input lists                    ##
