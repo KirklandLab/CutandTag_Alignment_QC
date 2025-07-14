@@ -33,12 +33,12 @@
 # 4) Set your sample order (must match keys above):              #
 # -------------------------------------------------------------- #
 # SAMPLE_ORDER="Sample1 Sample2 Sample3"                         #
-#                 											     #
+#
 # ============================================================== #
-# USAGE: 													     #
+# USAGE:
 # After modifying the variables above,                           #
 # submit this script to SLURM with:                              #
-#																 #
+#
 #   sbatch make_heatplots.sh                                     #
 # ============================================================== #
 
