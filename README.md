@@ -239,7 +239,7 @@ If you use this workflow in your research, please cite both the original CUT&Tag
 
 ## 11) Authorship & Contributions  
 
-**Kevin A. Boyd** – Designed and implemented the Snakemake workflow for a Slurm-managed HPC environment, modularized the pipeline structure, implemented all processing steps, integrated spike-in normalization support, designed quality control plots, and created the documentation.   
+**Kevin A. Boyd** – Designed and implemented the Snakemake workflow for a Slurm-managed HPC environment, modularized the pipeline structure, implemented all processing steps, integrated all normalization support, designed quality control plots, and created the documentation.   
 
 **Jacob Kirkland** – Principal Investigator; provided project direction, conceptual guidance, and experimental data for pipeline development.  
 
