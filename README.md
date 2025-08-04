@@ -164,9 +164,15 @@ Example FASTQ names to **not** use:
 | **FRiP Score & Coverage**   | `results/alignment/bam/*_frip.txt`, `*_fragmentsCount.bin500.bed`  |
 | **Plots**                   | `results/plots/` for alignment summary, FRiP, and peak stats       |
 
-**Note**: BigWig Tracks Explanation  
-  + **CPM**: normalizes coverage to 1 million reads using `--normalizeUsing CPM`  
-  + **Custom scale factor**: calculated as `1 / (total_mapped_reads / 1,000,000)` and applied with `--scaleFactor`, allowing more precise normalization across varying sequencing depths  
+**BigWig Track Types**
+This pipeline generates three types of BigWig tracks for genome browser visualization:
++ **Raw**: unnormalized read coverage  
++ **CPM**: normalized to 1 million mapped reads using `--normalizeUsing CPM`  
++ **Scale factor**: normalized using a custom factor calculated as:  
+
+  `scale_factor = 1 / (total_mapped_reads / 1,000,000)`
+
+  This is applied using the `--scaleFactor` option in `bamCoverage` and allows more precise normalization across samples with differing sequencing depth. 
 
 ---
 
