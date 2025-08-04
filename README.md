@@ -164,6 +164,10 @@ Example FASTQ names to **not** use:
 | **FRiP Score & Coverage**   | `results/alignment/bam/*_frip.txt`, `*_fragmentsCount.bin500.bed`  |
 | **Plots**                   | `results/plots/` for alignment summary, FRiP, and peak stats       |
 
+**Note**: BigWig Tracks 
+  + **CPM**: normalizes coverage to 1 million reads using `--normalizeUsing CPM`  
+  + **Custom scale factor**: calculated as `1 / (total_mapped_reads / 1,000,000)` and applied with `--scaleFactor`, allowing more precise normalization across varying sequencing depths  
+
 ---
 
 ## 8) Example Output Plots
