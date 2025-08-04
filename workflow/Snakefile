@@ -1,13 +1,57 @@
 configfile: "config/config.yml"
 
 ##################################################################
-##                    Define input functions                    ##
+##                         Author Info                          ##
 ##################################################################
 
-# Author: Kevin Boyd
-# Date: Oct 18, 2024
+# Author: Kevin A. Boyd
+# Email: kevinboyd76@gmail.com
+# GitHub: https://github.com/kevinboyd76
+# Date Created: October 18, 2024
+# Last Modified: August 4, 2025
+# Version: 1.1.0
+#
+# Description: This Snakemake workflow processes Cut-and-Tag sequencing data
+# from raw paired-end FASTQ files through quality control, read alignment using
+# Bowtie2, BigWig signal track generation (raw, CPM-normalized, and scaled),
+# peak calling via MACS2, fragment length analysis, and QC visualizations.
+# The pipeline outputs scaled and normalized coverage tracks, peak files,
+# FRiP scores, and summary plots to assess quality and replicate consistency.
+# 
 # Adapted from: Ye Zheng, Kami Ahmad, Steven Henikoff
 # Original Protocol DOI: dx.doi.org/10.17504/protocols.io.bjk2kkye
+
+##################################################################
+##                  Specific Steps in Pipeline                  ##
+##################################################################
+
+#  Steps:
+#  1) Quality control using FastQC (per read) and MultiQC (summary report)
+#  2) Contamination check using FastQ Screen
+#  3) Align reads to reference genome using Bowtie2 (paired-end)
+#  4) Convert SAM to BAM, then sort and index BAM files
+#  5) Generate raw and CPM-normalized BigWig signal tracks (per sample)
+#  6) Calculate total aligned reads and scale factors (1 / reads per million)
+#  7) Generate scaled BigWig tracks using scale factor (per sample)
+#  8) Call peaks using MACS2 with fixed q-value threshold (per sample)
+#  9) Extract fragment lengths from aligned SAM files (per sample)
+# 10) Plot fragment length distributions using R (violin and line plots)
+# 11) Process BAM to BED, filter and bin fragment data (for correlation analysis)
+# 12) Calculate FRiP scores (Fraction of Reads in Peaks) for QC (per sample)
+# 13) Generate correlation plot of binned fragment counts across samples
+# 14) Create summary plot of peak count and FRiP scores
+# 
+#  Outputs:
+#    • FastQC and MultiQC HTML reports
+#    • FastQ Screen PNG plots
+#    • Raw, CPM, and scaled BigWig files
+#    • MACS2 peak files (narrowPeak)
+#    • Fragment length text files
+#    • Summary plots: alignment, fragment length, correlation, and peaks
+
+##################################################################
+##                    Define input functions                    ##
+##################################################################
 
 import pandas as pd
 
