@@ -53,7 +53,7 @@ rule all:
 # run fastqc on fastq.gz files before trimming
 rule fastqc_reads:
     input:
-        unpack(fq_dict_from_sample)   # <--- we need to wrap our input function inside a special Snakemake function called unpack() which turns the dict into a collection of named inputs
+        unpack(fq_dict_from_sample)
     output:
         html1="results/qc/fastqc/{sample}_R1_fastqc.html",
         zip1="results/qc/fastqc/{sample}_R1_fastqc.zip",
