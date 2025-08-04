@@ -10,11 +10,11 @@
 
 # CutandTag_Alignment_QC
 ![Cut&Tag](/images/Cut&Tag.png)
-+ OpenAI. (2024). Cartoon image of scissors cutting DNA and protein and DNA playing tag. DALL-E. Retrieved from OpenAI.
+*(Image generated with DALL-E. OpenAI, 2024: Cartoon of scissors cutting DNA and DNA tagging protein)*
 
 ## 1) Project Description  
 
-**CutandTag_Alignment_QC** is a Snakemake workflow adapted from the protocol by Ye Zheng, Kami Ahmad, and Steven Henikoff ([dx.doi.org/10.17504/protocols.io.bjk2kkye](https://dx.doi.org/10.17504/protocols.io.bjk2kkye)). This pipeline is designed to process Cut-and-Tag sequencing data to facilitating the analysis of chromatin accessibility and DNA-protein interactions. It uses raw FASTQs as input and includes automated steps for read alignment, quality control, signal track generation (raw and scaled), peak calling, and various visualizations, enabling high-resolution profiling of protein-DNA binding sites. The pipeline's automated quality checks include FastQC and FastQ Screen reports while performing read alignment with Bowtie2. Outputs include raw and scaled BigWig files, which allow users to visualize signal intensity across the genome. Additionally, peak calling is performed using MACS2, and fragment length and alignment summary plots are generated for detailed data exploration. The workflow is automated with Snakemake and dependencies are managed through module environments, ensuring reproducibility and flexibility.  
+**CutandTag_Alignment_QC** is a Snakemake workflow adapted from the protocol by Ye Zheng, Kami Ahmad, and Steven Henikoff ([dx.doi.org/10.17504/protocols.io.bjk2kkye](https://dx.doi.org/10.17504/protocols.io.bjk2kkye)). This pipeline is designed to process Cut-and-Tag sequencing data to facilitate the analysis of chromatin accessibility and DNA-protein interactions. It uses raw FASTQs as input and includes automated steps for read alignment, quality control, signal track generation (raw and scaled), peak calling, and various visualizations, enabling high-resolution profiling of protein-DNA binding sites. The pipeline performs automated quality checks using FastQC, MultiQC, and FastQ Screen reports while also aligning reads with Bowtie2. Outputs include raw and scaled BigWig files, which allow users to visualize signal intensity across the genome. Additionally, peak calling is performed using MACS2, and fragment length and alignment summary plots are generated for detailed data exploration. The workflow is automated with Snakemake and dependencies are managed through module environments, ensuring reproducibility and flexibility.  
 
 Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](https://github.com/KirklandLab/CutandTag_ReplicatePeak_Analysis) snakemake workflow. This pipeline starts with aligned BAM files, focusing on the identification of reproducible peaks, the generation of consensus peak sets, and the visualization of overlaps and signal distributions across multiple samples and experimental conditions.  
 
@@ -86,7 +86,7 @@ All parameters and module versions are specified in `config/config.yml`.
 
 ---
 
-## **4) Tools & Modules**
+## 4) Tools & Modules
 
 This workflow uses the following tools through environment modules on an HPC system:
 
@@ -121,7 +121,7 @@ The `samples.csv` must contain the following columns:
 | sample               | fastq1                                   | fastq2                                   | histone            | replicate    |
 |----------------------|------------------------------------------|------------------------------------------|--------------------|--------------|
 | H3K27ac_1_control    | path/to/H3K27ac_1_control_R1.fastq.gz    | path/to/H3K27ac_1_control_R2.fastq.gz    |H3H27ac_Control     |1             |
-| H3K27ac_2_control    | path/to/H3K27ac_2_contorl_R1.fastq.gz    | path/to/H3K27ac_2_control_R1.fastq.gz    |H3K27ac_Control     |2             |
+| H3K27ac_2_control    | path/to/H3K27ac_2_control_R1.fastq.gz    | path/to/H3K27ac_2_control_R1.fastq.gz    |H3K27ac_Control     |2             |
 | H3K27me3_1_treatment | path/to/H3K27me3_1_treatment_R1.fastq.gz | path/to/H3K27me3_1_treatment_R1.fastq.gz |H3K27me3_Treatment  |1             |
 | H3K27me3_2_treatment | path/to/H3K27me3_2_treatment_R1.fastq.gz | path/to/H3K27me3_2_treatment_R1.fastq.gz |H3K27me3_Treatment  |2             |
 
@@ -130,7 +130,7 @@ The `samples.csv` must contain the following columns:
 + **histone**: Mark name (used in plots). Include control or treatment label in `histone`_`control` format
 + **replicate**: Include replicate number (e.g., `1`, `2`, `A`, `B`, etc.)
 
-Include both the histone and samlpe type in `histone` column. This determines how samples are grouped together. Following these practices will improve downstream plot labeling and reproducibility metrics.  
+Include both the histone and sample type in `histone` column. This determines how samples are grouped together. Following these practices will improve downstream plot labeling and reproducibility metrics.  
 
 Use informative `sample` names that match your design and be sure that fastq file names do not include "." before the file extension.  
 
@@ -164,7 +164,7 @@ Example FASTQ names to **not** use:
 
 ---
 
-# 8) Examples Output Plots
+## 8) Examples Output Plots
 
 Below are example plots generated by this pipeline.  
 
@@ -180,8 +180,8 @@ Below are example plots generated by this pipeline.
 
 ---
 
-# 9) Instructions to run on Slurm managed HPC
-9A. Download verson controlled repository
+## 9) Instructions to run on Slurm managed HPC  
+9A. Download version controlled repository
 ```
 wget https://github.com/KirklandLab/CutandTag_Alignment_QC/releases/download/v1.0.4/CutandTag_Alignment_QC-1.0.4.tar.gz
 tar -xzf CutandTag_Alignment_QC-1.0.4.tar.gz
