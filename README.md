@@ -123,9 +123,9 @@ The `samples.csv` must contain the following columns:
 | sample               | fastq1                                   | fastq2                                   | histone            | replicate    |
 |----------------------|------------------------------------------|------------------------------------------|--------------------|--------------|
 | H3K27ac_1_control    | path/to/H3K27ac_1_control_R1.fastq.gz    | path/to/H3K27ac_1_control_R2.fastq.gz    |H3K27ac_Control     |1             |
-| H3K27ac_2_control    | path/to/H3K27ac_2_control_R1.fastq.gz    | path/to/H3K27ac_2_control_R1.fastq.gz    |H3K27ac_Control     |2             |
-| H3K27me3_1_treatment | path/to/H3K27me3_1_treatment_R1.fastq.gz | path/to/H3K27me3_1_treatment_R1.fastq.gz |H3K27me3_Treatment  |1             |
-| H3K27me3_2_treatment | path/to/H3K27me3_2_treatment_R1.fastq.gz | path/to/H3K27me3_2_treatment_R1.fastq.gz |H3K27me3_Treatment  |2             |
+| H3K27ac_2_control    | path/to/H3K27ac_2_control_R1.fastq.gz    | path/to/H3K27ac_2_control_R2.fastq.gz    |H3K27ac_Control     |2             |
+| H3K27me3_1_treatment | path/to/H3K27me3_1_treatment_R1.fastq.gz | path/to/H3K27me3_1_treatment_R2.fastq.gz |H3K27me3_Treatment  |1             |
+| H3K27me3_2_treatment | path/to/H3K27me3_2_treatment_R1.fastq.gz | path/to/H3K27me3_2_treatment_R2.fastq.gz |H3K27me3_Treatment  |2             |
 
 + **sample**: Unique name used for all output files.
 + **fastq1 / fastq2**: Paths to R1 and R2 FASTQ files.
@@ -164,7 +164,7 @@ Example FASTQ names to **not** use:
 | **FRiP Score & Coverage**   | `results/alignment/bam/*_frip.txt`, `*_fragmentsCount.bin500.bed`  |
 | **Plots**                   | `results/plots/` for alignment summary, FRiP, and peak stats       |
 
-**BigWig Track Types**
+**BigWig Track Types**:  
 This pipeline generates three types of BigWig tracks for genome browser visualization:
 + **Raw**: unnormalized read coverage  
 + **CPM**: normalized to 1 million mapped reads using `--normalizeUsing CPM`  
