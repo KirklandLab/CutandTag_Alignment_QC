@@ -1,7 +1,7 @@
 {
-  "title": "CutandTag_Analysis_Snakemake: A Snakemake Workflow for Cut-and-Tag Sequencing Data Processing",
+  "title": "CutandTag_Alignment_QC: A reproducible Snakemake workflow for alignment, quality control, and signal generation from Cut-and-Tag sequencing data.",
   "upload_type": "software",
-  "description": "CutandTag_Analysis_Snakemake is a Snakemake pipeline that automates the processing of Cut-and-Tag sequencing data, enabling analysis of chromatin accessibility and protein-DNA interactions. It includes steps for quality control, Bowtie2 alignment, BigWig generation, peak calling with MACS2, and visualization of fragment length and alignment statistics. FastQC and FastQ Screen are used for initial QC, and the pipeline supports module environments for reproducibility on HPC systems. This workflow serves as the upstream component to CutandTag_ReplicatePeak_Analysis, which performs downstream consensus peak and visualization analysis on aligned BAM files.",
+  "description": "CutandTag_Alignment_QC is a Snakemake workflow designed to process Cut-and-Tag sequencing data to facilitate the analysis of chromatin accessibility and DNA-protein interactions. It uses raw FASTQs as input and includes automated steps for read alignment, quality control, signal track generation (raw and scaled), peak calling, and various visualizations, enabling high-resolution profiling of protein-DNA binding sites. The pipeline performs automated quality checks using FastQC, MultiQC, and FastQ Screen reports while also aligning reads with Bowtie2. Outputs include raw and scaled BigWig files, which allow users to visualize signal intensity across the genome. Additionally, peak calling is performed using MACS2, and fragment length and alignment summary plots are generated for detailed data exploration. The workflow is automated with Snakemake and dependencies are managed through module environments, ensuring reproducibility and flexibility.",
   "creators": [
     {
       "name": "Boyd, Kevin A.",
@@ -29,12 +29,12 @@
   ],
   "related_identifiers": [
     {
-      "identifier": "https://github.com/JK-Cobre-Help/CutandTag_Analysis_Snakemake",
+      "identifier": "https://github.com/KirklandLab/CutandTag_Alignment_QC",
       "relation": "isSupplementTo",
       "scheme": "url"
     },
     {
-      "identifier": "https://github.com/JK-Cobre-Help/CutandTag_ReplicatePeak_Analysis",
+      "identifier": "https://github.com/KirklandLab/CutandTag_ReplicatePeak_Analysis",
       "relation": "isPartOf",
       "scheme": "url"
     },
