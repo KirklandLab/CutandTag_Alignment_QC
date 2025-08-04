@@ -46,6 +46,10 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
   + Designed for HPC environments using module-based environments
   + Uses `samples.csv` and `config.yml` for full customization
   + Easily integrated with the downstream pipeline: [CutandTag_ReplicatePeak_Analysis](https://github.com/KirklandLab/CutandTag_ReplicatePeak_Analysis)
+ 
++ **Optional Heatmap Generation**
+  + A helper script is included in `scripts/make_heatplot.sh` for visualizing BigWig signals over defined BED regions.  
+  + Instructions for customizing and running the script are provided are provided as comments.  
 
 ---
 
