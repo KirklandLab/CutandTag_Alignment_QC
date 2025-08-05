@@ -12,6 +12,8 @@
 ![Cut&Tag](/images/Cut&Tag.png)
 *(Image generated with DALL-E. OpenAI, 2024: Cartoon of scissors cutting DNA and DNA tagging protein)*
 
+--- 
+
 ## 1) Project Description  
 
 **CutandTag_Alignment_QC** is a Snakemake workflow adapted from the protocol by Ye Zheng, Kami Ahmad, and Steven Henikoff ([dx.doi.org/10.17504/protocols.io.bjk2kkye](https://dx.doi.org/10.17504/protocols.io.bjk2kkye)). This pipeline is designed to process Cut-and-Tag sequencing data to facilitate the analysis of chromatin accessibility and DNA-protein interactions. It uses raw FASTQs as input and includes automated steps for read alignment, quality control, signal track generation (raw and scaled), peak calling, and various visualizations, enabling high-resolution profiling of protein-DNA binding sites. The pipeline performs automated quality checks using FastQC, MultiQC, and FastQ Screen reports while also aligning reads with Bowtie2. Outputs include raw and scaled BigWig files, which allow users to visualize signal intensity across the genome. Additionally, peak calling is performed using MACS2, and fragment length and alignment summary plots are generated for detailed data exploration. The workflow is automated with Snakemake and dependencies are managed through module environments, ensuring reproducibility and flexibility.  
@@ -49,7 +51,7 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
  
 + **Optional Heatmap Generation**
   + A helper script is included in `scripts/make_heatplot.sh` for visualizing BigWig signals over defined BED regions.  
-  + Instructions for customizing and running the script are provided are provided as comments.  
+  + Instructions for customizing and running the script are provided as comments.  
 
 ---
 
