@@ -195,10 +195,10 @@ rule align_with_bowtie2:
     log: "results/logs/snakelogs/align_with_bowtie2.{sample}.log"
     shell:
         """
-        bowtie2 --end-to-end --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 -p 16 \
+        bowtie2 --end-to-end --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 \
         -p {threads} \
         -x {params.bowtie2_genome} \
-        -1 {input.fq1} -2 {input.fq2} -S {output.sam_file} &> {output.bowtie2_summary}
+        -1 {input.fq1} -2 {input.fq2} -S {output.sam_file} 2> {output.bowtie2_summary}
         """
 
 ##################################################################
@@ -236,7 +236,7 @@ rule sort_bam:
     shell:
         """
         samtools sort -@ {threads} -o {output.sorted_bam} {input.bam_file}
-        samtools index -@ {threads} {output.sorted_bam} > {output.bai}
+        samtools index -@ {threads} {output.sorted_bam} {output.bai}
         """
 
 ##################################################################
