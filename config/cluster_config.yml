@@ -11,13 +11,23 @@ fastqc_reads:
     cpus-per-task: 4
     mem: 32G
     cores: 4
+    time: 01:00:00
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
 
+multiqc_raw:
+    cpus-per-task: 4
+    mem: 16G
+    time: 01:00:00
+    name: "{rule}"
+    output: results/logs/{rule}.log
+    error: results/logs/{rule}.err
+
 fastq_screen:
     cpus-per-task: 4
     mem: 32G
+    time: 01:00:00
     cores: 4
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
@@ -27,6 +37,7 @@ align_with_bowtie2:
     cpus-per-task: 16
     mem: 64G
     cores: 16
+    time: 06:00:00
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
@@ -35,6 +46,7 @@ sam_to_bam:
     cpus-per-task: 4
     mem: 32G
     cores: 4
+    time: 02:00:00
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
@@ -43,6 +55,7 @@ sort_bam:
     cpus-per-task: 4
     mem: 32G
     cores: 4
+    time: 02:00:00
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
@@ -51,6 +64,7 @@ make_bigwig_raw:
     cpus-per-task: 4
     mem: 32G
     cores: 4
+    time: 03:00:00
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
@@ -59,6 +73,7 @@ calculate_total_reads:
     cpus-per-task: 2
     mem: 16G
     cores: 2
+    time: 01:00:00
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
@@ -67,6 +82,7 @@ make_bigwig_scaled:
     cpus-per-task: 4
     mem: 32G
     cores: 4
+    time: 03:00:00
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
@@ -75,6 +91,7 @@ macs2_peak_calling:
     cpus-per-task: 8
     mem: 64G
     cores: 8
+    time: 04:00:00
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
@@ -89,6 +106,7 @@ generate_alignment_plots:
 generate_fragmentLength_files:
     cpus-per-task: 2
     mem: 16G
+    time: 01:30:00
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
@@ -96,6 +114,7 @@ generate_fragmentLength_files:
 generate_fragLen_plots:
     cpus-per-task: 2
     mem: 16G
+    time: 01:30:00
     name: "{rule}"
     output: results/logs/{rule}.log
     error: results/logs/{rule}.err
@@ -103,6 +122,7 @@ generate_fragLen_plots:
 process_fragment_length:
     cpus-per-task: 4
     mem: 32G
+    time: 01:30:00
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
@@ -110,6 +130,7 @@ process_fragment_length:
 calculate_frip:
     cpus-per-task: 2
     mem: 16G
+    time: 01:30:00
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
@@ -117,6 +138,7 @@ calculate_frip:
 generate_correlation_plot:
     cpus-per-task: 2
     mem: 16G
+    time: 01:30:00
     name: "{rule}"
     output: results/logs/{rule}.log
     error: results/logs/{rule}.err
@@ -124,6 +146,7 @@ generate_correlation_plot:
 generate_peak_summary_plots:
     cpus-per-task: 2
     mem: 16G
+    time: 01:30:00
     name: "{rule}"
     output: results/logs/{rule}.log
     error: results/logs/{rule}.err
