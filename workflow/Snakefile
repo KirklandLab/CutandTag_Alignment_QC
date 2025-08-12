@@ -9,7 +9,7 @@ configfile: "config/config.yml"
 # GitHub: https://github.com/kevinboyd76
 # Date Created: October 18, 2024
 # Last Modified: August 4, 2025
-# Version: 1.1.0
+# Version: 1.1.1
 #
 # Description: This Snakemake workflow processes Cut-and-Tag sequencing data
 # from raw paired-end FASTQ files through quality control, read alignment using
