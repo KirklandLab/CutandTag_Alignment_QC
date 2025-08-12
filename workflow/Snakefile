@@ -105,12 +105,13 @@ rule fastqc_reads:
         zip2="results/qc/fastqc/{sample}_R2_fastqc.zip"
     envmodules:
         config["fastqc"]
+    threads: 4
     log: "results/logs/snakelogs/fastqc_reads.{sample}.log"
     shell:
         """
         # Run FastQC with output directed to writable folder
-        fastqc -o results/qc/fastqc {input.fq1}
-        fastqc -o results/qc/fastqc {input.fq2}
+        fastqc -t {threads} -o results/qc/fastqc {input.fq1}
+        fastqc -t {threads} -o results/qc/fastqc {input.fq2}
 
         # Rename output files to match specified output paths
         dir="results/qc/fastqc"
@@ -139,6 +140,7 @@ rule multiqc_raw:
         outdir="results/qc/multiqc"
     envmodules:
         config["multiqc"]
+    threads: 4
     log:
         "results/logs/multiqc/multiqc.log"
     shell:
@@ -162,10 +164,11 @@ rule fastq_screen:
         config_file="resources/fastq_screen.conf"
     envmodules:
         config["fastq_screen"]
+    threads: 4
     log: "results/logs/snakelogs/fastq_screen.{sample}.log"
     shell:
         """
-        fastq_screen --conf {params.config_file} --threads 16 --outdir {params.out_dir} {input.fq1}
+        fastq_screen --conf {params.config_file} --threads {threads} --outdir {params.out_dir} {input.fq1}
         
         # Extract the base name without .fastq.gz
         base_name=$(basename {input.fq1} .fastq.gz)
@@ -188,10 +191,12 @@ rule align_with_bowtie2:
         bowtie2_genome=config["bowtie2_genome"]
     envmodules:
         config["bowtie2"]
+    threads: 16
     log: "results/logs/snakelogs/align_with_bowtie2.{sample}.log"
     shell:
         """
         bowtie2 --end-to-end --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 -p 16 \
+        -p {threads} \
         -x {params.bowtie2_genome} \
         -1 {input.fq1} -2 {input.fq2} -S {output.sam_file} &> {output.bowtie2_summary}
         """
@@ -207,10 +212,11 @@ rule sam_to_bam:
         bam_file="results/alignment/bam/{sample}_bowtie2.bam"
     envmodules:
         config["samtools"]
+    threads: 4
     log: "results/logs/snakelogs/sam_to_bam.{sample}.log"
     shell:
         """
-        samtools view -bS {input.sam_file} > {output.bam_file}
+        samtools view -@ {threads} -bS {input.sam_file} > {output.bam_file}
         """
 
 ##################################################################
@@ -225,11 +231,12 @@ rule sort_bam:
         bai="results/alignment/bam/{sample}.sorted.bam.bai"
     envmodules:
         config["samtools"]
+    threads: 4
     log: "results/logs/snakelogs/sort_bam.{sample}.log"
     shell:
         """
-        samtools sort -o {output.sorted_bam} {input.bam_file}
-        samtools index -@ 12 {output.sorted_bam} > {output.bai}
+        samtools sort -@ {threads} -o {output.sorted_bam} {input.bam_file}
+        samtools index -@ {threads} {output.sorted_bam} > {output.bai}
         """
 
 ##################################################################
@@ -247,11 +254,12 @@ rule make_bigwig_raw:
         binSize=config["binSize"]
     envmodules:
         config["deeptools"]
+    threads: 4
     log: "results/logs/snakelogs/make_bigwig_raw.{sample}.log"
     shell:
         """
-        bamCoverage -b {input.sorted_bam} -o {output.bigwig} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize}
-        bamCoverage -b {input.sorted_bam} -o {output.bigwig_cpm} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize} --normalizeUsing CPM
+        bamCoverage -p {threads} -b {input.sorted_bam} -o {output.bigwig} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize}
+        bamCoverage -p {threads} -b {input.sorted_bam} -o {output.bigwig_cpm} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize} --normalizeUsing CPM
         """
 
 
@@ -267,10 +275,11 @@ rule calculate_total_reads:
         scale_factor="results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt"
     envmodules:
         config["samtools"]
+    threads: 2
     log: "results/logs/snakelogs/calculate_total_reads.{sample}.log"
     shell:
         """
-        total_reads=$(samtools view -c -F 4 {input.sorted_bam})
+        total_reads=$(samtools view -@ {threads} -c -F 4 {input.sorted_bam})
         scale_factor=$(echo "1 / ($total_reads / 1000000)" | bc -l)
         echo $total_reads > {output.total_reads}
         echo $scale_factor > {output.scale_factor}
@@ -291,11 +300,12 @@ rule make_bigwig_scaled:
         binSize=config["binSize"]
     envmodules:
         config["deeptools"]
+    threads: 4
     log: "results/logs/snakelogs/make_bigwig_scaled.{sample}.log"
     shell:
         """
         scale_factor=$(cat {input.scale_factor})
-        bamCoverage -b {input.sorted_bam} -o {output.bigwig_scaled} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize} --scaleFactor $scale_factor
+        bamCoverage -p {threads} -b {input.sorted_bam} -o {output.bigwig_scaled} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize} --scaleFactor $scale_factor
         """
 
 ##################################################################
@@ -314,6 +324,7 @@ rule macs2_peak_calling:
         output_dir="results/peakCalling/"
     envmodules:
         config["macs2"]
+    threads: 8
     log: "results/logs/snakelogs/macs2_peak_calling.{sample}.log"
     shell:
         """
@@ -338,6 +349,7 @@ rule generate_alignment_plots:
     envmodules:
         config["R"],
         config["bioconductor"]
+    threads: 2
     log:
         "results/logs/snakelogs/generate_alignment_plots.log"
     shell:
@@ -357,10 +369,11 @@ rule generate_fragmentLength_files:
         fragLen="results/alignment/sam/{sample}_fragmentLen.txt"
     envmodules:
         config["samtools"]
+    threads: 2
     log: "results/logs/snakelogs/generate_fragmentLength_files.{sample}.log"
     shell:
         """
-        samtools view -F 0x04 {input.sam_file} | \
+        samtools view -@ {threads} -F 0x04 {input.sam_file} | \
         awk -F'\\t' '{{print ($9 < 0 ? -$9 : $9)}}' | \
         sort | uniq -c | \
         awk -v OFS="\\t" '{{print $2, $1/2}}' > {output.fragLen}
@@ -381,6 +394,7 @@ rule generate_fragLen_plots:
     envmodules:
         config["R"],
         config["bioconductor"]
+    threads: 2
     log:
         "results/logs/snakelogs/generate_fragLen_plots.log"
     shell:
@@ -406,6 +420,7 @@ rule process_fragment_length:
     envmodules:
         config["samtools"],
         config["bedtools"]
+    threads: 4
     log: "results/logs/snakelogs/process_fragment_length.{sample}.log"
     shell:
         """
@@ -414,7 +429,7 @@ rule process_fragment_length:
         histName=$(basename "{input.sam_file}")
 
         # Filter and keep the mapped read pairs
-        samtools view -bS -F 0x04 {input.sam_file} -o {output.mapped_bam}
+        samtools view -@ {threads} -bS -F 0x04 {input.sam_file} -o {output.mapped_bam}
 
         # Convert into bed file format
         bedtools bamtobed -i {output.mapped_bam} -bedpe > {output.bed_file}
@@ -445,11 +460,12 @@ rule calculate_frip:
     envmodules:
         config["samtools"],
         config["bedtools"]
+    threads: 2
     log: "results/logs/snakelogs/calculate_frip.{sample}.log"
     shell:
         """
         # Count total mapped reads
-        total_mapped=$(samtools view -c {input.mapped_bam})
+        total_mapped=$(samtools view -@ {threads} -c {input.mapped_bam})
         
         # Intersect fragments with peaks
         intersected=$(bedtools intersect -a {input.clean_bed} -b {input.peak_bed} -u | wc -l)
@@ -476,6 +492,7 @@ rule generate_correlation_plot:
         work_dir="results/plots"
     envmodules:
         config["R"]
+    threads: 2
     log: "results/logs/snakelogs/generate_correlation_plot.log"
     shell:
         """
@@ -498,6 +515,7 @@ rule generate_peak_summary_plots:
     envmodules:
         config["R"],
         config["bioconductor"]
+    threads: 2
     log:
         "results/logs/snakelogs/generate_peak_summary_plots.log"
     shell:
