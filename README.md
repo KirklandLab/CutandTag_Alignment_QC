@@ -222,7 +222,7 @@ snakemake -npr
 ```
 9E. Run on HPC with config.yml options
 ```
-sbatch --wrap="snakemake -j 999 --resources mem_mb=200000 --use-envmodules --latency-wait 300 --cluster-config config/cluster_config.yml --cluster 'sbatch -A {cluster.account} -p {cluster.partition} --cpus-per-task {cluster.cpus-per-task}  -t {cluster.time} --mem {cluster.mem} --output {cluster.output}'"
+sbatch --wrap="snakemake -j 50 --resources mem_mb=200000 --use-envmodules --latency-wait 300 --cluster-config config/cluster_config.yml --cluster 'sbatch -A {cluster.account} -p {cluster.partition} --cpus-per-task {cluster.threads} -t {cluster.time} --mem {cluster.mem} --job-name {cluster.name} --output {cluster.output}'"
 ```
 
 ---
