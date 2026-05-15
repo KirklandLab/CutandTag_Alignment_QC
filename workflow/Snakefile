@@ -522,3 +522,4 @@ rule generate_peak_summary_plots:
         """
         Rscript scripts/plot_peakSummary.R "{input.peak_list}" "{input.frip_list}" {input.metadata} {params.out_dir}
         """
+
