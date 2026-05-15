@@ -19,12 +19,20 @@ duplicate_cap_max: 5
 # ------------------------------------------------------------
 use_downsampling: true
 
-# Target number of mapped fragments/read pairs after duplicate capping.
-# Samples below this number are NOT downsampled.
+# Options:
+#   "manual" = use downsample_target_fragments
+#   "lowest_with_floor" = use the lowest post-duplicate-cap sample,
+#                         but only if it is >= downsample_minimum_acceptable_fragments
+downsample_target_mode: "manual"
+
+# Used only when downsample_target_mode: "manual"
 downsample_target_fragments: 10000000
 
-# Keep seed fixed for reproducibility
-# Change if you want a sensitivity run.
+# Used only when downsample_target_mode: "lowest_with_floor"
+# If the lowest post-duplicate-cap sample is below this, the pipeline falls back to manual target.
+downsample_minimum_acceptable_fragments: 8000000
+
+# Keep seed fixed for reproducibility.
 downsample_seed: 12345
 
 # ------------------------------------------------------------
