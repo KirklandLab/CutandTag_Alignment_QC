@@ -71,6 +71,14 @@ downsample_analysis_bam:
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
 
+calculate_downsample_target:
+    cpus-per-task: 2
+    mem: 16G
+    time: 01:00:00
+    name: "{rule}"
+    output: results/logs/{rule}.log
+    error: results/logs/{rule}.err
+
 summarize_duplicate_metrics:
     cpus-per-task: 2
     mem: 16G
@@ -119,7 +127,15 @@ generate_alignment_plots:
     output: results/logs/{rule}.log
     error: results/logs/{rule}.err
 
-generate_fragmentLength_files:
+generate_fragmentLength_raw:
+    cpus-per-task: 2
+    mem: 16G
+    time: 01:30:00
+    name: "{rule}.{wildcards.sample}"
+    output: results/logs/{rule}.{wildcards.sample}.log
+    error: results/logs/{rule}.{wildcards.sample}.err
+
+generate_fragmentLength_final:
     cpus-per-task: 2
     mem: 16G
     time: 01:30:00
