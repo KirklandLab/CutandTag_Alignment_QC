@@ -55,6 +55,30 @@ sort_bam:
     output: results/logs/{rule}.{wildcards.sample}.log
     error: results/logs/{rule}.{wildcards.sample}.err
 
+cap_duplicate_fragments:
+    cpus-per-task: 4
+    mem: 32G
+    time: 03:00:00
+    name: "{rule}.{wildcards.sample}"
+    output: results/logs/{rule}.{wildcards.sample}.log
+    error: results/logs/{rule}.{wildcards.sample}.err
+
+downsample_analysis_bam:
+    cpus-per-task: 4
+    mem: 32G
+    time: 02:00:00
+    name: "{rule}.{wildcards.sample}"
+    output: results/logs/{rule}.{wildcards.sample}.log
+    error: results/logs/{rule}.{wildcards.sample}.err
+
+summarize_duplicate_metrics:
+    cpus-per-task: 2
+    mem: 16G
+    time: 01:00:00
+    name: "{rule}"
+    output: results/logs/{rule}.log
+    error: results/logs/{rule}.err
+
 make_bigwig_raw:
     cpus-per-task: 4
     mem: 32G
