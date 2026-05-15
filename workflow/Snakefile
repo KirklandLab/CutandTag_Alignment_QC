@@ -65,6 +65,13 @@ def fq_dict_from_sample(wildcards):
     "fq2": samples_table.loc[wildcards.sample, "fastq2"]
   }
 
+USE_DUP_CAP = bool(config.get("use_duplicate_cap", False))
+DUP_CAP_MAX = int(config.get("duplicate_cap_max", 0))
+
+USE_DOWNSAMPLING = bool(config.get("use_downsampling", False))
+DOWNSAMPLE_TARGET = int(config.get("downsample_target_fragments", 0))
+DOWNSAMPLE_SEED = int(config.get("downsample_seed", 12345))
+
 ##################################################################
 ##                          Rule All                            ##
 ##################################################################
@@ -77,6 +84,13 @@ rule all:
         expand("results/alignment/sam/{sample}_bowtie2.sam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}_bowtie2.bam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}.sorted.bam", sample=samples_table.index),
+        expand("results/alignment/bam/dedup_cap/{sample}.dupCap.bam", sample=samples_table.index),
+        expand("results/alignment/bam/analysis/{sample}.analysis.bam", sample=samples_table.index),
+        expand("results/qc/duplicates/{sample}.duplicate_metrics.txt", sample=samples_table.index),
+        expand("results/qc/downsampling/{sample}.downsample_metrics.txt", sample=samples_table.index),
+        "results/qc/duplicates/duplicate_metrics_summary.tsv",
+        "results/plots/duplicate_metrics_barplot.png",
+        "results/qc/downsampling/downsample_metrics_summary.tsv",
         expand("results/alignment/bigwig/{sample}_raw.bw", sample=samples_table.index),
         expand("results/alignment/{sample}_total_reads.txt", sample=samples_table.index),
         expand("results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt", sample=samples_table.index),
@@ -240,12 +254,134 @@ rule sort_bam:
         """
 
 ##################################################################
+##              Duplicate Capping by Fragment Coordinate         ##
+##################################################################
+
+rule cap_duplicate_fragments:
+    input:
+        sorted_bam="results/alignment/bam/{sample}.sorted.bam",
+        bai="results/alignment/bam/{sample}.sorted.bam.bai"
+    output:
+        bam="results/alignment/bam/dedup_cap/{sample}.dupCap.bam",
+        bai="results/alignment/bam/dedup_cap/{sample}.dupCap.bam.bai",
+        names="results/qc/duplicates/{sample}.dupCap.keep_names.txt",
+        metrics="results/qc/duplicates/{sample}.duplicate_metrics.txt"
+    params:
+        max_dups=lambda wildcards: DUP_CAP_MAX if USE_DUP_CAP else 0
+    envmodules:
+        config["samtools"]
+    threads: 4
+    log:
+        "results/logs/snakelogs/cap_duplicate_fragments.{sample}.log"
+    shell:
+        """
+        mkdir -p results/alignment/bam/dedup_cap results/qc/duplicates
+
+        samtools view -@ {threads} {input.sorted_bam} | \
+        python scripts/select_duplicate_capped_names.py \
+            --sample {wildcards.sample} \
+            --max-dups {params.max_dups} \
+            --names-out {output.names} \
+            --metrics-out {output.metrics}
+
+        samtools view -@ {threads} -b -N {output.names} {input.sorted_bam} | \
+            samtools sort -@ {threads} -o {output.bam}
+
+        samtools index -@ {threads} {output.bam} {output.bai}
+        """
+
+##################################################################
+##                 Optional Downsampling After Dup Cap           ##
+##################################################################
+
+rule downsample_analysis_bam:
+    input:
+        bam="results/alignment/bam/dedup_cap/{sample}.dupCap.bam",
+        bai="results/alignment/bam/dedup_cap/{sample}.dupCap.bam.bai"
+    output:
+        bam="results/alignment/bam/analysis/{sample}.analysis.bam",
+        bai="results/alignment/bam/analysis/{sample}.analysis.bam.bai",
+        metrics="results/qc/downsampling/{sample}.downsample_metrics.txt"
+    params:
+        use_downsampling=USE_DOWNSAMPLING,
+        target=DOWNSAMPLE_TARGET,
+        seed=DOWNSAMPLE_SEED
+    envmodules:
+        config["samtools"]
+    threads: 4
+    log:
+        "results/logs/snakelogs/downsample_analysis_bam.{sample}.log"
+    shell:
+        """
+        mkdir -p results/alignment/bam/analysis results/qc/downsampling
+
+        # Count mapped read1 records as mapped fragments/read pairs.
+        fragments_before=$(samtools view -@ {threads} -c -f 64 -F 12 {input.bam})
+
+        if [ "{params.use_downsampling}" = "True" ] && [ "{params.target}" -gt 0 ] && [ "$fragments_before" -gt "{params.target}" ]; then
+            fraction=$(awk -v target="{params.target}" -v total="$fragments_before" 'BEGIN {{ printf "%.10f", target / total }}')
+
+            samtools view -@ {threads} -b \
+                --subsample-seed {params.seed} \
+                --subsample $fraction \
+                {input.bam} | \
+                samtools sort -@ {threads} -o {output.bam}
+
+            action="downsampled"
+        else
+            cp {input.bam} {output.bam}
+            action="not_downsampled"
+        fi
+
+        samtools index -@ {threads} {output.bam} {output.bai}
+
+        fragments_after=$(samtools view -@ {threads} -c -f 64 -F 12 {output.bam})
+
+        echo -e "Sample\\tAction\\tTargetFragments\\tSeed\\tFragmentsBefore\\tFragmentsAfter" > {output.metrics}
+        echo -e "{wildcards.sample}\\t$action\\t{params.target}\\t{params.seed}\\t$fragments_before\\t$fragments_after" >> {output.metrics}
+        """
+
+##################################################################
+##                  Duplicate Metrics Summary Plot               ##
+##################################################################
+
+rule summarize_duplicate_metrics:
+    input:
+        dup_metrics=expand("results/qc/duplicates/{sample}.duplicate_metrics.txt", sample=samples_table.index),
+        down_metrics=expand("results/qc/downsampling/{sample}.downsample_metrics.txt", sample=samples_table.index),
+        metadata="config/samples.csv"
+    output:
+        dup_summary="results/qc/duplicates/duplicate_metrics_summary.tsv",
+        down_summary="results/qc/downsampling/downsample_metrics_summary.tsv",
+        plot="results/plots/duplicate_metrics_barplot.png"
+    params:
+        out_dir="results/plots"
+    envmodules:
+        config["R"],
+        config["bioconductor"]
+    threads: 2
+    log:
+        "results/logs/snakelogs/summarize_duplicate_metrics.log"
+    shell:
+        """
+        mkdir -p results/qc/duplicates results/qc/downsampling results/plots
+
+        Rscript scripts/plot_duplicate_metrics.R \
+            "{input.dup_metrics}" \
+            "{input.down_metrics}" \
+            {input.metadata} \
+            {output.dup_summary} \
+            {output.down_summary} \
+            {output.plot}
+        """
+
+##################################################################
 ##                       BigWig Generation                      ##
 ##################################################################
 
 rule make_bigwig_raw:
     input:
-        sorted_bam="results/alignment/bam/{sample}.sorted.bam"
+        sorted_bam="results/alignment/bam/analysis/{sample}.analysis.bam"
     output:
         bigwig="results/alignment/bigwig/{sample}_raw.bw",
         bigwig_cpm="results/alignment/bigwig/{sample}_cpm.bw"
@@ -269,7 +405,7 @@ rule make_bigwig_raw:
 
 rule calculate_total_reads:
     input:
-        sorted_bam="results/alignment/bam/{sample}.sorted.bam"
+        sorted_bam="results/alignment/bam/analysis/{sample}.analysis.bam"
     output:
         total_reads="results/alignment/{sample}_total_reads.txt",
         scale_factor="results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt"
@@ -291,7 +427,7 @@ rule calculate_total_reads:
 
 rule make_bigwig_scaled:
     input:
-        sorted_bam="results/alignment/bam/{sample}.sorted.bam",
+        sorted_bam="results/alignment/bam/analysis/{sample}.analysis.bam",
         scale_factor="results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt"
     output:
         bigwig_scaled="results/alignment/bigwig/scale_reads/{sample}_scaled.bw"
@@ -314,7 +450,7 @@ rule make_bigwig_scaled:
 
 rule macs2_peak_calling:
     input:
-        bam="results/alignment/bam/{sample}.sorted.bam"
+        bam="results/alignment/bam/analysis/{sample}.analysis.bam"
     output:
         peaks="results/peakCalling/{sample}_0.05_peaks.narrowPeak"
     params:
@@ -522,4 +658,3 @@ rule generate_peak_summary_plots:
         """
         Rscript scripts/plot_peakSummary.R "{input.peak_list}" "{input.frip_list}" {input.metadata} {params.out_dir}
         """
-
