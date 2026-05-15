@@ -98,17 +98,18 @@ rule all:
         expand("results/alignment/bam/analysis/{sample}.analysis.bam", sample=samples_table.index),
         expand("results/qc/duplicates/{sample}.duplicate_metrics.txt", sample=samples_table.index),
         expand("results/qc/downsampling/{sample}.downsample_metrics.txt", sample=samples_table.index),
-        "results/qc/duplicates/duplicate_metrics_summary.tsv",
-        "results/plots/duplicate_metrics_barplot.png",
-        "results/qc/downsampling/downsample_metrics_summary.tsv",
+        "results/qc/downsampling/downsample_target.txt",
+        "results/qc/duplicates_downsampling/duplicate_downsampling_summary.tsv",
+        "results/plots/duplicate_downsampling_summary.png",
         expand("results/alignment/bigwig/{sample}_raw.bw", sample=samples_table.index),
         expand("results/alignment/{sample}_total_reads.txt", sample=samples_table.index),
         expand("results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt", sample=samples_table.index),
         expand("results/alignment/bigwig/scale_reads/{sample}_scaled.bw", sample=samples_table.index),
         expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index),
-        expand("results/alignment/sam/{sample}_fragmentLen.txt", sample=samples_table.index),
-        "results/plots/alignment_summary_plot.png",
+        expand("results/alignment/fragment_length/raw/{sample}_fragmentLen.raw.txt", sample=samples_table.index),
+        expand("results/alignment/fragment_length/final/{sample}_fragmentLen.final.txt", sample=samples_table.index),
         "results/plots/fragment_length_plot.png",
+        "results/plots/alignment_summary_plot.png",
         expand("results/alignment/bed/{sample}_bowtie2.fragmentsCount.bin500.bed", sample=samples_table.index),
         expand("results/alignment/bam/{sample}_frip.txt", sample=samples_table.index),
         "results/plots/fragCount_correlation_plot.pdf",
@@ -592,26 +593,49 @@ rule generate_fragmentLength_files:
         """
 
 ##################################################################
-##                    Fragment Length Plot                      ##
+##             Raw Fragment Length Files from Sorted BAM         ##
 ##################################################################
 
-rule generate_fragLen_plots:
+rule generate_fragmentLength_raw:
     input:
-        sample_list=expand("results/alignment/sam/{sample}_fragmentLen.txt", sample=samples_table.index),
-        metadata="config/samples.csv"
+        bam_file="results/alignment/bam/{sample}.sorted.bam"
     output:
-        "results/plots/fragment_length_plot.png"
-    params:
-        out_dir="results/plots"
+        fragLen="results/alignment/fragment_length/raw/{sample}_fragmentLen.raw.txt"
     envmodules:
-        config["R"],
-        config["bioconductor"]
+        config["samtools"]
     threads: 2
-    log:
-        "results/logs/snakelogs/generate_fragLen_plots.log"
+    log: "results/logs/snakelogs/generate_fragmentLength_raw.{sample}.log"
     shell:
         """
-        Rscript scripts/plot_fragLength.R {input.sample_list} {input.metadata} {params.out_dir}
+        mkdir -p results/alignment/fragment_length/raw
+
+        samtools view -@ {threads} -f 64 -F 12 {input.bam_file} | \
+        awk -F'\\t' '$9 != 0 {{print ($9 < 0 ? -$9 : $9)}}' | \
+        sort | uniq -c | \
+        awk -v OFS="\\t" '{{print $2, $1}}' > {output.fragLen}
+        """
+
+##################################################################
+##            Final Fragment Length Files from Analysis BAM      ##
+##################################################################
+
+rule generate_fragmentLength_final:
+    input:
+        bam_file="results/alignment/bam/analysis/{sample}.analysis.bam"
+    output:
+        fragLen="results/alignment/fragment_length/final/{sample}_fragmentLen.final.txt"
+    envmodules:
+        config["samtools"]
+    threads: 2
+    log: "results/logs/snakelogs/generate_fragmentLength_final.{sample}.log"
+    shell:
+        """
+        mkdir -p results/alignment/fragment_length/final
+
+        samtools view -@ {threads} -f 64 -F 12 {input.bam_file} | \
+        awk -F'\\t' '$9 != 0 {{print ($9 < 0 ? -$9 : $9)}}' | \
+        sort | uniq -c | \
+        awk -v OFS="\\t" '{{print $2, $1}}' > {output.fragLen}
         """
 
 ##################################################################
@@ -620,7 +644,7 @@ rule generate_fragLen_plots:
 
 rule process_fragment_length:
     input:
-        sam_file="results/alignment/sam/{sample}_bowtie2.sam"
+        bam_file="results/alignment/bam/analysis/{sample}.analysis.bam"
     output:
         mapped_bam="results/alignment/bam/{sample}_bowtie2.mapped.bam",
         bed_file="results/alignment/bed/{sample}_bowtie2.bed",
@@ -636,26 +660,47 @@ rule process_fragment_length:
     log: "results/logs/snakelogs/process_fragment_length.{sample}.log"
     shell:
         """
-        # Set variables
-        sampleName={wildcards.sample}
-        histName=$(basename "{input.sam_file}")
+        mkdir -p results/alignment/bed
 
-        # Filter and keep the mapped read pairs
-        samtools view -@ {threads} -bS -F 0x04 {input.sam_file} -o {output.mapped_bam}
+        # Keep mapped reads from the final analysis BAM.
+        samtools view -@ {threads} -b -F 0x04 {input.bam_file} -o {output.mapped_bam}
 
-        # Convert into bed file format
+        # Convert into BEDPE format.
         bedtools bamtobed -i {output.mapped_bam} -bedpe > {output.bed_file}
 
-        # Keep the read pairs that are on the same chromosome and fragment length less than 1000bp
+        # Keep read pairs on the same chromosome with fragment length less than 1000 bp.
         awk '$1==$4 && $6-$2 < 1000 {{print $0}}' {output.bed_file} > {output.clean_bed}
 
-        # Only extract the fragment-related columns
+        # Extract fragment coordinates.
         cut -f 1,2,6 {output.clean_bed} | sort -k1,1 -k2,2n -k3,3n > {output.fragments_bed}
 
-        # Bin the fragment counts
+        # Bin fragment counts.
         awk -v w={params.binLen} '{{print $1, int(($2 + $3)/(2*w))*w + w/2}}' {output.fragments_bed} | \
         sort -k1,1V -k2,2n | uniq -c | \
         awk -v OFS="\\t" '{{print $2, $3, $1}}' | sort -k1,1V -k2,2n > {output.binned_counts}
+        """
+
+##################################################################
+##                    Fragment Length Plot                      ##
+##################################################################
+
+rule generate_fragLen_plots:
+    input:
+        sample_list=expand("results/alignment/fragment_length/final/{sample}_fragmentLen.final.txt", sample=samples_table.index),
+        metadata="config/samples.csv"
+    output:
+        "results/plots/fragment_length_plot.png"
+    params:
+        out_dir="results/plots"
+    envmodules:
+        config["R"],
+        config["bioconductor"]
+    threads: 2
+    log:
+        "results/logs/snakelogs/generate_fragLen_plots.log"
+    shell:
+        """
+        Rscript scripts/plot_fragLength.R {input.sample_list} {input.metadata} {params.out_dir}
         """
 
 ##################################################################
@@ -676,18 +721,14 @@ rule calculate_frip:
     log: "results/logs/snakelogs/calculate_frip.{sample}.log"
     shell:
         """
-        # Count total mapped reads
-        total_mapped=$(samtools view -@ {threads} -c {input.mapped_bam})
+        total_fragments=$(wc -l < {input.clean_bed})
         
-        # Intersect fragments with peaks
         intersected=$(bedtools intersect -a {input.clean_bed} -b {input.peak_bed} -u | wc -l)
         
-        # Calculate FRiP value
-        frip=$(echo "scale=4; ($intersected / $total_mapped) * 100" | bc)
+        frip=$(echo "scale=4; ($intersected / $total_fragments) * 100" | bc)
         
-        # Write to output
-        echo -e "Sample\\tTotalMapped\\tInPeaks\\tFRiP" > {output.frip_data}
-        echo -e "{wildcards.sample}\\t$total_mapped\\t$intersected\\t$frip" >> {output.frip_data}
+        echo -e "Sample\\tTotalFragments\\tFragmentsInPeaks\\tFRiP" > {output.frip_data}
+        echo -e "{wildcards.sample}\\t$total_fragments\\t$intersected\\t$frip" >> {output.frip_data}
         """
 
 ##################################################################
