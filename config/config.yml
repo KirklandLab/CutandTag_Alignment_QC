@@ -1,15 +1,50 @@
+# ------------------------------------------------------------
+# Alignment
+# ------------------------------------------------------------
 # Bowtie2 genome index path
 bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"   # mm10 genome index file path = "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"
                                                                              # GRCh38 genome index file path = "/hpc-prj/kirkland/shared/scripts/hg38_bowtie2_index/hg38"
 
+# ------------------------------------------------------------
+# Duplicate capping
+# ------------------------------------------------------------
+use_duplicate_cap: true
+
+# Maximum number of read-pair fragments allowed at the exact same fragment coordinate.
+# Recommended sensitivity runs: 3, 5, 8, and off.
+duplicate_cap_max: 5
+
+# ------------------------------------------------------------
+# Random downsampling
+# ------------------------------------------------------------
+use_downsampling: true
+
+# Target number of mapped fragments/read pairs after duplicate capping.
+# Samples below this number are NOT downsampled.
+downsample_target_fragments: 10000000
+
+# Keep seed fixed for reproducibility
+# Change if you want a sensitivity run.
+downsample_seed: 12345
+
+# ------------------------------------------------------------
+# Peak Calling
+# ------------------------------------------------------------
 # MACS2 parameters for peak calling
 genome_size: "mm"                                                            # For human genome - "hs" / for mouse genome - "mm"
 macs2_qvalue: 0.05                                                           # q-value cutoff for significant peaks
 
+# ------------------------------------------------------------
+# BigWigs
+# ------------------------------------------------------------
 # bamCoverage parameters for BigWig generation
 binSize: 50                                                                  # default bin = 50 
 effective_genome_size: 2730871774                                            # mm10 genome size - 2730871774       
                                                                              # GRCh38 genome size - 2913022398
+
+# ------------------------------------------------------------
+# Module Versions
+# ------------------------------------------------------------
 # Modules (for loading software dependencies)
 fastqc: "fastqc/0.12.1"
 multiqc: "multiqc/1.21"
