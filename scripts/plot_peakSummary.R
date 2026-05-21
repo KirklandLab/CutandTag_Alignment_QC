@@ -89,43 +89,77 @@ fig2 <- ggplot(peakData, aes(x = Histone, y = width, fill = Histone)) +
 # -------------------------
 # Plot 3: Reproducibility
 # -------------------------
+# Compare all sample pairs within each histone group.
+
 reproducibility_data <- data.frame()
 
-for (hist in unique(peakData$Histone)) {
-  reps <- unique(peakData$Replicate[peakData$Histone == hist])
-  if (length(reps) >= 2) {
-    rep_combinations <- combn(reps, 2)
-    for (k in 1:ncol(rep_combinations)) {
-      rep1_id <- rep_combinations[1, k]
-      rep2_id <- rep_combinations[2, k]
-      rep1 <- sample_metadata$sample[sample_metadata$histone == hist & sample_metadata$replicate == rep1_id]
-      rep2 <- sample_metadata$sample[sample_metadata$histone == hist & sample_metadata$replicate == rep2_id]
+for (hist in unique(as.character(peakData$Histone))) {
+  
+  # Get all samples for this histone group from the metadata.
+  hist_samples <- sample_metadata$sample[sample_metadata$histone == hist]
+  
+  # Keep only samples that actually have peak GRanges loaded.
+  hist_samples <- hist_samples[hist_samples %in% names(peak_granges_list)]
+  
+  # Need at least two samples to calculate pairwise reproducibility.
+  if (length(hist_samples) >= 2) {
+    
+    sample_combinations <- combn(hist_samples, 2, simplify = FALSE)
+    
+    for (pair in sample_combinations) {
+      sample1 <- pair[1]
+      sample2 <- pair[2]
       
-      if (rep1 %in% names(peak_granges_list) && rep2 %in% names(peak_granges_list)) {
-        overlaps <- findOverlaps(peak_granges_list[[rep1]], peak_granges_list[[rep2]])
-        reproducible_count <- length(unique(queryHits(overlaps)))
-        total_peaks <- (length(peak_granges_list[[rep1]]) + length(peak_granges_list[[rep2]])) / 2
-        reproducibility_rate <- (reproducible_count / total_peaks) * 100
-        
-        reproducibility_data <- rbind(reproducibility_data,
-                                      data.frame(Histone = hist,
-                                                 ReplicatePair = paste(rep1_id, rep2_id, sep = "-"),
-                                                 ReproducibilityRate = reproducibility_rate))
+      peaks1 <- peak_granges_list[[sample1]]
+      peaks2 <- peak_granges_list[[sample2]]
+      
+      # Skip if one sample has no peaks.
+      if (length(peaks1) == 0 || length(peaks2) == 0) {
+        next
       }
+      
+      overlaps <- findOverlaps(peaks1, peaks2)
+      
+      reproducible_count <- length(unique(queryHits(overlaps)))
+      total_peaks <- (length(peaks1) + length(peaks2)) / 2
+      reproducibility_rate <- (reproducible_count / total_peaks) * 100
+      
+      rep1_id <- sample_metadata$replicate[sample_metadata$sample == sample1]
+      rep2_id <- sample_metadata$replicate[sample_metadata$sample == sample2]
+      
+      reproducibility_data <- rbind(
+        reproducibility_data,
+        data.frame(
+          Histone = hist,
+          SamplePair = paste(sample1, sample2, sep = " vs "),
+          ReplicatePair = paste(rep1_id, rep2_id, sep = "-"),
+          ReproducibilityRate = reproducibility_rate,
+          stringsAsFactors = FALSE
+        )
+      )
     }
   }
 }
 
 if (nrow(reproducibility_data) > 0) {
-  fig3 <- ggplot(reproducibility_data, aes(x = Histone, y = ReproducibilityRate, fill = Histone)) +
-    geom_bar(stat = "identity", position = position_dodge()) +
-    geom_text(aes(label = round(ReproducibilityRate, 2), group = ReplicatePair),
-              vjust = -0.5, position = position_dodge(0.9)) +
-    theme_bw(base_size = 18) +
+  fig3 <- ggplot(
+    reproducibility_data,
+    aes(x = Histone, y = ReproducibilityRate, fill = Histone)
+  ) +
+    geom_col(position = position_dodge()) +
+    geom_text(
+      aes(label = round(ReproducibilityRate, 1)),
+      vjust = -0.5,
+      size = 3
+    ) +
+    facet_wrap(~ SamplePair) +
+    theme_bw(base_size = 14) +
     ylab("% of Peaks Reproduced") +
     xlab("") +
-    facet_wrap(~ ReplicatePair) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+    theme(
+      axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+      strip.text = element_text(size = 8)
+    )
 } else {
   fig3 <- ggplot() +
     geom_blank() +
