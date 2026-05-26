@@ -8,8 +8,8 @@ configfile: "config/config.yml"
 # Email: kevinboyd76@gmail.com
 # GitHub: https://github.com/kevinboyd76
 # Date Created: October 18, 2024
-# Last Modified: August 4, 2025
-# Version: 1.2.0
+# Last Modified: May 26, 2026
+# Version: 2.0.0
 #
 # Description: This Snakemake workflow processes Cut-and-Tag sequencing data
 # from raw paired-end FASTQ files through quality control, read alignment using
@@ -17,6 +17,9 @@ configfile: "config/config.yml"
 # peak calling via MACS2, fragment length analysis, and QC visualizations.
 # The pipeline outputs scaled and normalized coverage tracks, peak files,
 # FRiP scores, and summary plots to assess quality and replicate consistency.
+# Update May 2026: This workflow now has two settings for random downsampling 
+# (manual and lowest sample with floor). It also includes a duplicate removal 
+# step to minimize PCR duplicates.
 # 
 # Adapted from: Ye Zheng, Kami Ahmad, Steven Henikoff
 # Original Protocol DOI: dx.doi.org/10.17504/protocols.io.bjk2kkye
