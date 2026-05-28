@@ -105,9 +105,6 @@ rule all:
         "results/qc/duplicates_downsampling/duplicate_downsampling_summary.tsv",
         "results/plots/duplicate_downsampling_summary.png",
         expand("results/alignment/bigwig/{sample}_raw.bw", sample=samples_table.index),
-        expand("results/alignment/{sample}_total_reads.txt", sample=samples_table.index),
-        expand("results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt", sample=samples_table.index),
-        expand("results/alignment/bigwig/scale_reads/{sample}_scaled.bw", sample=samples_table.index),
         expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index),
         expand("results/alignment/fragment_length/raw/{sample}_fragmentLen.raw.txt", sample=samples_table.index),
         expand("results/alignment/fragment_length/final/{sample}_fragmentLen.final.txt", sample=samples_table.index),
@@ -268,7 +265,7 @@ rule sort_bam:
         """
 
 ##################################################################
-##              Duplicate Capping by Fragment Coordinate         ##
+##              Duplicate Capping by Fragment Coordinate        ##
 ##################################################################
 
 rule cap_duplicate_fragments:
@@ -305,7 +302,7 @@ rule cap_duplicate_fragments:
         """
 
 ##################################################################
-##                 Calculate Downsampling Target                 ##
+##                 Calculate Downsampling Target                ##
 ##################################################################
 
 rule calculate_downsample_target:
@@ -366,7 +363,7 @@ rule calculate_downsample_target:
         """
 
 ##################################################################
-##                 Optional Downsampling After Dup Cap           ##
+##                Optional: Downsampling After Dup Cap          ##
 ##################################################################
 
 rule downsample_analysis_bam:
@@ -422,7 +419,7 @@ rule downsample_analysis_bam:
         """
 
 ##################################################################
-##             Duplicate + Downsampling Metrics Summary          ##
+##             Duplicate + Downsampling Metrics Summary         ##
 ##################################################################
 
 rule summarize_duplicate_metrics:
@@ -478,52 +475,6 @@ rule make_bigwig_raw:
         bamCoverage -p {threads} -b {input.sorted_bam} -o {output.bigwig_cpm} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize} --normalizeUsing CPM
         """
 
-
-##################################################################
-##                  Total Reads and Scale Factor                ##
-##################################################################
-
-rule calculate_total_reads:
-    input:
-        sorted_bam="results/alignment/bam/analysis/{sample}.analysis.bam"
-    output:
-        total_reads="results/alignment/{sample}_total_reads.txt",
-        scale_factor="results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt"
-    envmodules:
-        config["samtools"]
-    threads: 2
-    log: "results/logs/snakelogs/calculate_total_reads.{sample}.log"
-    shell:
-        """
-        total_reads=$(samtools view -@ {threads} -c -F 4 {input.sorted_bam})
-        scale_factor=$(echo "1 / ($total_reads / 1000000)" | bc -l)
-        echo $total_reads > {output.total_reads}
-        echo $scale_factor > {output.scale_factor}
-        """
-
-##################################################################
-##              Scaled BigWig with Normalization                ##
-##################################################################
-
-rule make_bigwig_scaled:
-    input:
-        sorted_bam="results/alignment/bam/analysis/{sample}.analysis.bam",
-        scale_factor="results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt"
-    output:
-        bigwig_scaled="results/alignment/bigwig/scale_reads/{sample}_scaled.bw"
-    params:
-        genome_size=config["effective_genome_size"],
-        binSize=config["binSize"]
-    envmodules:
-        config["deeptools"]
-    threads: 4
-    log: "results/logs/snakelogs/make_bigwig_scaled.{sample}.log"
-    shell:
-        """
-        scale_factor=$(cat {input.scale_factor})
-        bamCoverage -p {threads} -b {input.sorted_bam} -o {output.bigwig_scaled} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize} --scaleFactor $scale_factor
-        """
-
 ##################################################################
 ##                        MACS2 Peak Calling                    ##
 ##################################################################
@@ -574,7 +525,7 @@ rule generate_alignment_plots:
         """
 
 ##################################################################
-##             Raw Fragment Length Files from Sorted BAM         ##
+##             Raw Fragment Length Files from Sorted BAM        ##
 ##################################################################
 
 rule generate_fragmentLength_raw:
@@ -597,7 +548,7 @@ rule generate_fragmentLength_raw:
         """
 
 ##################################################################
-##            Final Fragment Length Files from Analysis BAM      ##
+##            Final Fragment Length Files from Analysis BAM     ##
 ##################################################################
 
 rule generate_fragmentLength_final:
