@@ -2,7 +2,6 @@
 
 # Load required libraries
 library(dplyr)
-library(tidyr)
 library(corrplot)
 
 # Capture command-line arguments
@@ -37,12 +36,7 @@ for (file_path in input_files) {
 }
 
 # Calculate correlation matrix
-count_mat <- fragCount %>%
-  select(-chrom, -bin)
-
-count_mat <- as.data.frame(lapply(count_mat, as.numeric))
-
-M <- cor(log2(count_mat), use = "pairwise.complete.obs")
+M <- cor(fragCount %>% select(-chrom, -bin) %>% log2(), use = "complete.obs")
 
 # Dynamically set addrect based on the number of samples
 num_samples <- ncol(M)
