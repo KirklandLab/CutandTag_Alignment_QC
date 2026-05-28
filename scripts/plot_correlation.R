@@ -38,9 +38,13 @@ for (file_path in input_files) {
 
 # Calculate correlation matrix
 count_mat <- fragCount %>%
-  select(-chrom, -bin) %>%
-  mutate(across(everything(), ~ replace_na(.x, 0)))
+  select(-chrom, -bin)
 
+# Make sure columns are numeric
+count_mat <- as.data.frame(lapply(count_mat, as.numeric))
+
+# Use only bins observed in both samples for each pairwise comparison.
+# log2(count + 1) avoids problems if a true zero is ever present.
 M <- cor(log2(count_mat + 1), use = "pairwise.complete.obs")
 
 # Dynamically set addrect based on the number of samples
