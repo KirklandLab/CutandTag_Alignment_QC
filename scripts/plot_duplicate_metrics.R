@@ -94,6 +94,10 @@ dup_plot_df <- combined_df |>
       metric,
       pct_duplicate_before = "Before duplicate cap",
       pct_duplicate_after = "After duplicate cap"
+    ),
+    metric = factor(
+      metric,
+      levels = c("Before duplicate cap", "After duplicate cap")
     )
   )
 
@@ -124,11 +128,52 @@ read_plot_df <- combined_df |>
     )
   )
 
+removed_label_df <- combined_df |>
+  mutate(
+    label = paste0("-", format(removed_fragments, big.mark = ","))
+  )
+
+dup_cap_label <- unique(combined_df$max_dups)
+dup_cap_label <- dup_cap_label[!is.na(dup_cap_label)]
+
+if (length(dup_cap_label) == 1) {
+  dup_cap_title <- paste0("Duplicate burden before and after duplicate capping (cap = ", dup_cap_label, ")")
+} else {
+  dup_cap_title <- "Duplicates before and after duplicate capping"
+}
+
+downsample_target <- down_target$target_fragments[1]
+downsample_mode <- down_target$mode[1]
+
+if (!is.na(downsample_target) && downsample_target > 0) {
+  downsample_title <- paste0(
+    "Fragments retained after duplicate capping and downsampling",
+    " (target = ",
+    format(downsample_target, big.mark = ","),
+    "; mode = ",
+    downsample_mode,
+    ")"
+  )
+} else {
+  downsample_title <- "Fragments retained after duplicate capping and downsampling (downsampling disabled)"
+}
+
 p1 <- ggplot(
   dup_plot_df,
   aes(x = sample, y = percent_duplicate, fill = metric)
 ) +
   geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  geom_text(
+    data = removed_label_df,
+    aes(
+      x = sample,
+      y = pmax(pct_duplicate_before, pct_duplicate_after, na.rm = TRUE),
+      label = label
+    ),
+    inherit.aes = FALSE,
+    vjust = -0.4,
+    size = 3
+  ) +
   facet_wrap(~ histone, scales = "free_x") +
   theme_bw(base_size = 12) +
   theme(
@@ -139,7 +184,10 @@ p1 <- ggplot(
     x = "Sample",
     y = "% duplicate fragments",
     fill = "",
-    title = "Duplicate burden before and after duplicate capping"
+    title = dup_cap_title
+  ) +
+  expand_limits(
+    y = max(dup_plot_df$percent_duplicate, na.rm = TRUE) * 1.15
   )
 
 p2 <- ggplot(
@@ -157,7 +205,7 @@ p2 <- ggplot(
     x = "Sample",
     y = "Mapped fragments / read pairs",
     fill = "",
-    title = "Fragments retained after duplicate capping and downsampling"
+    title = downsample_title
   )
 
 p <- p1 / p2
