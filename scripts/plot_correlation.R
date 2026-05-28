@@ -36,7 +36,11 @@ for (file_path in input_files) {
 }
 
 # Calculate correlation matrix
-M <- cor(fragCount %>% select(-chrom, -bin) %>% log2(), use = "complete.obs")
+count_mat <- fragCount %>%
+  select(-chrom, -bin) %>%
+  mutate(across(everything(), ~ replace_na(.x, 0)))
+
+M <- cor(log2(count_mat + 1), use = "pairwise.complete.obs")
 
 # Dynamically set addrect based on the number of samples
 num_samples <- ncol(M)
