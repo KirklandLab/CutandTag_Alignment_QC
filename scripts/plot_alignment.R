@@ -43,10 +43,25 @@ for (file_path in input_files) {
   
   # Extract alignment metrics (using line assumptions from Bowtie2 output)
   sequencingDepth <- as.numeric(gsub("[^0-9]", "", alignRes$V1[1]))  # Total reads
-  mappedFragNum <- as.numeric(gsub("[^0-9]", "", alignRes$V1[4])) + 
-                   as.numeric(gsub("[^0-9]", "", alignRes$V1[5]))    # Mapped fragments
-  alignmentRate <- as.numeric(gsub("[^0-9.]", "", alignRes$V1[6]))   # Aligned %
-  unalignedRate <- 100 - alignmentRate
+
+  concordant_zero <- as.numeric(gsub("[^0-9]", "", alignRes$V1[3]))
+  concordant_one <- as.numeric(gsub("[^0-9]", "", alignRes$V1[4]))
+  concordant_multi <- as.numeric(gsub("[^0-9]", "", alignRes$V1[5]))
+
+  mappedFragNum <- concordant_one + concordant_multi
+  alignmentRate <- as.numeric(gsub("[^0-9.]", "", alignRes$V1[6]))
+
+  uniqueMappedRate <- ifelse(
+    sequencingDepth > 0,
+    100 * concordant_one / sequencingDepth,
+    NA_real_
+  )
+
+  multiMappedRate <- ifelse(
+    sequencingDepth > 0,
+    100 * concordant_multi / sequencingDepth,
+    NA_real_
+  )
 
   # Append results
   alignResult <- rbind(
@@ -58,7 +73,8 @@ for (file_path in input_files) {
       SequencingDepth = sequencingDepth,
       MappedFragNum = mappedFragNum,
       AlignmentRate = alignmentRate,
-      UnalignedRate = unalignedRate
+      UniqueMappedRate = uniqueMappedRate,
+      MultiMappedRate = multiMappedRate
     )
   )
 }
@@ -100,13 +116,13 @@ fig3 <- ggplot(alignResult, aes(x = Histone, y = AlignmentRate, fill = Histone))
   ggtitle("Alignment Rate per Histone") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
-fig4 <- ggplot(alignResult, aes(x = Histone, y = UnalignedRate, fill = Histone)) +
+fig4 <- ggplot(alignResult, aes(x = Histone, y = UniqueMappedRate, fill = Histone)) +
   geom_boxplot() +
   geom_jitter(aes(color = Replicate), width = 0.2) +
   theme_bw(base_size = 14) +
-  ylab("Unaligned Rate (%)") +
+  ylab("Unique Concordant Alignment Rate (%)") +
   xlab("") +
-  ggtitle("Unaligned Rate per Histone") +
+  ggtitle("Uniquely Mapped Concordant Pairs per Histone") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
 # -------------------------
