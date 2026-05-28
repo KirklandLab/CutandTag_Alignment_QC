@@ -65,7 +65,7 @@ peakData$Replicate <- as.factor(peakData$Replicate)
 # Plot 1: Number of Peaks
 # -------------------------
 fig1 <- peakData %>%
-  group_by(Histone, Replicate) %>%
+  group_by(sampleInfo, Histone, Replicate) %>%
   summarise(peakN = n(), .groups = "drop") %>%
   ggplot(aes(x = Histone, y = peakN, fill = Histone)) +
   geom_boxplot() +
