@@ -105,6 +105,7 @@ rule all:
         "results/qc/duplicates_downsampling/duplicate_downsampling_summary.tsv",
         "results/plots/duplicate_downsampling_summary.png",
         expand("results/alignment/bigwig/{sample}_raw.bw", sample=samples_table.index),
+        expand("results/alignment/bigwig/{sample}_cpm.bw", sample=samples_table.index),
         expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index),
         expand("results/alignment/fragment_length/raw/{sample}_fragmentLen.raw.txt", sample=samples_table.index),
         expand("results/alignment/fragment_length/final/{sample}_fragmentLen.final.txt", sample=samples_table.index),
