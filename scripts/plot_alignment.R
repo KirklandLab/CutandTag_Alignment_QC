@@ -50,9 +50,11 @@ for (file_path in input_files) {
   }
 
   get_percent <- function(pattern) {
-    line <- grep(pattern, lines, value = TRUE)
-    if (length(line) == 0) return(NA_real_)
-    as.numeric(sub(".*?([0-9.]+)%.*", "\\1", line[1]))
+  line <- grep(pattern, lines, value = TRUE)
+  if (length(line) == 0) return(NA_real_)
+  match <- regmatches(line[1], regexpr("[0-9.]+(?=%)", line[1], perl = TRUE))
+  if (length(match) == 0) return(NA_real_)
+  as.numeric(match)
   }
 
   sequencingDepth <- get_first_number("reads; of these:")
