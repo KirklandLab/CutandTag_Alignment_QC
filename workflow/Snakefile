@@ -86,6 +86,86 @@ if DOWNSAMPLE_TARGET_MODE not in VALID_DOWNSAMPLE_MODES:
     )
 
 ##################################################################
+##                 Conditional analysis BAM logic               ##
+##################################################################
+
+SAMPLES = list(samples_table.index)
+
+DUP_CAP_BAMS = (
+    expand("results/alignment/bam/dedup_cap/{sample}.dupCap.bam", sample=SAMPLES)
+    if USE_DUP_CAP else []
+)
+
+DUP_CAP_BAIS = (
+    expand("results/alignment/bam/dedup_cap/{sample}.dupCap.bam.bai", sample=SAMPLES)
+    if USE_DUP_CAP else []
+)
+
+DUP_CAP_METRICS = (
+    expand("results/qc/duplicates/{sample}.duplicate_metrics.txt", sample=SAMPLES)
+    if USE_DUP_CAP else []
+)
+
+DOWNSAMPLE_BAMS = (
+    expand("results/alignment/bam/analysis/{sample}.analysis.bam", sample=SAMPLES)
+    if USE_DOWNSAMPLING else []
+)
+
+DOWNSAMPLE_BAIS = (
+    expand("results/alignment/bam/analysis/{sample}.analysis.bam.bai", sample=SAMPLES)
+    if USE_DOWNSAMPLING else []
+)
+
+DOWNSAMPLE_METRICS = (
+    expand("results/qc/downsampling/{sample}.downsample_metrics.txt", sample=SAMPLES)
+    if USE_DOWNSAMPLING else []
+)
+
+DOWNSAMPLE_TARGET_FILE = (
+    ["results/qc/downsampling/downsample_target.txt"]
+    if USE_DOWNSAMPLING else []
+)
+
+DUP_DOWNSAMPLE_SUMMARY_FILES = (
+    [
+        "results/qc/duplicates_downsampling/duplicate_downsampling_summary.tsv",
+        "results/plots/duplicate_downsampling_summary.png"
+    ]
+    if (USE_DUP_CAP or USE_DOWNSAMPLING) else []
+)
+
+
+def post_dup_bam(wildcards):
+    """
+    BAM used as input to downsampling.
+    If duplicate capping is enabled, use dupCap.bam.
+    Otherwise use the original coordinate-sorted BAM.
+    """
+    if USE_DUP_CAP:
+        return f"results/alignment/bam/dedup_cap/{wildcards.sample}.dupCap.bam"
+    return f"results/alignment/bam/{wildcards.sample}.sorted.bam"
+
+
+def post_dup_bai(wildcards):
+    if USE_DUP_CAP:
+        return f"results/alignment/bam/dedup_cap/{wildcards.sample}.dupCap.bam.bai"
+    return f"results/alignment/bam/{wildcards.sample}.sorted.bam.bai"
+
+
+def final_analysis_bam(wildcards):
+    """
+    Final BAM used by bigWig, MACS2, final fragment length, BEDPE, FRiP, and correlation.
+    If downsampling is enabled, use analysis.bam.
+    Else if duplicate capping is enabled, use dupCap.bam.
+    Else use sorted.bam directly.
+    """
+    if USE_DOWNSAMPLING:
+        return f"results/alignment/bam/analysis/{wildcards.sample}.analysis.bam"
+    if USE_DUP_CAP:
+        return f"results/alignment/bam/dedup_cap/{wildcards.sample}.dupCap.bam"
+    return f"results/alignment/bam/{wildcards.sample}.sorted.bam"
+c
+##################################################################
 ##                          Rule All                            ##
 ##################################################################
 
@@ -97,13 +177,14 @@ rule all:
         expand("results/alignment/sam/{sample}_bowtie2.sam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}_bowtie2.bam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}.sorted.bam", sample=samples_table.index),
-        expand("results/alignment/bam/dedup_cap/{sample}.dupCap.bam", sample=samples_table.index),
-        expand("results/alignment/bam/analysis/{sample}.analysis.bam", sample=samples_table.index),
-        expand("results/qc/duplicates/{sample}.duplicate_metrics.txt", sample=samples_table.index),
-        expand("results/qc/downsampling/{sample}.downsample_metrics.txt", sample=samples_table.index),
-        "results/qc/downsampling/downsample_target.txt",
-        "results/qc/duplicates_downsampling/duplicate_downsampling_summary.tsv",
-        "results/plots/duplicate_downsampling_summary.png",
+        DUP_CAP_BAMS,
+        DUP_CAP_BAIS,
+        DUP_CAP_METRICS,
+        DOWNSAMPLE_BAMS,
+        DOWNSAMPLE_BAIS,
+        DOWNSAMPLE_METRICS,
+        DOWNSAMPLE_TARGET_FILE,
+        DUP_DOWNSAMPLE_SUMMARY_FILES,
         expand("results/alignment/bigwig/{sample}_raw.bw", sample=samples_table.index),
         expand("results/alignment/bigwig/{sample}_cpm.bw", sample=samples_table.index),
         expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index),
@@ -308,8 +389,12 @@ rule cap_duplicate_fragments:
 
 rule calculate_downsample_target:
     input:
-        bams=expand("results/alignment/bam/dedup_cap/{sample}.dupCap.bam", sample=samples_table.index),
-        metrics=expand("results/qc/duplicates/{sample}.duplicate_metrics.txt", sample=samples_table.index)
+        bams=lambda wildcards: [
+            f"results/alignment/bam/dedup_cap/{sample}.dupCap.bam"
+            if USE_DUP_CAP else
+            f"results/alignment/bam/{sample}.sorted.bam"
+            for sample in samples_table.index
+        ]
     output:
         target="results/qc/downsampling/downsample_target.txt"
     params:
@@ -369,8 +454,8 @@ rule calculate_downsample_target:
 
 rule downsample_analysis_bam:
     input:
-        bam="results/alignment/bam/dedup_cap/{sample}.dupCap.bam",
-        bai="results/alignment/bam/dedup_cap/{sample}.dupCap.bam.bai",
+        bam=post_dup_bam,
+        bai=post_dup_bai,
         target="results/qc/downsampling/downsample_target.txt"
     output:
         bam="results/alignment/bam/analysis/{sample}.analysis.bam",
@@ -464,7 +549,7 @@ rule summarize_duplicate_metrics:
 
 rule make_bigwig_raw:
     input:
-        sorted_bam="results/alignment/bam/analysis/{sample}.analysis.bam"
+        sorted_bam=final_analysis_bam
     output:
         bigwig="results/alignment/bigwig/{sample}_raw.bw",
         bigwig_cpm="results/alignment/bigwig/{sample}_cpm.bw"
@@ -487,7 +572,7 @@ rule make_bigwig_raw:
 
 rule macs2_peak_calling:
     input:
-        bam="results/alignment/bam/analysis/{sample}.analysis.bam"
+        bam=final_analysis_bam
     output:
         peaks="results/peakCalling/{sample}_0.05_peaks.narrowPeak"
     params:
@@ -559,7 +644,7 @@ rule generate_fragmentLength_raw:
 
 rule generate_fragmentLength_final:
     input:
-        bam_file="results/alignment/bam/analysis/{sample}.analysis.bam"
+        bam_file=final_analysis_bam
     output:
         fragLen="results/alignment/fragment_length/final/{sample}_fragmentLen.final.txt"
     envmodules:
@@ -582,7 +667,7 @@ rule generate_fragmentLength_final:
 
 rule process_fragment_length:
     input:
-        bam_file="results/alignment/bam/analysis/{sample}.analysis.bam"
+        bam_file=final_analysis_bam
     output:
         mapped_bam="results/alignment/bam/{sample}_bowtie2.mapped.bam",
         name_sorted_bam=temp("results/alignment/bam/{sample}_bowtie2.mapped.nameSorted.bam"),
