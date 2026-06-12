@@ -33,37 +33,55 @@ alignResult <- data.frame()
 # -------------------------
 for (file_path in input_files) {
   sample_name <- gsub("_bowtie2.txt", "", basename(file_path))
-  
-  # Lookup metadata
+
   histone <- sample_metadata$histone[sample_metadata$sample == sample_name]
   replicate <- sample_metadata$replicate[sample_metadata$sample == sample_name]
-  
-  # Read summary file
-  alignRes <- read.table(file_path, header = FALSE, fill = TRUE, stringsAsFactors = FALSE)
-  
-  # Extract alignment metrics (using line assumptions from Bowtie2 output)
-  sequencingDepth <- as.numeric(gsub("[^0-9]", "", alignRes$V1[1]))  # Total reads
 
-  concordant_zero <- as.numeric(gsub("[^0-9]", "", alignRes$V1[3]))
-  concordant_one <- as.numeric(gsub("[^0-9]", "", alignRes$V1[4]))
-  concordant_multi <- as.numeric(gsub("[^0-9]", "", alignRes$V1[5]))
+  if (length(histone) != 1 || length(replicate) != 1) {
+    stop("Sample not found uniquely in metadata: ", sample_name)
+  }
+
+  lines <- readLines(file_path, warn = FALSE)
+
+  get_first_number <- function(pattern) {
+    line <- grep(pattern, lines, value = TRUE)
+    if (length(line) == 0) return(NA_real_)
+    as.numeric(sub("^\\s*([0-9,]+).*", "\\1", gsub(",", "", line[1])))
+  }
+
+  get_percent <- function(pattern) {
+    line <- grep(pattern, lines, value = TRUE)
+    if (length(line) == 0) return(NA_real_)
+    as.numeric(sub(".*?([0-9.]+)%.*", "\\1", line[1]))
+  }
+
+  sequencingDepth <- get_first_number("reads; of these:")
+  pairedReads <- get_first_number("were paired; of these:")
+  concordant_zero <- get_first_number("aligned concordantly 0 times")
+  concordant_one <- get_first_number("aligned concordantly exactly 1 time")
+  concordant_multi <- get_first_number("aligned concordantly >1 times")
+  alignmentRate <- get_percent("overall alignment rate")
 
   mappedFragNum <- concordant_one + concordant_multi
-  alignmentRate <- as.numeric(gsub("[^0-9.]", "", alignRes$V1[6]))
 
   uniqueMappedRate <- ifelse(
-    sequencingDepth > 0,
-    100 * concordant_one / sequencingDepth,
+    pairedReads > 0,
+    100 * concordant_one / pairedReads,
     NA_real_
   )
 
   multiMappedRate <- ifelse(
-    sequencingDepth > 0,
-    100 * concordant_multi / sequencingDepth,
+    pairedReads > 0,
+    100 * concordant_multi / pairedReads,
     NA_real_
   )
 
-  # Append results
+  unalignedRate <- ifelse(
+    pairedReads > 0,
+    100 * concordant_zero / pairedReads,
+    NA_real_
+  )
+
   alignResult <- rbind(
     alignResult,
     data.frame(
@@ -71,10 +89,15 @@ for (file_path in input_files) {
       Histone = histone,
       Replicate = replicate,
       SequencingDepth = sequencingDepth,
+      PairedReads = pairedReads,
+      ConcordantZero = concordant_zero,
+      ConcordantOne = concordant_one,
+      ConcordantMulti = concordant_multi,
       MappedFragNum = mappedFragNum,
       AlignmentRate = alignmentRate,
       UniqueMappedRate = uniqueMappedRate,
-      MultiMappedRate = multiMappedRate
+      MultiMappedRate = multiMappedRate,
+      UnalignedRate = unalignedRate
     )
   )
 }
