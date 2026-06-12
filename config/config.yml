@@ -32,7 +32,9 @@ downsample_target_fragments: 10000000
 # If the lowest post-duplicate-cap sample is below this, the pipeline falls back to manual target.
 downsample_minimum_acceptable_fragments: 8000000
 
-# Keep seed fixed for reproducibility.
+# Set seed to an integer for reproducible downsampling.
+# Set to "none" for normal use.
+#downsample_seed: "none"
 downsample_seed: 12345
 
 # ------------------------------------------------------------
