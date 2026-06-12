@@ -131,7 +131,7 @@ DUP_DOWNSAMPLE_SUMMARY_FILES = (
         "results/qc/duplicates_downsampling/duplicate_downsampling_summary.tsv",
         "results/plots/duplicate_downsampling_summary.png"
     ]
-    if (USE_DUP_CAP and USE_DOWNSAMPLING) else []
+    if USE_DUP_CAP else []
 )
 
 
@@ -515,9 +515,9 @@ rule downsample_analysis_bam:
 
 rule summarize_duplicate_metrics:
     input:
-        dup_metrics=expand("results/qc/duplicates/{sample}.duplicate_metrics.txt", sample=samples_table.index),
-        down_metrics=expand("results/qc/downsampling/{sample}.downsample_metrics.txt", sample=samples_table.index),
-        down_target="results/qc/downsampling/downsample_target.txt",
+        dup_metrics=DUP_CAP_METRICS,
+        down_metrics=DOWNSAMPLE_METRICS,
+        down_target=DOWNSAMPLE_TARGET_FILE,
         metadata="config/samples.csv"
     output:
         combined_summary="results/qc/duplicates_downsampling/duplicate_downsampling_summary.tsv",
@@ -534,10 +534,21 @@ rule summarize_duplicate_metrics:
         """
         mkdir -p results/qc/duplicates_downsampling results/plots
 
+        down_metrics_arg="{input.down_metrics}"
+        down_target_arg="{input.down_target}"
+
+        if [ -z "$down_metrics_arg" ]; then
+            down_metrics_arg="NA"
+        fi
+
+        if [ -z "$down_target_arg" ]; then
+            down_target_arg="NA"
+        fi
+
         Rscript scripts/plot_duplicate_metrics.R \
             "{input.dup_metrics}" \
-            "{input.down_metrics}" \
-            {input.down_target} \
+            "$down_metrics_arg" \
+            "$down_target_arg" \
             {input.metadata} \
             {output.combined_summary} \
             {output.plot}
