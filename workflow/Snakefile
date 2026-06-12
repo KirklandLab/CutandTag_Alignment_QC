@@ -354,7 +354,7 @@ rule calculate_downsample_target:
                 note="lowest_sample_used"
             else
                 target="{params.floor}"
-                note="lowest_below_floor_used"
+                note="set_floor_used"
             fi
 
             echo -e "target_fragments\tmode\tlowest_fragments\tfloor\tmanual_target\tnote" > {output.target}
@@ -602,7 +602,7 @@ rule process_fragment_length:
         mkdir -p results/alignment/bed results/alignment/bam
 
         # Keep mapped reads from the final analysis BAM.
-        samtools view -@ {threads} -b -F 0x04 {input.bam_file} -o {output.mapped_bam}
+        samtools view -@ {threads} -b -F 0x0C {input.bam_file} -o {output.mapped_bam}
 
         # Name-sort before BEDPE conversion so mates are paired correctly.
         samtools sort -@ {threads} -n -o {output.name_sorted_bam} {output.mapped_bam}
