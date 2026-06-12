@@ -580,6 +580,7 @@ rule process_fragment_length:
         bam_file="results/alignment/bam/analysis/{sample}.analysis.bam"
     output:
         mapped_bam="results/alignment/bam/{sample}_bowtie2.mapped.bam",
+        name_sorted_bam=temp("results/alignment/bam/{sample}_bowtie2.mapped.nameSorted.bam"),
         bed_file="results/alignment/bed/{sample}_bowtie2.bed",
         clean_bed="results/alignment/bed/{sample}_bowtie2.clean.bed",
         fragments_bed="results/alignment/bed/{sample}_bowtie2.fragments.bed",
@@ -593,21 +594,24 @@ rule process_fragment_length:
     log: "results/logs/snakelogs/process_fragment_length.{sample}.log"
     shell:
         """
-        mkdir -p results/alignment/bed
+        mkdir -p results/alignment/bed results/alignment/bam
 
         # Keep mapped reads from the final analysis BAM.
         samtools view -@ {threads} -b -F 0x04 {input.bam_file} -o {output.mapped_bam}
 
-        # Convert into BEDPE format.
-        bedtools bamtobed -i {output.mapped_bam} -bedpe > {output.bed_file}
+        # Name-sort before BEDPE conversion so mates are paired correctly.
+        samtools sort -@ {threads} -n -o {output.name_sorted_bam} {output.mapped_bam}
+
+        # Convert name-sorted BAM into BEDPE format.
+        bedtools bamtobed -i {output.name_sorted_bam} -bedpe > {output.bed_file}
 
         # Keep read pairs on the same chromosome with fragment length less than 1000 bp.
-        awk '$1==$4 && $6-$2 < 1000 {{print $0}}' {output.bed_file} > {output.clean_bed}
+        awk '$1==$4 && $6>$2 && $6-$2 < 1000 {{print $0}}' {output.bed_file} > {output.clean_bed}
 
         # Extract fragment coordinates.
         cut -f 1,2,6 {output.clean_bed} | sort -k1,1 -k2,2n -k3,3n > {output.fragments_bed}
 
-        # Bin fragment counts.
+        # Bin fragment counts by fragment midpoint.
         awk -v w={params.binLen} '{{print $1, int(($2 + $3)/(2*w))*w + w/2}}' {output.fragments_bed} | \
         sort -k1,1V -k2,2n | uniq -c | \
         awk -v OFS="\\t" '{{print $2, $3, $1}}' | sort -k1,1V -k2,2n > {output.binned_counts}
