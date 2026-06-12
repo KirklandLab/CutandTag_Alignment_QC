@@ -131,7 +131,7 @@ DUP_DOWNSAMPLE_SUMMARY_FILES = (
         "results/qc/duplicates_downsampling/duplicate_downsampling_summary.tsv",
         "results/plots/duplicate_downsampling_summary.png"
     ]
-    if (USE_DUP_CAP or USE_DOWNSAMPLING) else []
+    if (USE_DUP_CAP and USE_DOWNSAMPLING) else []
 )
 
 
@@ -164,7 +164,7 @@ def final_analysis_bam(wildcards):
     if USE_DUP_CAP:
         return f"results/alignment/bam/dedup_cap/{wildcards.sample}.dupCap.bam"
     return f"results/alignment/bam/{wildcards.sample}.sorted.bam"
-c
+
 ##################################################################
 ##                          Rule All                            ##
 ##################################################################
