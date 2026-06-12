@@ -75,7 +75,7 @@ USE_DOWNSAMPLING = bool(config.get("use_downsampling", False))
 DOWNSAMPLE_TARGET_MODE = str(config.get("downsample_target_mode", "manual"))
 DOWNSAMPLE_TARGET = int(config.get("downsample_target_fragments", 0))
 DOWNSAMPLE_MIN_FLOOR = int(config.get("downsample_minimum_acceptable_fragments", 0))
-DOWNSAMPLE_SEED = int(config.get("downsample_seed", 12345))
+DOWNSAMPLE_SEED = config.get("downsample_seed", 12345)
 
 VALID_DOWNSAMPLE_MODES = ["manual", "lowest_with_floor"]
 
@@ -353,12 +353,12 @@ rule calculate_downsample_target:
                 target=$lowest
                 note="lowest_sample_used"
             else
-                target="{params.manual_target}"
-                note="lowest_below_floor_manual_target_used"
+                target="{params.floor}"
+                note="lowest_below_floor_used"
             fi
 
-            echo -e "target_fragments\\tmode\\tlowest_fragments\\tfloor\\tmanual_target\\tnote" > {output.target}
-            echo -e "$target\\tlowest_with_floor\\t$lowest\\t{params.floor}\\t{params.manual_target}\\t$note" >> {output.target}
+            echo -e "target_fragments\tmode\tlowest_fragments\tfloor\tmanual_target\tnote" > {output.target}
+            echo -e "$target\tlowest_with_floor\t$lowest\t{params.floor}\tNA\t$note" >> {output.target}
             exit 0
         fi
         """
@@ -398,8 +398,13 @@ rule downsample_analysis_bam:
         if [ "{params.use_downsampling}" = "True" ] && [ "$target" -gt 0 ] && [ "$fragments_before" -gt "$target" ]; then
             fraction=$(awk -v target="$target" -v total="$fragments_before" 'BEGIN {{ printf "%.10f", target / total }}')
 
+            seed_arg=""
+            if [ "{params.seed}" != "none" ] && [ "{params.seed}" != "None" ] && [ "{params.seed}" != "" ]; then
+                seed_arg="--subsample-seed {params.seed}"
+            fi
+
             samtools view -@ {threads} -b \
-                --subsample-seed {params.seed} \
+                $seed_arg \
                 --subsample $fraction \
                 {input.bam} | \
                 samtools sort -@ {threads} -o {output.bam}
