@@ -23,17 +23,18 @@ use_downsampling: true
 #   "manual" = use downsample_target_fragments
 #   "lowest_with_floor" = use the lowest post-duplicate-cap sample,
 #                         but only if it is >= downsample_minimum_acceptable_fragments
-downsample_target_mode: "manual"
+downsample_target_mode: "lowest_with_floor"
 
 # Used only when downsample_target_mode: "manual"
-downsample_target_fragments: 10000000
+downsample_target_fragments: 30000000
 
 # Used only when downsample_target_mode: "lowest_with_floor"
-# If the lowest post-duplicate-cap sample is below this, the pipeline falls back to manual target.
-downsample_minimum_acceptable_fragments: 8000000
+# If the lowest post-processing sample is below this, higher-depth samples
+# are downsampled to this floor. Samples already below the floor are not changed.
+downsample_minimum_acceptable_fragments: 30000000
 
-# Set seed to an integer for reproducible downsampling.
-# Set to "none" for normal use.
+# Set to "none" for non-reproducible random downsampling.
+# For comparisons across duplicate-cap settings, keep this fixed.
 #downsample_seed: "none"
 downsample_seed: 12345
 
