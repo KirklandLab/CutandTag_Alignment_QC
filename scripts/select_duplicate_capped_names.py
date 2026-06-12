@@ -54,6 +54,8 @@ def main():
                 continue
             if is_flag_set(flag, 0x800):    # supplementary
                 continue
+            if not is_flag_set(flag, 0x2):  # properly paired
+                continue
             if not is_flag_set(flag, 0x40): # read1 only
                 continue
             if tlen == 0:
