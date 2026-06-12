@@ -15,17 +15,43 @@ combined_summary_out <- args[5]
 plot_out <- args[6]
 
 dup_files <- strsplit(dup_files_arg, " ")[[1]]
-down_files <- strsplit(down_files_arg, " ")[[1]]
 
 metadata <- read.csv(metadata_file, stringsAsFactors = FALSE)
 
 dup_df <- dup_files |>
   purrr::map_dfr(read.delim, stringsAsFactors = FALSE)
 
-down_df <- down_files |>
-  purrr::map_dfr(read.delim, stringsAsFactors = FALSE)
+if (down_files_arg == "NA") {
+  down_df <- dup_df |>
+    transmute(
+      Sample = sample,
+      Action = "not_downsampled",
+      TargetMode = "disabled",
+      TargetNote = "downsampling_disabled",
+      TargetFragments = 0,
+      Seed = "NA",
+      SubsampleFraction = 1,
+      FragmentsBeforeDownsample = kept_fragments_after,
+      FragmentsAfterDownsample = kept_fragments_after
+    )
 
-down_target <- read.delim(down_target_file, stringsAsFactors = FALSE)
+  down_target <- data.frame(
+    target_fragments = 0,
+    mode = "disabled",
+    lowest_fragments = NA,
+    floor = NA,
+    manual_target = NA,
+    note = "downsampling_disabled"
+  )
+
+} else {
+  down_files <- strsplit(down_files_arg, " ")[[1]]
+
+  down_df <- down_files |>
+    purrr::map_dfr(read.delim, stringsAsFactors = FALSE)
+
+  down_target <- read.delim(down_target_file, stringsAsFactors = FALSE)
+}
 
 combined_df <- dup_df |>
   left_join(down_df, by = c("sample" = "Sample")) |>
@@ -145,7 +171,10 @@ if (length(dup_cap_label) == 1) {
 downsample_target <- down_target$target_fragments[1]
 downsample_mode <- down_target$mode[1]
 
-if (!is.na(downsample_target) && downsample_target > 0) {
+if (!is.na(downsample_mode) && downsample_mode == "disabled") {
+  downsample_title <- "Fragments retained after duplicate capping"
+
+} else if (!is.na(downsample_target) && downsample_target > 0) {
   downsample_title <- paste0(
     "Fragments retained after duplicate capping and downsampling",
     " (target = ",
@@ -154,8 +183,9 @@ if (!is.na(downsample_target) && downsample_target > 0) {
     downsample_mode,
     ")"
   )
+
 } else {
-  downsample_title <- "Fragments retained after duplicate capping and downsampling (downsampling disabled)"
+  downsample_title <- "Fragments retained after duplicate capping and downsampling"
 }
 
 p1 <- ggplot(
