@@ -87,7 +87,7 @@ summarize_duplicate_metrics:
     output: results/logs/{rule}.log
     error: results/logs/{rule}.err
 
-make_bigwig_raw:
+make_bigwigs:
     cpus-per-task: 4
     mem: 32G
     time: 03:00:00
