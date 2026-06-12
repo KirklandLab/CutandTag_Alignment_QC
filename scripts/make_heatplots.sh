@@ -71,7 +71,7 @@ REFPOINT_NAME="Center"
 REGIONS_NAME="All Midpoints"
 
 # ---- Define sample order (space-separated numbers, order matches bigwig input order) ----
-SAMPLE_ORDER="1 2 3 4"
+SAMPLE_ORDER="H3K27ac_C H3K27ac_T H3K27me3_C H3K27me3_T"
 
 ##################################################################
 ##                      Generate input lists                    ##
