@@ -77,7 +77,7 @@ DOWNSAMPLE_TARGET = int(config.get("downsample_target_fragments", 0))
 DOWNSAMPLE_MIN_FLOOR = int(config.get("downsample_minimum_acceptable_fragments", 0))
 DOWNSAMPLE_SEED = config.get("downsample_seed", 12345)
 
-VALID_DOWNSAMPLE_MODES = ["manual", "lowest_with_floor"]
+VALID_DOWNSAMPLE_MODES = ["manual", "lowest_with_floor", "lowest"]
 
 if DOWNSAMPLE_TARGET_MODE not in VALID_DOWNSAMPLE_MODES:
     raise ValueError(
@@ -121,10 +121,7 @@ DOWNSAMPLE_METRICS = (
     if USE_DOWNSAMPLING else []
 )
 
-DOWNSAMPLE_TARGET_FILE = (
-    ["results/qc/downsampling/downsample_target.txt"]
-    if USE_DOWNSAMPLING else []
-)
+DOWNSAMPLE_TARGET_FILE = ["results/qc/downsampling/downsample_target.txt"]
 
 DUP_DOWNSAMPLE_SUMMARY_FILES = (
     [
@@ -387,7 +384,7 @@ rule cap_duplicate_fragments:
         """
 
 ##################################################################
-##                 Calculate Downsampling Target                ##
+##             Calculate Analysis/Downsampling Target           ##
 ##################################################################
 
 rule calculate_downsample_target:
@@ -414,15 +411,10 @@ rule calculate_downsample_target:
         """
         mkdir -p results/qc/downsampling
 
-        if [ "{params.use_downsampling}" != "True" ]; then
-            echo -e "target_fragments\\tmode\\tlowest_fragments\\tfloor\\tmanual_target\\tnote" > {output.target}
-            echo -e "0\\tdisabled\\tNA\\t{params.floor}\\t{params.manual_target}\\tdownsampling_disabled" >> {output.target}
-            exit 0
-        fi
+        echo -e "target_fragments\\tmode\\tlowest_fragments\\tfloor\\tmanual_target\\tdownsampling_enabled\\tnote" > {output.target}
 
         if [ "{params.mode}" = "manual" ]; then
-            echo -e "target_fragments\\tmode\\tlowest_fragments\\tfloor\\tmanual_target\\tnote" > {output.target}
-            echo -e "{params.manual_target}\\tmanual\\tNA\\t{params.floor}\\t{params.manual_target}\\tmanual_target_used" >> {output.target}
+            echo -e "{params.manual_target}\\tmanual\\tNA\\t{params.floor}\\t{params.manual_target}\\t{params.use_downsampling}\\tmanual_target_used" >> {output.target}
             exit 0
         fi
 
@@ -436,6 +428,14 @@ rule calculate_downsample_target:
             fi
         done
 
+        if [ "{params.mode}" = "lowest" ]; then
+            target=$lowest
+            note="lowest_sample_used_no_floor"
+
+            echo -e "$target\\tlowest\\t$lowest\\tNA\\tNA\\t{params.use_downsampling}\\t$note" >> {output.target}
+            exit 0
+        fi
+
         if [ "{params.mode}" = "lowest_with_floor" ]; then
             if [ "$lowest" -ge "{params.floor}" ]; then
                 target=$lowest
@@ -445,8 +445,7 @@ rule calculate_downsample_target:
                 note="set_floor_used"
             fi
 
-            echo -e "target_fragments\tmode\tlowest_fragments\tfloor\tmanual_target\tnote" > {output.target}
-            echo -e "$target\tlowest_with_floor\t$lowest\t{params.floor}\tNA\t$note" >> {output.target}
+            echo -e "$target\\tlowest_with_floor\\t$lowest\\t{params.floor}\\tNA\\t{params.use_downsampling}\\t$note" >> {output.target}
             exit 0
         fi
         """
@@ -478,7 +477,8 @@ rule downsample_analysis_bam:
 
         target=$(awk 'NR==2 {{print $1}}' {input.target})
         target_mode=$(awk 'NR==2 {{print $2}}' {input.target})
-        target_note=$(awk 'NR==2 {{print $6}}' {input.target})
+        target_enabled=$(awk 'NR==2 {{print $6}}' {input.target})
+        target_note=$(awk 'NR==2 {{print $7}}' {input.target})
 
         # Count mapped read1 records as mapped fragments/read pairs.
         fragments_before=$(samtools view -@ {threads} -c -f 64 -F 12 {input.bam})
@@ -508,8 +508,8 @@ rule downsample_analysis_bam:
 
         fragments_after=$(samtools view -@ {threads} -c -f 64 -F 12 {output.bam})
 
-        echo -e "Sample\\tAction\\tTargetMode\\tTargetNote\\tTargetFragments\\tSeed\\tSubsampleFraction\\tFragmentsBeforeDownsample\\tFragmentsAfterDownsample" > {output.metrics}
-        echo -e "{wildcards.sample}\\t$action\\t$target_mode\\t$target_note\\t$target\\t{params.seed}\\t$fraction\\t$fragments_before\\t$fragments_after" >> {output.metrics}
+        echo -e "Sample\\tAction\\tTargetMode\\tDownsamplingEnabled\\tTargetNote\\tTargetFragments\\tSeed\\tSubsampleFraction\\tFragmentsBeforeDownsample\\tFragmentsAfterDownsample" > {output.metrics}
+        echo -e "{wildcards.sample}\\t$action\\t$target_mode\\t$target_enabled\\t$target_note\\t$target\\t{params.seed}\\t$fraction\\t$fragments_before\\t$fragments_after" >> {output.metrics}
         """
 
 ##################################################################
@@ -558,7 +558,7 @@ rule summarize_duplicate_metrics:
         """
 
 ##################################################################
-##             Final Analysis Fragments and Scale Factor         ##
+##          Final Analysis Fragments and BW Scale Factor        ##
 ##################################################################
 
 rule calculate_analysis_scale_factor:
