@@ -21,15 +21,17 @@ use_downsampling: true
 
 # Options:
 #   "manual" = uses `downsample_target_fragments` as downsample target and lets samples <= target through without downsampling
-#   "lowest_with_floor" = use the lowest post-duplicate-cap sample as downsample target, but only if it is >= `downsample_minimum_acceptable_fragments`; behaves like manual with samples lower than target
+#   "lowest_with_floor" = use the lowest post-duplicate-cap sample that is >= downsample_minimum_acceptable_fragments as the target. 
+#                         Samples below the target are not changed. This prevents one very low-depth sample from forcing all other 
+#                         samples down to that low depth.
 #   "lowest" = use the lowest post-duplicate-cap sample as target
 downsample_target_mode: "manual"
 
 # Used only when downsample_target_mode: "manual"
-downsample_target_fragments: 30000000
+downsample_target_fragments: 20000000
 
 # Used only when downsample_target_mode: "lowest_with_floor"
-downsample_minimum_acceptable_fragments: 30000000
+downsample_minimum_acceptable_fragments: 20000000
 
 # Set to "none" for non-reproducible random downsampling.
 # For comparisons across duplicate-cap settings, keep this fixed.
