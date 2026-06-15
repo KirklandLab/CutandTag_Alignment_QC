@@ -34,17 +34,22 @@ if (length(missing_metadata_cols) > 0) {
   )
 }
 
+# -------------------------
+# Helper: format large numbers without scientific notation
+# -------------------------
 format_full_number <- function(x) {
-  if (is.na(x)) {
-    return("NA")
-  }
+  x_num <- suppressWarnings(as.numeric(x))
 
-  format(
-    as.numeric(x),
+  out <- format(
+    x_num,
     big.mark = ",",
     scientific = FALSE,
     trim = TRUE
   )
+
+  out[is.na(x_num)] <- "NA"
+
+  return(out)
 }
 
 # -------------------------
@@ -264,9 +269,8 @@ read_plot_df <- combined_df |>
 # -------------------------
 # Removed-fragment labels
 # -------------------------
-# This restores the labels from your original plot:
-# -10,000, -250,000, etc.
-# They are only shown when duplicate capping actually removed fragments.
+# Restores labels such as -10,000 or -250,000 on the duplicate burden plot.
+# Labels are only shown when duplicate capping actually removed fragments.
 removed_label_df <- combined_df |>
   filter(!is.na(removed_fragments), removed_fragments > 0) |>
   mutate(
@@ -294,7 +298,6 @@ if (length(dup_cap_label) == 1 && dup_cap_label == "off") {
 
 downsample_target <- suppressWarnings(as.numeric(down_target$target_fragments[1]))
 downsample_mode <- as.character(down_target$mode[1])
-
 downsample_target_label <- format_full_number(downsample_target)
 
 if (!is.na(downsample_mode) && downsample_mode %in% c("disabled", "no_downsampling")) {
