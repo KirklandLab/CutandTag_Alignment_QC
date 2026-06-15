@@ -14,43 +14,83 @@ metadata_file <- args[4]
 combined_summary_out <- args[5]
 plot_out <- args[6]
 
-dup_files <- strsplit(dup_files_arg, " ")[[1]]
-
 metadata <- read.csv(metadata_file, stringsAsFactors = FALSE)
 
-dup_df <- dup_files |>
-  purrr::map_dfr(read.delim, stringsAsFactors = FALSE)
-
+# -------------------------
+# Load downsampling metrics
+# -------------------------
 if (down_files_arg == "NA") {
+  down_df <- NULL
+} else {
+  down_files <- strsplit(down_files_arg, " ")[[1]]
+  down_df <- down_files |>
+    purrr::map_dfr(read.delim, stringsAsFactors = FALSE)
+}
+
+# -------------------------
+# Load downsampling target
+# -------------------------
+if (down_target_file == "NA") {
+  down_target <- data.frame(
+    target_fragments = NA_real_,
+    mode = "not_available",
+    lowest_fragments = NA_real_,
+    lowest_above_floor = NA_real_,
+    floor = NA_real_,
+    manual_target = NA_real_,
+    downsampling_enabled = NA,
+    note = "target_file_not_available"
+  )
+} else {
+  down_target <- read.delim(down_target_file, stringsAsFactors = FALSE)
+}
+
+# -------------------------
+# Load duplicate metrics or create no-cap placeholder
+# -------------------------
+if (dup_files_arg == "NA") {
+
+  if (is.null(down_df)) {
+    stop("Both duplicate metrics and downsampling metrics are NA. Nothing to summarize.")
+  }
+
+  dup_df <- down_df |>
+    transmute(
+      sample = Sample,
+      max_dups = "off",
+      total_fragments_before = FragmentsBeforeDownsample,
+      unique_fragment_positions = NA_real_,
+      duplicate_fragments_before = NA_real_,
+      pct_duplicate_before = NA_real_,
+      kept_fragments_after = FragmentsBeforeDownsample,
+      removed_fragments = 0,
+      duplicate_fragments_after = NA_real_,
+      pct_duplicate_after = NA_real_
+    )
+
+} else {
+  dup_files <- strsplit(dup_files_arg, " ")[[1]]
+  dup_df <- dup_files |>
+    purrr::map_dfr(read.delim, stringsAsFactors = FALSE)
+}
+
+# -------------------------
+# If downsampling metrics are absent, create no-downsampling placeholder
+# -------------------------
+if (is.null(down_df)) {
   down_df <- dup_df |>
     transmute(
       Sample = sample,
       Action = "not_downsampled",
       TargetMode = "disabled",
+      DownsamplingEnabled = FALSE,
       TargetNote = "downsampling_disabled",
-      TargetFragments = 0,
+      TargetFragments = NA_real_,
       Seed = "NA",
       SubsampleFraction = 1,
       FragmentsBeforeDownsample = kept_fragments_after,
       FragmentsAfterDownsample = kept_fragments_after
     )
-
-  down_target <- data.frame(
-    target_fragments = 0,
-    mode = "disabled",
-    lowest_fragments = NA,
-    floor = NA,
-    manual_target = NA,
-    note = "downsampling_disabled"
-  )
-
-} else {
-  down_files <- strsplit(down_files_arg, " ")[[1]]
-
-  down_df <- down_files |>
-    purrr::map_dfr(read.delim, stringsAsFactors = FALSE)
-
-  down_target <- read.delim(down_target_file, stringsAsFactors = FALSE)
 }
 
 combined_df <- dup_df |>
