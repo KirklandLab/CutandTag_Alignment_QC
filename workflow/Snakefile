@@ -128,7 +128,7 @@ DUP_DOWNSAMPLE_SUMMARY_FILES = (
         "results/qc/duplicates_downsampling/duplicate_downsampling_summary.tsv",
         "results/plots/duplicate_downsampling_summary.png"
     ]
-    if USE_DUP_CAP else []
+    if (USE_DUP_CAP or USE_DOWNSAMPLING) else []
 )
 
 
@@ -413,11 +413,6 @@ rule calculate_downsample_target:
 
         echo -e "target_fragments\\tmode\\tlowest_fragments\\tfloor\\tmanual_target\\tdownsampling_enabled\\tnote" > {output.target}
 
-        if [ "{params.mode}" = "manual" ]; then
-            echo -e "{params.manual_target}\\tmanual\\tNA\\t{params.floor}\\t{params.manual_target}\\t{params.use_downsampling}\\tmanual_target_used" >> {output.target}
-            exit 0
-        fi
-
         lowest=""
 
         for bam in {input.bams}; do
@@ -427,6 +422,21 @@ rule calculate_downsample_target:
                 lowest=$count
             fi
         done
+
+        # If downsampling is disabled, use the empirical lowest final-analysis
+        # fragment count as the BigWig scaling target.
+        if [ "{params.use_downsampling}" != "True" ]; then
+            target=$lowest
+            note="downsampling_disabled_lowest_used_for_bigwig_scaling"
+
+            echo -e "$target\\tno_downsampling\\t$lowest\\tNA\\tNA\\t{params.use_downsampling}\\t$note" >> {output.target}
+            exit 0
+        fi
+
+        if [ "{params.mode}" = "manual" ]; then
+            echo -e "{params.manual_target}\\tmanual\\t$lowest\\t{params.floor}\\t{params.manual_target}\\t{params.use_downsampling}\\tmanual_target_used" >> {output.target}
+            exit 0
+        fi
 
         if [ "{params.mode}" = "lowest" ]; then
             target=$lowest
@@ -537,8 +547,13 @@ rule summarize_duplicate_metrics:
         """
         mkdir -p results/qc/duplicates_downsampling results/plots
 
+        dup_metrics_arg="{input.dup_metrics}"
         down_metrics_arg="{input.down_metrics}"
         down_target_arg="{input.down_target}"
+
+        if [ -z "$dup_metrics_arg" ]; then
+            dup_metrics_arg="NA"
+        fi
 
         if [ -z "$down_metrics_arg" ]; then
             down_metrics_arg="NA"
@@ -549,7 +564,7 @@ rule summarize_duplicate_metrics:
         fi
 
         Rscript scripts/plot_duplicate_metrics.R \
-            "{input.dup_metrics}" \
+            "$dup_metrics_arg" \
             "$down_metrics_arg" \
             "$down_target_arg" \
             {input.metadata} \
