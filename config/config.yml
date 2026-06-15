@@ -11,7 +11,7 @@ bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"   # m
 use_duplicate_cap: true
 
 # Maximum number of read-pair fragments allowed at the exact same fragment coordinate.
-# Recommended sensitivity runs: 3, 5, 8, and off.
+# Recommended sensitivity runs: 3, 5, 7, and off.
 duplicate_cap_max: 5
 
 # ------------------------------------------------------------
@@ -20,17 +20,15 @@ duplicate_cap_max: 5
 use_downsampling: true
 
 # Options:
-#   "manual" = use downsample_target_fragments
-#   "lowest_with_floor" = use the lowest post-duplicate-cap sample,
-#                         but only if it is >= downsample_minimum_acceptable_fragments
-downsample_target_mode: "lowest_with_floor"
+#   "manual" = uses `downsample_target_fragments` as downsample target and lets samples <= target through without downsampling
+#   "lowest_with_floor" = use the lowest post-duplicate-cap sample as downsample target, but only if it is >= `downsample_minimum_acceptable_fragments`; behaves like manual with samples lower than target
+#   "lowest" = use the lowest post-duplicate-cap sample as target
+downsample_target_mode: "manual"
 
 # Used only when downsample_target_mode: "manual"
 downsample_target_fragments: 30000000
 
 # Used only when downsample_target_mode: "lowest_with_floor"
-# If the lowest post-processing sample is below this, higher-depth samples
-# are downsampled to this floor. Samples already below the floor are not changed.
 downsample_minimum_acceptable_fragments: 30000000
 
 # Set to "none" for non-reproducible random downsampling.
