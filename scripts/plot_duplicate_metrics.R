@@ -34,6 +34,19 @@ if (length(missing_metadata_cols) > 0) {
   )
 }
 
+format_full_number <- function(x) {
+  if (is.na(x)) {
+    return("NA")
+  }
+
+  format(
+    as.numeric(x),
+    big.mark = ",",
+    scientific = FALSE,
+    trim = TRUE
+  )
+}
+
 # -------------------------
 # Load downsampling metrics
 # -------------------------
@@ -248,10 +261,17 @@ read_plot_df <- combined_df |>
     )
   )
 
+# -------------------------
+# Removed-fragment labels
+# -------------------------
+# This restores the labels from your original plot:
+# -10,000, -250,000, etc.
+# They are only shown when duplicate capping actually removed fragments.
 removed_label_df <- combined_df |>
   filter(!is.na(removed_fragments), removed_fragments > 0) |>
   mutate(
-    label = paste0("-", format(removed_fragments, big.mark = ","))
+    label = paste0("-", format_full_number(removed_fragments)),
+    label_y = pmax(pct_duplicate_before, pct_duplicate_after, na.rm = TRUE)
   )
 
 # -------------------------
@@ -275,11 +295,13 @@ if (length(dup_cap_label) == 1 && dup_cap_label == "off") {
 downsample_target <- suppressWarnings(as.numeric(down_target$target_fragments[1]))
 downsample_mode <- as.character(down_target$mode[1])
 
+downsample_target_label <- format_full_number(downsample_target)
+
 if (!is.na(downsample_mode) && downsample_mode %in% c("disabled", "no_downsampling")) {
   if (!is.na(downsample_target) && downsample_target > 0) {
     downsample_title <- paste0(
       "Fragments retained after processing; BigWig scaling target = ",
-      format(downsample_target, big.mark = ","),
+      downsample_target_label,
       " (mode = ",
       downsample_mode,
       ")"
@@ -292,7 +314,7 @@ if (!is.na(downsample_mode) && downsample_mode %in% c("disabled", "no_downsampli
   downsample_title <- paste0(
     "Fragments retained after processing and downsampling",
     " (target = ",
-    format(downsample_target, big.mark = ","),
+    downsample_target_label,
     "; mode = ",
     downsample_mode,
     ")"
@@ -331,7 +353,7 @@ if (has_dup_data) {
         data = removed_label_df,
         aes(
           x = sample,
-          y = pmax(pct_duplicate_before, pct_duplicate_after, na.rm = TRUE),
+          y = label_y,
           label = label
         ),
         inherit.aes = FALSE,
