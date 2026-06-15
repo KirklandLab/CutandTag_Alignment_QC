@@ -7,6 +7,14 @@ suppressPackageStartupMessages({
 
 args <- commandArgs(trailingOnly = TRUE)
 
+if (length(args) != 6) {
+  stop(
+    "Usage: Rscript plot_duplicate_metrics.R ",
+    "<dup_metrics|NA> <down_metrics|NA> <down_target|NA> ",
+    "<samples.csv> <combined_summary_out> <plot_out>"
+  )
+}
+
 dup_files_arg <- args[1]
 down_files_arg <- args[2]
 down_target_file <- args[3]
@@ -16,6 +24,16 @@ plot_out <- args[6]
 
 metadata <- read.csv(metadata_file, stringsAsFactors = FALSE)
 
+required_metadata_cols <- c("sample", "histone", "replicate")
+missing_metadata_cols <- setdiff(required_metadata_cols, colnames(metadata))
+
+if (length(missing_metadata_cols) > 0) {
+  stop(
+    "Metadata file is missing required columns: ",
+    paste(missing_metadata_cols, collapse = ", ")
+  )
+}
+
 # -------------------------
 # Load downsampling metrics
 # -------------------------
@@ -23,8 +41,14 @@ if (down_files_arg == "NA") {
   down_df <- NULL
 } else {
   down_files <- strsplit(down_files_arg, " ")[[1]]
+  down_files <- down_files[down_files != ""]
+
   down_df <- down_files |>
     purrr::map_dfr(read.delim, stringsAsFactors = FALSE)
+
+  if (!"DownsamplingEnabled" %in% colnames(down_df)) {
+    down_df$DownsamplingEnabled <- NA
+  }
 }
 
 # -------------------------
@@ -43,6 +67,14 @@ if (down_target_file == "NA") {
   )
 } else {
   down_target <- read.delim(down_target_file, stringsAsFactors = FALSE)
+
+  # Backward compatibility if older target files are used.
+  if (!"lowest_above_floor" %in% colnames(down_target)) {
+    down_target$lowest_above_floor <- NA_real_
+  }
+  if (!"downsampling_enabled" %in% colnames(down_target)) {
+    down_target$downsampling_enabled <- NA
+  }
 }
 
 # -------------------------
@@ -70,6 +102,8 @@ if (dup_files_arg == "NA") {
 
 } else {
   dup_files <- strsplit(dup_files_arg, " ")[[1]]
+  dup_files <- dup_files[dup_files != ""]
+
   dup_df <- dup_files |>
     purrr::map_dfr(read.delim, stringsAsFactors = FALSE)
 }
@@ -93,19 +127,26 @@ if (is.null(down_df)) {
     )
 }
 
+# -------------------------
+# Combine duplicate, downsampling, and metadata
+# -------------------------
 combined_df <- dup_df |>
   left_join(down_df, by = c("sample" = "Sample")) |>
   left_join(metadata, by = "sample") |>
   mutate(
     final_analysis_fragments = FragmentsAfterDownsample,
     pct_fragments_retained_after_dup_cap =
-      ifelse(total_fragments_before > 0,
-             100 * kept_fragments_after / total_fragments_before,
-             NA_real_),
+      ifelse(
+        total_fragments_before > 0,
+        100 * kept_fragments_after / total_fragments_before,
+        NA_real_
+      ),
     pct_fragments_retained_final =
-      ifelse(total_fragments_before > 0,
-             100 * final_analysis_fragments / total_fragments_before,
-             NA_real_)
+      ifelse(
+        total_fragments_before > 0,
+        100 * final_analysis_fragments / total_fragments_before,
+        NA_real_
+      )
   ) |>
   select(
     sample,
@@ -123,6 +164,7 @@ combined_df <- dup_df |>
     pct_fragments_retained_after_dup_cap,
     Action,
     TargetMode,
+    DownsamplingEnabled,
     TargetNote,
     TargetFragments,
     Seed,
@@ -142,6 +184,9 @@ write.table(
   row.names = FALSE
 )
 
+# -------------------------
+# Duplicate plot dataframe
+# -------------------------
 dup_plot_df <- combined_df |>
   select(
     sample,
@@ -167,6 +212,11 @@ dup_plot_df <- combined_df |>
     )
   )
 
+has_dup_data <- any(!is.na(dup_plot_df$percent_duplicate))
+
+# -------------------------
+# Fragment/read retention plot dataframe
+# -------------------------
 read_plot_df <- combined_df |>
   select(
     sample,
@@ -184,39 +234,63 @@ read_plot_df <- combined_df |>
   mutate(
     metric = recode(
       metric,
-      total_fragments_before = "Raw fragments",
-      kept_fragments_after = "After duplicate cap",
+      total_fragments_before = "Input fragments",
+      kept_fragments_after = "After duplicate cap / pre-downsample",
       final_analysis_fragments = "Final analysis fragments"
     ),
     metric = factor(
       metric,
-      levels = c("Raw fragments", "After duplicate cap", "Final analysis fragments")
+      levels = c(
+        "Input fragments",
+        "After duplicate cap / pre-downsample",
+        "Final analysis fragments"
+      )
     )
   )
 
 removed_label_df <- combined_df |>
+  filter(!is.na(removed_fragments), removed_fragments > 0) |>
   mutate(
     label = paste0("-", format(removed_fragments, big.mark = ","))
   )
 
+# -------------------------
+# Plot titles
+# -------------------------
 dup_cap_label <- unique(combined_df$max_dups)
 dup_cap_label <- dup_cap_label[!is.na(dup_cap_label)]
 
-if (length(dup_cap_label) == 1) {
-  dup_cap_title <- paste0("Duplicate burden before and after duplicate capping (cap = ", dup_cap_label, ")")
+if (length(dup_cap_label) == 1 && dup_cap_label == "off") {
+  dup_cap_title <- "Duplicate capping disabled"
+} else if (length(dup_cap_label) == 1) {
+  dup_cap_title <- paste0(
+    "Duplicate burden before and after duplicate capping (cap = ",
+    dup_cap_label,
+    ")"
+  )
 } else {
   dup_cap_title <- "Duplicates before and after duplicate capping"
 }
 
-downsample_target <- down_target$target_fragments[1]
-downsample_mode <- down_target$mode[1]
+downsample_target <- suppressWarnings(as.numeric(down_target$target_fragments[1]))
+downsample_mode <- as.character(down_target$mode[1])
 
-if (!is.na(downsample_mode) && downsample_mode == "disabled") {
-  downsample_title <- "Fragments retained after duplicate capping"
+if (!is.na(downsample_mode) && downsample_mode %in% c("disabled", "no_downsampling")) {
+  if (!is.na(downsample_target) && downsample_target > 0) {
+    downsample_title <- paste0(
+      "Fragments retained after processing; BigWig scaling target = ",
+      format(downsample_target, big.mark = ","),
+      " (mode = ",
+      downsample_mode,
+      ")"
+    )
+  } else {
+    downsample_title <- "Fragments retained after processing; downsampling disabled"
+  }
 
 } else if (!is.na(downsample_target) && downsample_target > 0) {
   downsample_title <- paste0(
-    "Fragments retained after duplicate capping and downsampling",
+    "Fragments retained after processing and downsampling",
     " (target = ",
     format(downsample_target, big.mark = ","),
     "; mode = ",
@@ -225,41 +299,76 @@ if (!is.na(downsample_mode) && downsample_mode == "disabled") {
   )
 
 } else {
-  downsample_title <- "Fragments retained after duplicate capping and downsampling"
+  downsample_title <- "Fragments retained after processing and downsampling"
 }
 
-p1 <- ggplot(
-  dup_plot_df,
-  aes(x = sample, y = percent_duplicate, fill = metric)
-) +
-  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
-  geom_text(
-    data = removed_label_df,
-    aes(
-      x = sample,
-      y = pmax(pct_duplicate_before, pct_duplicate_after, na.rm = TRUE),
-      label = label
-    ),
-    inherit.aes = FALSE,
-    vjust = -0.4,
-    size = 3
-  ) +
-  facet_wrap(~ histone, scales = "free_x") +
-  theme_bw(base_size = 12) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid.major.x = element_blank()
-  ) +
-  labs(
-    x = "Sample",
-    y = "% duplicate fragments",
-    fill = "",
-    title = dup_cap_title
-  ) +
-  expand_limits(
-    y = max(dup_plot_df$percent_duplicate, na.rm = TRUE) * 1.15
-  )
+# -------------------------
+# Duplicate plot
+# -------------------------
+if (has_dup_data) {
 
+  p1 <- ggplot(
+    dup_plot_df,
+    aes(x = sample, y = percent_duplicate, fill = metric)
+  ) +
+    geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+    facet_wrap(~ histone, scales = "free_x") +
+    theme_bw(base_size = 12) +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      panel.grid.major.x = element_blank()
+    ) +
+    labs(
+      x = "Sample",
+      y = "% duplicate fragments",
+      fill = "",
+      title = dup_cap_title
+    )
+
+  if (nrow(removed_label_df) > 0) {
+    p1 <- p1 +
+      geom_text(
+        data = removed_label_df,
+        aes(
+          x = sample,
+          y = pmax(pct_duplicate_before, pct_duplicate_after, na.rm = TRUE),
+          label = label
+        ),
+        inherit.aes = FALSE,
+        vjust = -0.4,
+        size = 3
+      )
+  }
+
+  max_dup_y <- max(dup_plot_df$percent_duplicate, na.rm = TRUE)
+
+  if (is.finite(max_dup_y) && max_dup_y > 0) {
+    p1 <- p1 + expand_limits(y = max_dup_y * 1.15)
+  }
+
+} else {
+
+  p1 <- ggplot(
+    combined_df,
+    aes(x = sample, y = 0)
+  ) +
+    geom_col(width = 0.7) +
+    facet_wrap(~ histone, scales = "free_x") +
+    theme_bw(base_size = 12) +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      panel.grid.major.x = element_blank()
+    ) +
+    labs(
+      x = "Sample",
+      y = "% duplicate fragments",
+      title = "Duplicate capping disabled"
+    )
+}
+
+# -------------------------
+# Fragment/read retention plot
+# -------------------------
 p2 <- ggplot(
   read_plot_df,
   aes(x = sample, y = fragments, fill = metric)
