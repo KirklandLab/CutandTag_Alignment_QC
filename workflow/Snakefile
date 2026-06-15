@@ -411,9 +411,10 @@ rule calculate_downsample_target:
         """
         mkdir -p results/qc/downsampling
 
-        echo -e "target_fragments\\tmode\\tlowest_fragments\\tfloor\\tmanual_target\\tdownsampling_enabled\\tnote" > {output.target}
+        echo -e "target_fragments\\tmode\\tlowest_fragments\\tlowest_above_floor\\tfloor\\tmanual_target\\tdownsampling_enabled\\tnote" > {output.target}
 
         lowest=""
+        lowest_above_floor=""
 
         for bam in {input.bams}; do
             count=$(samtools view -@ {threads} -c -f 64 -F 12 $bam)
@@ -421,20 +422,29 @@ rule calculate_downsample_target:
             if [ -z "$lowest" ] || [ "$count" -lt "$lowest" ]; then
                 lowest=$count
             fi
+
+            if [ "{params.floor}" -gt 0 ] && [ "$count" -ge "{params.floor}" ]; then
+                if [ -z "$lowest_above_floor" ] || [ "$count" -lt "$lowest_above_floor" ]; then
+                    lowest_above_floor=$count
+                fi
+            fi
         done
 
         # If downsampling is disabled, use the empirical lowest final-analysis
-        # fragment count as the BigWig scaling target.
+        # fragment count as the BigWig scaling target only.
         if [ "{params.use_downsampling}" != "True" ]; then
             target=$lowest
             note="downsampling_disabled_lowest_used_for_bigwig_scaling"
 
-            echo -e "$target\\tno_downsampling\\t$lowest\\tNA\\tNA\\t{params.use_downsampling}\\t$note" >> {output.target}
+            echo -e "$target\\tno_downsampling\\t$lowest\\t$lowest_above_floor\\t{params.floor}\\tNA\\t{params.use_downsampling}\\t$note" >> {output.target}
             exit 0
         fi
 
         if [ "{params.mode}" = "manual" ]; then
-            echo -e "{params.manual_target}\\tmanual\\t$lowest\\t{params.floor}\\t{params.manual_target}\\t{params.use_downsampling}\\tmanual_target_used" >> {output.target}
+            target="{params.manual_target}"
+            note="manual_target_used"
+
+            echo -e "$target\\tmanual\\t$lowest\\t$lowest_above_floor\\t{params.floor}\\t{params.manual_target}\\t{params.use_downsampling}\\t$note" >> {output.target}
             exit 0
         fi
 
@@ -442,20 +452,20 @@ rule calculate_downsample_target:
             target=$lowest
             note="lowest_sample_used_no_floor"
 
-            echo -e "$target\\tlowest\\t$lowest\\tNA\\tNA\\t{params.use_downsampling}\\t$note" >> {output.target}
+            echo -e "$target\\tlowest\\t$lowest\\t$lowest_above_floor\\t{params.floor}\\tNA\\t{params.use_downsampling}\\t$note" >> {output.target}
             exit 0
         fi
 
         if [ "{params.mode}" = "lowest_with_floor" ]; then
-            if [ "$lowest" -ge "{params.floor}" ]; then
-                target=$lowest
-                note="lowest_sample_used"
+            if [ -n "$lowest_above_floor" ]; then
+                target=$lowest_above_floor
+                note="lowest_sample_at_or_above_floor_used"
             else
-                target="{params.floor}"
-                note="set_floor_used"
+                target=$lowest
+                note="no_sample_met_floor_lowest_sample_used"
             fi
 
-            echo -e "$target\\tlowest_with_floor\\t$lowest\\t{params.floor}\\tNA\\t{params.use_downsampling}\\t$note" >> {output.target}
+            echo -e "$target\\tlowest_with_floor\\t$lowest\\t$lowest_above_floor\\t{params.floor}\\tNA\\t{params.use_downsampling}\\t$note" >> {output.target}
             exit 0
         fi
         """
