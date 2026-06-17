@@ -20,7 +20,7 @@ configfile: "config/config.yml"
 # per-sample peak files, FRiP scores, alignment summaries, duplicate/downsampling
 # summaries, and plots to assess sample quality and replicate consistency.
 #
-# Update Version 2.0.0 (May/June 2026): This workflow now includes config-controlled 
+# Update Version 2.0.0 (May/June 2026): This workflow now includes config controlled 
 # toggles for raw FASTQ QC, duplicate capping, and random downsampling. Downsampling 
 # can be run using a manual target, the lowest sample depth, or the lowest sample 
 # depth above a minimum acceptable floor. Duplicate capping limits the number of
