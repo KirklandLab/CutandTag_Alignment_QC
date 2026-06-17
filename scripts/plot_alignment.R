@@ -116,7 +116,7 @@ alignResult$Replicate <- as.factor(alignResult$Replicate)
 
 fig1 <- ggplot(alignResult, aes(x = Histone, y = SequencingDepth / 1e6, fill = Histone)) +
   geom_boxplot() +
-  geom_jitter(aes(color = Replicate), width = 0.2) +
+  geom_jitter(aes(color = Replicate), width = 0.2, height = 0) +
   theme_bw(base_size = 14) +
   ylab("Sequencing Depth (Millions)") +
   xlab("") +
