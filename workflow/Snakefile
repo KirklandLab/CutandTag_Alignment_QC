@@ -68,6 +68,7 @@ def fq_dict_from_sample(wildcards):
     "fq2": samples_table.loc[wildcards.sample, "fastq2"]
   }
 
+USE_FASTQ_QC = bool(config.get("use_fastq_qc", True))
 USE_DUP_CAP = bool(config.get("use_duplicate_cap", False))
 DUP_CAP_MAX = int(config.get("duplicate_cap_max", 0))
 
@@ -90,6 +91,22 @@ if DOWNSAMPLE_TARGET_MODE not in VALID_DOWNSAMPLE_MODES:
 ##################################################################
 
 SAMPLES = list(samples_table.index)
+
+FASTQC_OUTPUTS = (
+    expand("results/qc/fastqc/{sample}_R1_fastqc.html", sample=SAMPLES) +
+    expand("results/qc/fastqc/{sample}_R2_fastqc.html", sample=SAMPLES)
+    if USE_FASTQ_QC else []
+)
+
+MULTIQC_OUTPUTS = (
+    ["results/qc/multiqc/multiqc_report.html"]
+    if USE_FASTQ_QC else []
+)
+
+FASTQ_SCREEN_OUTPUTS = (
+    expand("results/qc/fastq_screen/{sample}_screen.png", sample=SAMPLES)
+    if USE_FASTQ_QC else []
+)
 
 DUP_CAP_BAMS = (
     expand("results/alignment/bam/dedup_cap/{sample}.dupCap.bam", sample=SAMPLES)
@@ -168,9 +185,9 @@ def final_analysis_bam(wildcards):
 
 rule all:
     input:
-        expand("results/qc/fastqc/{sample}_R1_fastqc.html", sample=samples_table.index),
-        "results/qc/multiqc/multiqc_report.html",
-        expand("results/qc/fastq_screen/{sample}_screen.png", sample=samples_table.index),
+        FASTQC_OUTPUTS,
+        MULTIQC_OUTPUTS,
+        FASTQ_SCREEN_OUTPUTS,
         expand("results/alignment/sam/{sample}_bowtie2.sam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}_bowtie2.bam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}.sorted.bam", sample=samples_table.index),
