@@ -6,6 +6,13 @@ bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"   # m
                                                                              # GRCh38 genome index file path = "/hpc-prj/kirkland/shared/scripts/hg38_bowtie2_index/hg38"
 
 # ------------------------------------------------------------
+# Raw FASTQs Quality Control
+# ------------------------------------------------------------
+# If true, run FastQC, MultiQC, and FastQ Screen.
+# If false, skip these rules. Use for rerunning the workflow after raw FASTQ QC has already been completed.
+use_fastq_qc: true
+
+# ------------------------------------------------------------
 # Duplicate capping
 # ------------------------------------------------------------
 use_duplicate_cap: true
