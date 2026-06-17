@@ -1,3 +1,19 @@
+![GitHub Release](https://img.shields.io/github/v/release/KirklandLab/CutandTag_Alignment_QC)
+![GitHub Release Date](https://img.shields.io/github/release-date/KirklandLab/CutandTag_Alignment_QC)
+![GitHub repo size](https://img.shields.io/github/repo-size/KirklandLab/CutandTag_Alignment_QC)
+![GitHub last commit](https://img.shields.io/github/last-commit/KirklandLab/CutandTag_Alignment_QC)
+![GitHub contributors](https://img.shields.io/github/contributors/KirklandLab/CutandTag_Alignment_QC)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/KirklandLab/CutandTag_Alignment_QC/total)
+![GitHub commits since latest release](https://img.shields.io/github/commits-since/KirklandLab/CutandTag_Alignment_QC/latest)
+[![DOI](https://zenodo.org/badge/873121124.svg)](https://doi.org/10.5281/zenodo.15232228)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+# CutandTag_Alignment_QC
+![Cut&Tag](/images/Cut&Tag.png)
+*(Image generated with DALL-E. OpenAI, 2024: Cartoon of scissors cutting DNA and DNA tagging protein)*
+
+--- 
+
 ## 1) Project Description
 
 **CutandTag_Alignment_QC** is a Snakemake workflow adapted from the protocol by Ye Zheng, Kami Ahmad, and Steven Henikoff ([dx.doi.org/10.17504/protocols.io.bjk2kkye](https://dx.doi.org/10.17504/protocols.io.bjk2kkye)). This pipeline is designed to process CUT&Tag sequencing data from raw paired-end FASTQ files through optional raw FASTQ quality control, read alignment, optional duplicate capping, optional random downsampling, BigWig signal track generation, per-sample peak calling, fragment length analysis, and QC visualization.
