@@ -650,7 +650,7 @@ rule make_bigwigs:
         binSize=config["binSize"]
     envmodules:
         config["deeptools"]
-    threads: 4
+    threads: 8
     log: "results/logs/snakelogs/make_bigwigs.{sample}.log"
     shell:
         """
