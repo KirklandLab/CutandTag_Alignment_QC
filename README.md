@@ -303,7 +303,7 @@ downsample_target_fragments: 15000000
 downsample_seed: "none"
 ```
 
-The resolved target is set in the config:
+The resolved target is set by the config:
 ```text
 15,000,000
 ```
@@ -334,7 +334,7 @@ Sample 5 is below the target, so it is not changed.
 
 ### **Downsampling: Lowest Sample With Floor**
 
-**lowest_with_floor** mode ignores samples below a minimum acceptable depth when choosing the downsampling target. It uses the lowest sample that is at or above the specified floor in `downsample_minimum_acceptable_fragments`.
+**lowest_with_floor** mode ignores samples below a minimum acceptable depth when choosing the downsampling target. It uses the lowest depth sample that is at or above the specified floor in `downsample_minimum_acceptable_fragments`.
 
 ```yaml
 use_downsampling: true
@@ -476,7 +476,7 @@ This workflow uses the following tools through environment modules on an HPC sys
 
 ## 5) Example Data
 
-A compact dataset is included within the repository for testing purposes, along with example scripts for analyzing publicly available CUT&Tag datasets. This pipeline extends the original protocol and provides a reproducible framework for routine alignment, QC, signal generation, and sample level assessment.
+A compact dataset is included within the repository for testing purposes, along with example scripts for analyzing publicly available CUT&Tag datasets. This pipeline extends the original protocol and provides a reproducible framework for routine alignment, QC, duplicate capping, random downsampling, signal generation, and sample level assessment.
 
 ---
 
@@ -541,10 +541,13 @@ Example FASTQ names to **not** use:
 
 This pipeline generates three types of BigWig tracks for genome browser visualization:
 
-+ **Raw BigWig**
-  + Direct coverage from the final analysis BAM
++ **Analysis BigWig**
+  + Direct coverage from the final analysis BAM which could be
+    + aligned sorted raw BAM
+    + aligned sorted BAM after downsampling
+    + duplicate capped BAM
+    + duplicate capped BAM after downsampling
   + Output pattern: `results/alignment/bigwig/{sample}_analysis.bw`
-  + Not normalized for sequencing depth
 
 + **CPM normalized BigWig**
   + Generated using `bamCoverage --normalizeUsing CPM`
@@ -572,29 +575,7 @@ The meaning of `target_fragments` depends on the workflow settings:
 
 ### **Example BigWig Scaling Behavior**
 
-If downsampling is disabled and two samples have final analysis depths of:
-
-```text
-Sample A = 7,916 fragments
-Sample B = 9,836 fragments
-```
-
-the BigWig scaling reference is the lowest sample:
-
-```text
-Scaling reference = 7,916
-```
-
-The target scaled BigWig scale factors are:
-
-```text
-Sample A: 7,916 / 7,916 = 1.000
-Sample B: 7,916 / 9,836 = 0.805
-```
-
-Sample A is unchanged, and Sample B is scaled down in the `analysisScaled.bw` file.
-
-If using `lowest_with_floor` with the example depths:
+Example final analysis fragment depths:
 
 ```text
 Sample 1 = 30,000,000
@@ -604,21 +585,39 @@ Sample 4 = 24,000,000
 Sample 5 =  8,000,000
 ```
 
-and:
+If downsampling is disabled, no BAM downsampling target is used. Instead, the BigWig scaling reference is resolved to the empirical lowest final analysis fragment count:
 
-```yaml
-downsample_target_mode: "lowest_with_floor"
-downsample_minimum_acceptable_fragments: 15000000
+```text
+Scaling reference = 8,000,000
 ```
 
-the resolved target is:
+The target scaled BigWig scale factors are:
+```text
+Sample 1: 8,000,000 / 30,000,000 = 0.267
+Sample 2: 8,000,000 / 28,000,000 = 0.286
+Sample 3: 8,000,000 / 18,000,000 = 0.444
+Sample 4: 8,000,000 / 24,000,000 = 0.333
+Sample 5: 8,000,000 /  8,000,000 = 1.000
+```
 
+Sample 5 is unchanged, and the higher depth samples are scaled down in the `analysisScaled.bw` files.
+
+If using `lowest_with_floor` with the same example depths:
+
+```text
+Sample 1 = 30,000,000
+Sample 2 = 28,000,000
+Sample 3 = 18,000,000
+Sample 4 = 24,000,000
+Sample 5 =  8,000,000
+```
+
+and the resolved target is:
 ```text
 18,000,000
 ```
 
-The target scaled BigWig scale factors are:
-
+The target-scaled BigWig scale factors are:
 ```text
 Sample 1: 18,000,000 / 30,000,000 = 0.600
 Sample 2: 18,000,000 / 28,000,000 = 0.643
@@ -699,106 +698,7 @@ snakemake --unlock
 
 ---
 
-## 10) Recommended Configuration Examples
-
-### **Standard full QC run**
-
-This is a reasonable starting point for a full initial run:
-
-```yaml
-use_fastq_qc: true
-
-use_duplicate_cap: true
-duplicate_cap_max: 5
-
-use_downsampling: true
-downsample_target_mode: "lowest_with_floor"
-downsample_target_fragments: 30000000
-downsample_minimum_acceptable_fragments: 15000000
-downsample_seed: 12345
-```
-
-This runs raw FASTQ QC, applies duplicate capping, and downscales good depth samples to the lowest sample at or above the minimum acceptable floor.
-
----
-
-### **Rerun after raw QC has already been checked**
-
-```yaml
-use_fastq_qc: false
-
-use_duplicate_cap: true
-duplicate_cap_max: 5
-
-use_downsampling: true
-downsample_target_mode: "lowest_with_floor"
-downsample_target_fragments: 30000000
-downsample_minimum_acceptable_fragments: 15000000
-downsample_seed: 12345
-```
-
-This skips FastQC, MultiQC, and FastQ Screen but still performs alignment, duplicate capping, downsampling, BigWig generation, peak calling, and QC summaries.
-
----
-
-### **Compare duplicate capping settings without downsampling**
-
-```yaml
-use_fastq_qc: false
-
-use_duplicate_cap: true
-duplicate_cap_max: 3
-
-use_downsampling: false
-downsample_target_mode: "manual"
-downsample_target_fragments: 30000000
-downsample_minimum_acceptable_fragments: 15000000
-downsample_seed: 12345
-```
-
-This applies duplicate capping but does not downsample BAM files. Target scaled BigWigs use the empirical lowest final analysis fragment count as the scaling reference.
-
----
-
-### **No duplicate capping, with downsampling**
-
-```yaml
-use_fastq_qc: false
-
-use_duplicate_cap: false
-duplicate_cap_max: 5
-
-use_downsampling: true
-downsample_target_mode: "manual"
-downsample_target_fragments: 15000000
-downsample_minimum_acceptable_fragments: 15000000
-downsample_seed: 12345
-```
-
-This uses sorted aligned BAMs as input to downsampling. The duplicate cap value is ignored because duplicate capping is disabled.
-
----
-
-### **Alignment and per sample QC without duplicate capping or downsampling**
-
-```yaml
-use_fastq_qc: false
-
-use_duplicate_cap: false
-duplicate_cap_max: 5
-
-use_downsampling: false
-downsample_target_mode: "manual"
-downsample_target_fragments: 30000000
-downsample_minimum_acceptable_fragments: 15000000
-downsample_seed: 12345
-```
-
-This leaves aligned BAMs unchanged after sorting and indexing. BigWigs, MACS2 peaks, fragment length files, FRiP scores, and correlation plots are generated from the sorted aligned BAMs.
-
----
-
-### **Testing several duplicate caps**
+## 10) Testing Several Duplicate Caps
 
 To compare the effect of duplicate capping, run the workflow in separate directories using different values of `duplicate_cap_max`.
 
@@ -809,13 +709,14 @@ capOff_run
 cap1_run
 cap3_run
 cap5_run
+cap7_run
 ```
 
 Example configs:
 
 ```yaml
 use_duplicate_cap: false
-duplicate_cap_max: 5
+duplicate_cap_max: 5        <- This value doesn't matter when set to false
 ```
 
 ```yaml
@@ -833,7 +734,16 @@ use_duplicate_cap: true
 duplicate_cap_max: 5
 ```
 
-This can help evaluate how duplicate burden affects retained fragments, signal tracks, FRiP scores, peak counts, and replicate correlations.
+```yaml
+use_duplicate_cap: true
+duplicate_cap_max: 7
+```
+
+Duplicate capping is useful as a sensitivity analysis because duplicate fragments can reflect both technical amplification and true biological enrichment. Very strict caps, such as `duplicate_cap_max: 1`, reduce the influence of PCR duplicates but may remove real signal from highly enriched CUT&Tag sites. More permissive caps, such as `duplicate_cap_max: 5` or `duplicate_cap_max: 7`, retain more fragment complexity and signal intensity but may allow technical duplication to have a stronger effect.
+
+Comparing several duplicate caps can help evaluate how duplicate burden affects retained fragments, signal tracks, FRiP scores, peak counts, and replicate correlations. A reasonable cap should reduce excessive duplicate-driven signal while preserving expected enrichment patterns, replicate consistency, and interpretable peak calls.
+
+*Note: The optimal duplicate cap may depend on library complexity, sequencing depth, antibody/target behavior, and the expected signal distribution for the mark being profiled. This workflow does not assume a single universal duplicate cap for all datasets.*
 
 ---
 
@@ -869,7 +779,7 @@ Downsampling can help make samples more comparable when sequencing depth differs
 
 This workflow produces three BigWig types:
 
-+ Raw coverage
++ Raw (possibly capped and/or downsampled) coverage
 + CPM normalized coverage
 + Target scaled coverage
 
