@@ -183,7 +183,7 @@ downsample_target_fragments: 30000000
 downsample_minimum_acceptable_fragments: 15000000
 
 # Random seed used by samtools downsampling
-downsample_seed: 12345
+downsample_seed: "none"
 ```
 
 ---
@@ -237,7 +237,7 @@ use_duplicate_cap: false
 duplicate_cap_max: 5
 ```
 
-When duplicate capping is disabled, `duplicate_cap_max` is ignored.
+*Note: When duplicate capping is disabled, `duplicate_cap_max` is ignored.*
 
 **Important:** This step is best described as **duplicate capping**, not complete duplicate removal. A duplicate cap of `5` does not remove all duplicate fragments. It keeps up to 5 identical fragments per fragment position and removes only duplicate fragments beyond that cap.
 
