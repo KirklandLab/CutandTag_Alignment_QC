@@ -16,47 +16,46 @@
 
 ## 1) Project Description
 
-**CutandTag_Alignment_QC** is a Snakemake workflow adapted from the protocol by Ye Zheng, Kami Ahmad, and Steven Henikoff ([dx.doi.org/10.17504/protocols.io.bjk2kkye](https://dx.doi.org/10.17504/protocols.io.bjk2kkye)). This pipeline is designed to process CUT&Tag sequencing data from raw paired-end FASTQ files through optional raw FASTQ quality control, read alignment, optional duplicate capping, optional random downsampling, BigWig signal track generation, per-sample peak calling, fragment length analysis, and QC visualization.
+**CutandTag_Alignment_QC** is a Snakemake workflow adapted from the protocol by Ye Zheng, Kami Ahmad, and Steven Henikoff ([dx.doi.org/10.17504/protocols.io.bjk2kkye](https://dx.doi.org/10.17504/protocols.io.bjk2kkye)). This pipeline is designed to process CUT&Tag sequencing data from raw paired-end FASTQ files through raw FASTQ quality control, read alignment, optional duplicate capping, optional random downsampling, BigWig signal track generation, per-sample peak calling, fragment length analysis, and QC visualization.
 
-The workflow performs read alignment with **Bowtie2**, creates sorted and indexed BAM files, optionally limits PCR duplicate burden using fragment-coordinate duplicate capping, optionally downscales samples to a defined fragment depth, and defines a final analysis BAM for each sample. These final analysis BAMs are then used for BigWig generation, MACS2 peak calling, final fragment length analysis, FRiP score calculation, and fragment-count correlation analysis.
+The workflow aligns reads with **Bowtie2**, creates sorted and indexed BAM files, optionally limits PCR duplicate burden using fragment-coordinate duplicate capping, optionally downscales samples to a defined fragment depth, and outputs a final analysis BAM for each sample. Final analysis BAMs are then used to generate raw, CPM-normalized, and target-scaled BigWig files for genome browser visualization, call per-sample peaks with MACS2, calculate raw and final fragment length distributions, compute FRiP scores, generate fragment-count correlations, and produce alignment, duplicate/downsampling, and peak summary plots.
 
-The pipeline can also perform automated raw FASTQ quality checks using **FastQC**, **MultiQC**, and **FastQ Screen**. These raw FASTQ QC steps are controlled by a config toggle, making it possible to skip them when rerunning the workflow after initial QC has already been completed.
-
-Outputs include raw, CPM-normalized, and target-scaled BigWig files for genome browser visualization, MACS2 peak files, raw and final fragment length files, FRiP scores, Bowtie2 alignment summaries, duplicate/downsampling summaries, and QC plots. The workflow is automated with Snakemake and dependencies are managed through environment modules, supporting reproducible execution on a Slurm-managed HPC system.
+Automated raw FASTQ quality checks are done using **FastQC**, **MultiQC**, and **FastQ Screen**. These raw FASTQ QC steps are controlled by a config toggle, making it possible to skip them when rerunning the workflow after an initial QC has already been completed. The workflow is automated with Snakemake and dependencies are managed through environment modules, supporting reproducible execution on a Slurm-managed HPC system.
 
 Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](https://github.com/KirklandLab/CutandTag_ReplicatePeak_Analysis) Snakemake workflow. This companion pipeline starts with aligned BAM files and focuses on identifying reproducible peaks, generating consensus peak sets, and visualizing overlaps and signal distributions across multiple samples and experimental conditions.
 
 ### **Key Features**
 
-+ **Optional Raw QC & Contamination Check**
++ **Optional: Raw QC & Contamination Check**
   + Generates **FastQC** reports for raw FASTQ files
   + Aggregates reports into a single **MultiQC** summary
   + Performs contamination detection via **FastQ Screen**
   + Can be toggled on/off using `use_fastq_qc`
 
 + **Read Alignment & BAM Processing**
-  + Aligns paired-end reads using **Bowtie2**
+  + Aligns paired end reads using **Bowtie2**
   + Converts SAM to BAM, then sorts and indexes BAM files
   + Produces sorted BAM files for each sample
   + Defines a final analysis BAM based on duplicate-capping and downsampling settings
 
-+ **Optional Duplicate Capping**
++ **Optional: Duplicate Capping**
   + Can be toggled on/off using `use_duplicate_cap`
   + Caps duplicate fragments by exact genomic fragment coordinates
   + Retains up to `duplicate_cap_max` identical fragments at each fragment position
   + Helps reduce the influence of PCR duplicates without forcing complete duplicate removal
   + Produces per-sample duplicate metrics and duplicate/downsampling summary plots
 
-+ **Optional Random Downsampling**
++ **Optional: Random Downsampling**
   + Can be toggled on/off using `use_downsampling`
   + Supports three target-selection modes:
     + `manual`
     + `lowest`
     + `lowest_with_floor`
-  + Uses a fixed random seed for reproducibility
-  + Downsamples only samples above the resolved target
-  + Leaves samples below the target unchanged
-  + Produces per-sample downsampling metrics and final analysis fragment counts
+  + All downsampling methods:
+    + Use a fixed random seed for reproducibility
+    + Downsample only samples above the resolved target
+    + Leaves samples below the target unchanged
+    + Produces per sample downsampling metrics and final analysis fragment counts
 
 + **Read Alignment & Coverage**
   + Aligns reads using **Bowtie2**
@@ -65,6 +64,8 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
     + **Raw** BigWigs show direct coverage from the final analysis BAM
     + **CPM** BigWigs normalize coverage using `bamCoverage --normalizeUsing CPM`
     + **Target-scaled** BigWigs scale signal using a resolved fragment-depth target or empirical scaling reference
+      + *When downsampling is **enabled**, the scaling target is the resolved downsampling target*
+      + *When downsampling is **disabled**, no BAM downsampling target is used; the target-scaled BigWig reference is resolved to the empirical lowest final analysis fragment count*
 
 + **Peak Calling**
   + Performs per-sample peak calling with **MACS2**
