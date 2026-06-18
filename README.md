@@ -716,7 +716,7 @@ Example configs:
 
 ```yaml
 use_duplicate_cap: false
-duplicate_cap_max: 5        <- This value doesn't matter when set to false
+duplicate_cap_max: 5       # <- This value doesn't matter when set to false
 ```
 
 ```yaml
