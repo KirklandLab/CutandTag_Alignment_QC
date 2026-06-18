@@ -85,8 +85,13 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
   + Uses Snakemake to track dependencies and rule outputs
   + Easily integrated with the downstream pipeline: [CutandTag_ReplicatePeak_Analysis](https://github.com/KirklandLab/CutandTag_ReplicatePeak_Analysis)
 
-+ **Optional Heatmap Generation**
++ **Optional: Heatmap Generation**
   + A helper script is included in `scripts/make_heatplot.sh` for visualizing BigWig signals over defined BED regions
+  + Instructions for customizing and running the script are provided as comments in the script
+ 
++ **Optional: FASTQ Combining**
+  + A helper script is included in `scripts/combine_fastqs.sh` for combining multiple FASTQ files from the same biological sample
+  + This is useful when additional sequencing is returned by the sequencing core, such as reads from multiple lanes, sequencing runs, or sequencing submissions that should be analyzed as one sample
   + Instructions for customizing and running the script are provided as comments in the script
 
 ---
