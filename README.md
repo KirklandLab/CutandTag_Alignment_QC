@@ -16,11 +16,11 @@
 
 ## 1) Project Description
 
-**CutandTag_Alignment_QC** is a Snakemake workflow adapted from the protocol by Ye Zheng, Kami Ahmad, and Steven Henikoff ([dx.doi.org/10.17504/protocols.io.bjk2kkye](https://dx.doi.org/10.17504/protocols.io.bjk2kkye)). This pipeline is designed to process CUT&Tag sequencing data from raw paired-end FASTQ files through raw FASTQ quality control, read alignment, optional duplicate capping, optional random downsampling, BigWig signal track generation, per-sample peak calling, fragment length analysis, and QC visualization.
+**CutandTag_Alignment_QC** is a Snakemake workflow adapted from the protocol by Ye Zheng, Kami Ahmad, and Steven Henikoff ([dx.doi.org/10.17504/protocols.io.bjk2kkye](https://dx.doi.org/10.17504/protocols.io.bjk2kkye)). This pipeline is designed to process CUT&Tag sequencing data from raw paired end FASTQ files through raw FASTQ quality control, read alignment, optional duplicate capping, optional random downsampling, BigWig signal track generation, per sample peak calling, fragment length analysis, and QC visualization.
 
-The workflow aligns reads with **Bowtie2**, creates sorted and indexed BAM files, optionally limits PCR duplicate burden using fragment-coordinate duplicate capping, optionally downscales samples to a defined fragment depth, and outputs a final analysis BAM for each sample. Final analysis BAMs are then used to generate raw, CPM-normalized, and target-scaled BigWig files for genome browser visualization, call per-sample peaks with MACS2, calculate raw and final fragment length distributions, compute FRiP scores, generate fragment-count correlations, and produce alignment, duplicate/downsampling, and peak summary plots.
+The workflow aligns reads with **Bowtie2**, creates sorted and indexed BAM files, optionally limits PCR duplicate burden using fragment coordinate duplicate capping, optionally downscales samples to a defined fragment depth, and outputs a final analysis BAM for each sample. Final analysis BAMs are then used to generate raw, CPM normalized, and target scaled BigWig files for genome browser visualization, call per sample peaks with MACS2, calculate raw and final fragment length distributions, compute FRiP scores, generate fragment count correlations, and produce alignment, duplicate/downsampling, and peak summary plots.
 
-Automated raw FASTQ quality checks are done using **FastQC**, **MultiQC**, and **FastQ Screen**. These raw FASTQ QC steps are controlled by a config toggle, making it possible to skip them when rerunning the workflow after an initial QC has already been completed. The workflow is automated with Snakemake and dependencies are managed through environment modules, supporting reproducible execution on a Slurm-managed HPC system.
+Automated raw FASTQ quality checks are done using **FastQC**, **MultiQC**, and **FastQ Screen**. These raw FASTQ QC steps are controlled by a config toggle, making it possible to skip them when rerunning the workflow after an initial QC has already been completed. The workflow is automated with Snakemake and dependencies are managed through environment modules, supporting reproducible execution on a Slurm managed HPC system.
 
 Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](https://github.com/KirklandLab/CutandTag_ReplicatePeak_Analysis) Snakemake workflow. This companion pipeline starts with aligned BAM files and focuses on identifying reproducible peaks, generating consensus peak sets, and visualizing overlaps and signal distributions across multiple samples and experimental conditions.
 
@@ -36,18 +36,18 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
   + Aligns paired end reads using **Bowtie2**
   + Converts SAM to BAM, then sorts and indexes BAM files
   + Produces sorted BAM files for each sample
-  + Defines a final analysis BAM based on duplicate-capping and downsampling settings
+  + Defines a final analysis BAM based on duplicate capping and downsampling settings
 
 + **Optional: Duplicate Capping**
   + Can be toggled on/off using `use_duplicate_cap`
   + Caps duplicate fragments by exact genomic fragment coordinates
   + Retains up to `duplicate_cap_max` identical fragments at each fragment position
   + Helps reduce the influence of PCR duplicates without forcing complete duplicate removal
-  + Produces per-sample duplicate metrics and duplicate/downsampling summary plots
+  + Produces per sample duplicate metrics and duplicate/downsampling summary plots
 
 + **Optional: Random Downsampling**
   + Can be toggled on/off using `use_downsampling`
-  + Supports three target-selection modes:
+  + Supports three target selection modes:
     + `manual`
     + `lowest`
     + `lowest_with_floor`
@@ -60,16 +60,16 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
 + **Read Alignment & Coverage**
   + Aligns reads using **Bowtie2**
   + Converts SAM to sorted BAM files and generates BAM indices
-  + Produces **raw**, **CPM-normalized**, and **target-scaled** BigWig tracks using DeepTools
+  + Produces **raw**, **CPM normalized**, and **target scaled** BigWig tracks using DeepTools
     + **Raw** BigWigs show direct coverage from the final analysis BAM
     + **CPM** BigWigs normalize coverage using `bamCoverage --normalizeUsing CPM`
-    + **Target-scaled** BigWigs scale signal using a resolved fragment-depth target or empirical scaling reference
+    + **Target scaled** BigWigs scale signal using a resolved fragment depth target or empirical scaling reference
       + *When downsampling is **enabled**, the scaling target is the resolved downsampling target*
-      + *When downsampling is **disabled**, no BAM downsampling target is used; the target-scaled BigWig reference is resolved to the empirical lowest final analysis fragment count*
+      + *When downsampling is **disabled**, no BAM downsampling target is used; the target scaled BigWig reference is resolved to the empirical lowest final analysis fragment count*
 
 + **Peak Calling**
-  + Performs per-sample peak calling with **MACS2**
-  + Uses paired-end BAM mode
+  + Performs per sample peak calling with **MACS2**
+  + Uses paired end BAM mode
   + Uses a customizable q-value threshold and genome size setting
 
 + **Summary Plots**
@@ -80,7 +80,7 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
   + Fragment count correlation between samples
 
 + **Modular & Reproducible**
-  + Designed for HPC environments using module-based software environments
+  + Designed for HPC environments using module based software environments
   + Uses `samples.csv` and `config.yml` for full customization
   + Uses Snakemake to track dependencies and rule outputs
   + Easily integrated with the downstream pipeline: [CutandTag_ReplicatePeak_Analysis](https://github.com/KirklandLab/CutandTag_ReplicatePeak_Analysis)
@@ -98,15 +98,21 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
 
 ## 2) Intended Use Case
 
-This pipeline is ideal for processing CUT&Tag datasets when the goal is to perform initial alignment, QC, and per-sample signal generation.
+This pipeline is designed for the initial processing and quality assessment of paired end CUT&Tag sequencing data. The main goal is to produce clean, well documented alignment files, browser tracks, and sample level metrics that can be used to evaluate data quality before downstream replicate aware analysis.
 
 + Performs **initial alignment and QC** of CUT&Tag sequencing data
-+ Creates BAM files and BigWig tracks for genome browser visualization
-+ Generates per-sample peak calls
-+ Summarizes sample-level alignment, duplication, downsampling, fragment length, FRiP, and correlation metrics
-+ Provides final analysis BAMs for downstream workflows
++ Optionally runs raw FASTQ QC using **FastQC**, **MultiQC**, and **FastQ Screen**
++ Creates sorted BAM files and config dependent final analysis BAMs
++ Optionally caps duplicate fragments to reduce PCR duplicate burden
++ Optionally downsamples samples to a manual, lowest sample, or floor filtered target depth
++ Generates raw, CPM normalized, and target scaled BigWig tracks for genome browser visualization
++ Calls per sample MACS2 peaks for QC and sample level assessment
++ Calculates raw and final fragment length distributions
++ Calculates FRiP scores using per sample peak calls
++ Summarizes sample level alignment, duplication, downsampling, fragment length, FRiP, peak count, and correlation metrics
++ Provides final analysis BAMs and signal tracks for downstream workflows
 
-**Note**: This pipeline does **not** merge replicates or define consensus peaks. That is handled by the companion pipeline linked above.
+**Note**: This pipeline is intended for alignment, preprocessing, signal generation, and sample level QC. It does **not** merge replicates, define consensus peaks, or perform replicate aware differential analysis. Those steps are handled by the companion pipeline linked above.
 
 ---
 
@@ -191,7 +197,6 @@ use_fastq_qc: true
 ```
 
 When `use_fastq_qc: true`, the workflow runs:
-
 + FastQC
 + MultiQC
 + FastQ Screen
@@ -202,7 +207,7 @@ When `use_fastq_qc: false`, these rules are skipped unless their output files ar
 use_fastq_qc: false
 ```
 
-This is useful when rerunning the workflow multiple times using the same FASTQs, because raw FASTQ QC usually does not need to be repeated after it has already been checked.
+This is useful when rerunning the workflow multiple times using the same FASTQs, because raw FASTQ QC usually does not need to be repeated after it has already been initially checked.
 
 ---
 
@@ -215,7 +220,7 @@ use_duplicate_cap: true
 duplicate_cap_max: 5
 ```
 
-When enabled, the workflow groups paired-end fragments by exact genomic fragment coordinates and retains up to `duplicate_cap_max` identical fragments per coordinate.
+When enabled, the workflow groups paired end fragments by exact genomic fragment coordinates and retains up to `duplicate_cap_max` identical fragments per coordinate.
 
 For example, with:
 
@@ -223,7 +228,7 @@ For example, with:
 duplicate_cap_max: 5
 ```
 
-the workflow allows up to 5 identical fragments at the same position. Additional identical fragments are removed before final analysis BAM generation.
+The workflow allows up to 5 identical fragments at the same position. Additional identical fragments are removed before final analysis BAM generation.
 
 To disable duplicate capping:
 
@@ -254,7 +259,7 @@ When disabled:
 use_downsampling: false
 ```
 
-the workflow does not downsample any BAM files. However, the workflow still records the empirical lowest final-analysis fragment count as a BigWig scaling reference for `analysisScaled.bw`.
+the workflow does not downsample any BAM files. However, the workflow still records the empirical lowest final analysis fragment count as a BigWig scaling reference for `analysisScaled.bw`.
 
 The downsampling target is selected using:
 
@@ -268,30 +273,42 @@ Valid options are:
 + `lowest`
 + `lowest_with_floor`
 
-Downsampling uses `samtools view --subsample` with a fixed seed from:
+Downsampling uses `samtools view --subsample`. For reproducible testing or direct run to run comparisons, set a fixed seed:
 
 ```yaml
 downsample_seed: 12345
 ```
 
-This makes random downsampling reproducible when the same input BAM, target, and seed are used.
+*Note: This makes random downsampling reproducible when the same input BAM, target, and seed are used. A fixed seed is recommended when comparing duplicate cap or downsampling settings across repeated test runs.*
+
+
+For normal operation, the workflow should be run without a fixed seed:
+
+```yaml
+downsample_seed: "none"
+```
+
+*Note: This lets downsampling remain random and may not select the exact same reads when the workflow is rerun. This is appropriate for routine processing.*
 
 ---
 
-### **Downsampling Mode 1: Manual Target**
+### **Downsampling: Manual Target**
 
-Manual mode uses the target specified by `downsample_target_fragments`.
+**manual** mode uses the target specified by `downsample_target_fragments`.
 
 ```yaml
 use_downsampling: true
 downsample_target_mode: "manual"
 downsample_target_fragments: 15000000
-downsample_minimum_acceptable_fragments: 15000000
-downsample_seed: 12345
+downsample_seed: "none"
 ```
 
-Example post-duplicate-cap fragment depths:
+The resolved target is set in the config:
+```text
+15,000,000
+```
 
+Example post duplicate cap fragment depths:
 ```text
 Sample 1 = 30,000,000
 Sample 2 = 28,000,000
@@ -300,21 +317,7 @@ Sample 4 = 24,000,000
 Sample 5 =  8,000,000
 ```
 
-With:
-
-```yaml
-downsample_target_mode: "manual"
-downsample_target_fragments: 15000000
-```
-
-the resolved target is:
-
-```text
-15,000,000
-```
-
-The final analysis depths are:
-
+Example downsampled final analysis depths are:
 ```text
 Sample 1: 30,000,000 -> 15,000,000
 Sample 2: 28,000,000 -> 15,000,000
@@ -325,26 +328,22 @@ Sample 5:  8,000,000 ->  8,000,000
 
 Sample 5 is below the target, so it is not changed.
 
-This mode is useful when a specific target depth is desired across experiments or when comparing several runs using a consistent manually selected threshold.
+*Note: This mode is useful when a specific target depth is desired across experiments or when comparing several runs using a consistent manually selected threshold.*
 
 ---
 
-### **Downsampling Mode 2: Lowest Sample**
+### **Downsampling: Lowest Sample With Floor**
 
-Lowest mode uses the lowest available post-cap or aligned fragment depth as the target.
+**lowest_with_floor** mode ignores samples below a minimum acceptable depth when choosing the downsampling target. It uses the lowest sample that is at or above the specified floor in `downsample_minimum_acceptable_fragments`.
 
 ```yaml
 use_downsampling: true
-downsample_target_mode: "lowest"
-downsample_target_fragments: 15000000
+downsample_target_mode: "lowest_with_floor"
 downsample_minimum_acceptable_fragments: 15000000
-downsample_seed: 12345
+downsample_seed: "none"
 ```
 
-In `lowest` mode, `downsample_target_fragments` and `downsample_minimum_acceptable_fragments` are not used to define the target.
-
-Example post-duplicate-cap fragment depths:
-
+Example post duplicate cap fragment depths:
 ```text
 Sample 1 = 30,000,000
 Sample 2 = 28,000,000
@@ -353,71 +352,12 @@ Sample 4 = 24,000,000
 Sample 5 =  8,000,000
 ```
 
-With:
-
-```yaml
-downsample_target_mode: "lowest"
-```
-
-the resolved target is:
-
-```text
-8,000,000
-```
-
-The final analysis depths are:
-
-```text
-Sample 1: 30,000,000 -> 8,000,000
-Sample 2: 28,000,000 -> 8,000,000
-Sample 3: 18,000,000 -> 8,000,000
-Sample 4: 24,000,000 -> 8,000,000
-Sample 5:  8,000,000 -> 8,000,000
-```
-
-This mode is strict and can force high-depth samples down to the depth of the lowest-depth sample. It can be useful when the lowest sample is still high quality, but it may be too aggressive if one sample has unusually low depth.
-
----
-
-### **Downsampling Mode 3: Lowest Sample With Floor**
-
-Lowest-with-floor mode ignores samples below a minimum acceptable depth when choosing the downsampling target. It uses the lowest sample that is at or above the specified floor.
-
-```yaml
-use_downsampling: true
-downsample_target_mode: "lowest_with_floor"
-downsample_target_fragments: 15000000
-downsample_minimum_acceptable_fragments: 15000000
-downsample_seed: 12345
-```
-
-Example post-duplicate-cap fragment depths:
-
-```text
-Sample 1 = 30,000,000
-Sample 2 = 28,000,000
-Sample 3 = 18,000,000
-Sample 4 = 24,000,000
-Sample 5 =  8,000,000
-```
-
-With:
-
-```yaml
-downsample_target_mode: "lowest_with_floor"
-downsample_minimum_acceptable_fragments: 15000000
-```
-
-Sample 5 is below the 15,000,000 floor and is not used to choose the target.
-
-The lowest sample at or above the floor is Sample 3:
-
+Sample 5 is below the 15,000,000 floor and is not used to choose the target. The lowest sample at or above the floor is Sample 3:
 ```text
 Resolved target = 18,000,000
 ```
 
-The final analysis depths are:
-
+Example downsampled final analysis depths are:
 ```text
 Sample 1: 30,000,000 -> 18,000,000
 Sample 2: 28,000,000 -> 18,000,000
@@ -426,19 +366,60 @@ Sample 4: 24,000,000 -> 18,000,000
 Sample 5:  8,000,000 ->  8,000,000
 ```
 
-This mode prevents one very low-depth sample from forcing all other samples down to an unnecessarily low depth.
+Sample 5 is below the target, so it is not changed. Sample 3 set the target, so it is also unchanged. 
+
+*Note: This mode prevents one very low depth sample from forcing all other samples down to an unnecessarily low depth.*
+
+---
+
+### **Downsampling: Lowest Sample**
+
+**lowest** mode uses the lowest available post cap or aligned fragment depth as the target, as `downsample_target_fragments` and `downsample_minimum_acceptable_fragments` are not used to define the target.
+
+```yaml
+use_downsampling: true
+downsample_target_mode: "lowest"
+downsample_seed: "none"
+```
+
+Example post duplicate cap fragment depths:
+```text
+Sample 1 = 30,000,000
+Sample 2 = 28,000,000
+Sample 3 = 18,000,000
+Sample 4 = 24,000,000
+Sample 5 =  8,000,000
+```
+
+The resolved target is set by the low sample:
+```text
+8,000,000
+```
+
+Example downsampled final analysis depths are:
+```text
+Sample 1: 30,000,000 -> 8,000,000
+Sample 2: 28,000,000 -> 8,000,000
+Sample 3: 18,000,000 -> 8,000,000
+Sample 4: 24,000,000 -> 8,000,000
+Sample 5:  8,000,000 -> 8,000,000
+```
+
+Sample 5 is the lowest sample so it set the target for all other samples. 
+
+*Note: This mode is strict and can force high depth samples down to the depth of the lowest depth sample. It can be useful when the lowest sample is still high quality, but it may be too aggressive if one sample has unusually low depth.*
 
 ---
 
 ### **How Final Analysis BAMs Are Defined**
 
-The final analysis BAM depends on the duplicate-capping and downsampling settings.
+The final analysis BAM depends on the duplicate capping and downsampling settings.
 
 + If duplicate capping is enabled and downsampling is enabled:
-  + Final BAM = duplicate-capped BAM after downsampling
+  + Final BAM = duplicate capped BAM after downsampling
 
 + If duplicate capping is enabled and downsampling is disabled:
-  + Final BAM = duplicate-capped BAM
+  + Final BAM = duplicate capped BAM
 
 + If duplicate capping is disabled and downsampling is enabled:
   + Final BAM = aligned sorted BAM after downsampling
@@ -452,7 +433,7 @@ These final analysis BAMs are used for:
 + MACS2 peak calling
 + Final fragment length analysis
 + FRiP score calculation
-+ Fragment-count correlation analysis
++ Fragment count correlation analysis
 
 The workflow does **not** create artificial reads or upsample BAM files. Samples below a downsampling target are left unchanged.
 
@@ -469,7 +450,7 @@ The workflow does **not** create artificial reads or upsample BAM files. Samples
 
 + The `config/config.yml` file defines module versions to load with `--use-envmodules`
 + The `config/cluster_config.yml` file defines resource usage per rule, including memory, time, and cores
-+ The workflow is designed for Slurm-managed HPC execution using Snakemake cluster submission
++ The workflow is designed for Slurm managed HPC execution using Snakemake cluster submission
 
 ---
 
@@ -480,14 +461,14 @@ This workflow uses the following tools through environment modules on an HPC sys
 + **FastQC**: for assessing raw FASTQ file quality
 + **FastQ Screen**: for detecting sample contamination via database alignment
 + **MultiQC**: for aggregating QC outputs into a single HTML report
-+ **Bowtie2**: for aligning paired-end reads to a reference genome
++ **Bowtie2**: for aligning paired end reads to a reference genome
 + **Samtools**: for converting, sorting, indexing, filtering, downsampling, and counting SAM/BAM files
 + **DeepTools**: `bamCoverage` generates BigWig tracks from final analysis BAMs
-+ **MACS2**: for narrow peak calling using paired-end BAM mode
++ **MACS2**: for narrow peak calling using paired end BAM mode
 + **Bedtools**: for fragment extraction, cleanup, and binning
 + **R**: for generating summary plots, including alignment stats, fragment length, duplicate/downsampling summaries, correlation, and peak summaries
-+ **Bioconductor**: for R-based QC visualizations
-+ **Python**: for duplicate-capping logic, metric generation, and workflow support scripts
++ **Bioconductor**: for R based QC visualizations
++ **Python**: for duplicate capping logic, metric generation, and workflow support scripts
 
 **Note**: All tool paths, versions, and parameters are centrally managed in `config.yml`, making the pipeline reproducible, portable, and easy to maintain.
 
@@ -495,7 +476,7 @@ This workflow uses the following tools through environment modules on an HPC sys
 
 ## 5) Example Data
 
-A compact dataset is included within the repository for testing purposes, along with example scripts for analyzing publicly available CUT&Tag datasets. This pipeline extends the original protocol and provides a reproducible framework for routine alignment, QC, signal generation, and sample-level assessment.
+A compact dataset is included within the repository for testing purposes, along with example scripts for analyzing publicly available CUT&Tag datasets. This pipeline extends the original protocol and provides a reproducible framework for routine alignment, QC, signal generation, and sample level assessment.
 
 ---
 
@@ -517,7 +498,7 @@ The `samples.csv` must contain the following columns:
 + **histone**: Mark, target, or sample group name used in plots
 + **replicate**: Replicate number or label, such as `1`, `2`, `A`, or `B`
 
-Include both the histone or target and the sample type in the `histone` column when possible. This determines how samples are grouped in plots and can improve interpretation of replicate-level QC.
+Include both the histone or target and the sample type in the `histone` column when possible. This determines how samples are grouped in plots and can improve interpretation of replicate level QC.
 
 Use informative `sample` names that match your design and avoid periods in FASTQ/sample names before the file extension.
 
@@ -565,12 +546,12 @@ This pipeline generates three types of BigWig tracks for genome browser visualiz
   + Output pattern: `results/alignment/bigwig/{sample}_analysis.bw`
   + Not normalized for sequencing depth
 
-+ **CPM-normalized BigWig**
++ **CPM normalized BigWig**
   + Generated using `bamCoverage --normalizeUsing CPM`
   + Output pattern: `results/alignment/bigwig/{sample}_analysisCPM.bw`
   + Useful for comparing signal after normalization to counts per million mapped reads
 
-+ **Target-scaled BigWig**
++ **Target scaled BigWig**
   + Generated using `bamCoverage --scaleFactor`
   + Output pattern: `results/alignment/bigwig/{sample}_analysisScaled.bw`
   + Uses a scale factor calculated as:
@@ -585,9 +566,9 @@ The meaning of `target_fragments` depends on the workflow settings:
   + `target_fragments` is the resolved downsampling target
 
 + If downsampling is disabled:
-  + `target_fragments` is the empirical lowest final-analysis fragment count and is used only as a BigWig scaling reference
+  + `target_fragments` is the empirical lowest final analysis fragment count and is used only as a BigWig scaling reference
 
-**Important:** Target-scaled BigWigs are for visualization and exploratory comparison. The workflow does not upsample BAM files or duplicate reads to artificially increase sequencing depth.
+**Important:** Target scaled BigWigs are for visualization and exploratory comparison. The workflow does not upsample BAM files or duplicate reads to artificially increase sequencing depth.
 
 ### **Example BigWig Scaling Behavior**
 
@@ -604,7 +585,7 @@ the BigWig scaling reference is the lowest sample:
 Scaling reference = 7,916
 ```
 
-The target-scaled BigWig scale factors are:
+The target scaled BigWig scale factors are:
 
 ```text
 Sample A: 7,916 / 7,916 = 1.000
@@ -636,7 +617,7 @@ the resolved target is:
 18,000,000
 ```
 
-The target-scaled BigWig scale factors are:
+The target scaled BigWig scale factors are:
 
 ```text
 Sample 1: 18,000,000 / 30,000,000 = 0.600
@@ -671,15 +652,15 @@ Below are example plots generated by this pipeline.
 
 ---
 
-## 9) Instructions to run on Slurm-managed HPC
+## 9) Instructions to run on Slurm managed HPC
 
-### 9A. Download version-controlled repository
+### 9A. Download version controlled repository
 
 ```bash
-wget https://github.com/KirklandLab/CutandTag_Alignment_QC/releases/download/v1.2.0/CutandTag_Alignment_QC-1.2.0.tar.gz
-tar -xzf CutandTag_Alignment_QC-1.2.0.tar.gz
-rm CutandTag_Alignment_QC-1.2.0.tar.gz
-cd CutandTag_Alignment_QC-1.2.0
+wget https://github.com/KirklandLab/CutandTag_Alignment_QC/releases/download/v2.0.0/CutandTag_Alignment_QC-2.0.0.tar.gz
+tar -xzf CutandTag_Alignment_QC-2.0.0.tar.gz
+rm CutandTag_Alignment_QC-2.0.0.tar.gz
+cd CutandTag_Alignment_QC-2.0.0
 ```
 
 ### 9B. Load modules
@@ -737,7 +718,7 @@ downsample_minimum_acceptable_fragments: 15000000
 downsample_seed: 12345
 ```
 
-This runs raw FASTQ QC, applies duplicate capping, and downscales good-depth samples to the lowest sample at or above the minimum acceptable floor.
+This runs raw FASTQ QC, applies duplicate capping, and downscales good depth samples to the lowest sample at or above the minimum acceptable floor.
 
 ---
 
@@ -775,7 +756,7 @@ downsample_minimum_acceptable_fragments: 15000000
 downsample_seed: 12345
 ```
 
-This applies duplicate capping but does not downsample BAM files. Target-scaled BigWigs use the empirical lowest final-analysis fragment count as the scaling reference.
+This applies duplicate capping but does not downsample BAM files. Target scaled BigWigs use the empirical lowest final analysis fragment count as the scaling reference.
 
 ---
 
@@ -798,7 +779,7 @@ This uses sorted aligned BAMs as input to downsampling. The duplicate cap value 
 
 ---
 
-### **Alignment and per-sample QC without duplicate capping or downsampling**
+### **Alignment and per sample QC without duplicate capping or downsampling**
 
 ```yaml
 use_fastq_qc: false
@@ -860,7 +841,7 @@ This can help evaluate how duplicate burden affects retained fragments, signal t
 
 ### **Duplicate Capping**
 
-Duplicate capping limits the number of identical fragments retained at each genomic fragment position. It is intended to reduce the influence of PCR over-amplification while avoiding complete duplicate removal.
+Duplicate capping limits the number of identical fragments retained at each genomic fragment position. It is intended to reduce the influence of PCR over amplification while avoiding complete duplicate removal.
 
 + `duplicate_cap_max: 1` is strict and behaves similarly to keeping only one fragment per exact position
 + `duplicate_cap_max: 3` is intermediate
@@ -889,20 +870,20 @@ Downsampling can help make samples more comparable when sequencing depth differs
 This workflow produces three BigWig types:
 
 + Raw coverage
-+ CPM-normalized coverage
-+ Target-scaled coverage
++ CPM normalized coverage
++ Target scaled coverage
 
-The target-scaled BigWig is for browser visualization and exploratory comparisons. It does not change the BAM file and does not rescue low-depth samples for downstream statistical analysis.
+The target scaled BigWig is for browser visualization and exploratory comparisons. It does not change the BAM file and does not rescue low depth samples for downstream statistical analysis.
 
-When downsampling is disabled, the target-scaled BigWig uses the empirical lowest final-analysis fragment count as the scaling reference.
+When downsampling is disabled, the target scaled BigWig uses the empirical lowest final analysis fragment count as the scaling reference.
 
-When downsampling is enabled, the target-scaled BigWig uses the resolved downsampling target as the scaling reference.
+When downsampling is enabled, the target scaled BigWig uses the resolved downsampling target as the scaling reference.
 
 ---
 
-### **Per-Sample Peak Calling**
+### **Per Sample Peak Calling**
 
-This workflow performs per-sample peak calling with MACS2. These peaks are useful for sample-level QC and FRiP score calculation.
+This workflow performs per sample peak calling with MACS2. These peaks are useful for sample level QC and FRiP score calculation.
 
 This workflow does not define final consensus peak sets or merge biological replicates. Those steps are handled by the downstream companion workflow.
 
@@ -922,11 +903,11 @@ If you use this workflow in your research, please cite both the original CUT&Tag
 
 ## 13) Authorship & Contributions
 
-**Kevin A. Boyd** – Designed and implemented the Snakemake workflow for a Slurm-managed HPC environment, modularized the pipeline structure, implemented the processing steps, integrated duplicate capping, downsampling, signal normalization, target-scaled BigWig support, quality control plots, and documentation.
+**Kevin A. Boyd** – Designed and implemented the Snakemake workflow for a Slurm managed HPC environment, modularized the pipeline structure, implemented the processing steps, integrated duplicate capping, downsampling, signal normalization, target scaled BigWig support, quality control plots, and documentation.
 
 **Jacob Kirkland** – Principal Investigator; provided project direction, conceptual guidance, and experimental data for pipeline development.
 
-This work was developed under the guidance of Jacob Kirkland as part of a COBRE-funded collaborative effort. While the pipeline was built specifically for use within the Kirkland Lab, it is broadly applicable to CUT&Tag data analysis in other research settings.
+This work was developed under the guidance of Jacob Kirkland as part of a COBRE funded collaborative effort. While the pipeline was built specifically for use within the Kirkland Lab, it is broadly applicable to CUT&Tag data analysis in other research settings.
 
 ---
 
