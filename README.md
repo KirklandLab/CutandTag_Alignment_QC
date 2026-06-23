@@ -815,9 +815,9 @@ If you use this workflow in your research, please cite both the original CUT&Tag
 
 **Kevin A. Boyd** – Designed and implemented the Snakemake workflow for a Slurm managed HPC environment, modularized the pipeline structure, implemented the processing steps, integrated duplicate capping, downsampling, signal normalization, target scaled BigWig support, quality control plots, and documentation.
 
-**Jacob Kirkland** – Principal Investigator; provided project direction, conceptual guidance, and experimental data for pipeline development.
+**Jacob Kirkland** – Principal Investigator; provided project direction, conceptual guidance, and experimental data for workflow development and validation.
 
-This work was developed under the guidance of Jacob Kirkland as part of a COBRE funded collaborative effort. While the pipeline was built specifically for use within the Kirkland Lab, it is broadly applicable to CUT&Tag data analysis in other research settings.
+This work was developed by Kevin A. Boyd for the Kirkland Lab, with scientific direction and resources provided by Jacob Kirkland, as part of a COBRE funded collaborative effort. While the pipeline was initially developed for use within the Kirkland Lab, it is broadly applicable to CUT&Tag data analysis in other research settings.
 
 ---
 
