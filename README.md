@@ -25,6 +25,7 @@ Automated raw FASTQ quality checks are done using **FastQC**, **MultiQC**, and *
 Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](https://github.com/KirklandLab/CutandTag_ReplicatePeak_Analysis) Snakemake workflow. This companion pipeline starts with aligned BAM files and focuses on identifying reproducible peaks, generating consensus peak sets, and visualizing overlaps and signal distributions across multiple samples and experimental conditions.
 
 ### **Key Features**
+*Note: Optional features can be toggled on and off in the `config` file found in `config/config.yml`.  
 
 + **Optional: Raw QC & Contamination Check**
   + Generates **FastQC** reports for raw FASTQ files
@@ -37,6 +38,8 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
   + Converts SAM to BAM, then sorts and indexes BAM files
   + Produces sorted BAM files for each sample
   + Defines a final analysis BAM based on duplicate capping and downsampling settings
+  + Includes preconfigured reference settings for the mouse **mm10**/**mm39** and human **hg38** geome builds
+  + Can be used with other organisms or genome assemblies by providing a compatible Bowtie2 index and updating the corresponding genome-size settings in the `config/config.yml`
 
 + **Optional: Duplicate Capping**
   + Can be toggled on/off using `use_duplicate_cap`
@@ -85,11 +88,11 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
   + Uses Snakemake to track dependencies and rule outputs
   + Easily integrated with the downstream pipeline: [CutandTag_ReplicatePeak_Analysis](https://github.com/KirklandLab/CutandTag_ReplicatePeak_Analysis)
 
-+ **Optional: Heatmap Generation**
++ **Extra Script: Heatmap Generation**
   + A helper script is included in `scripts/make_heatplot.sh` for visualizing BigWig signals over defined BED regions
   + Instructions for customizing and running the script are provided as comments in the script
  
-+ **Optional: FASTQ Combining**
++ **Extra Script: FASTQ Combining**
   + A helper script is included in `scripts/combine_fastqs.sh` for combining multiple FASTQ files from the same biological sample
   + This is useful when additional sequencing is returned by the sequencing core, such as reads from multiple lanes, sequencing runs, or sequencing submissions that should be analyzed as one sample
   + Instructions for customizing and running the script are provided as comments in the script
