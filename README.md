@@ -444,10 +444,29 @@ The workflow does **not** create artificial reads or upsample BAM files. Samples
 
 ### **Changing Genomes**
 
+The workflow includes preconfigured settings for the mouse mm10 and mm39 genome builds, along with the human hg38 build in the `config/config.yml`.
+
 + To switch from mm10 to hg38:
-  + Update `bowtie2_genome` path to the new index
+  + Update `bowtie2_genome` path to the new hg38 Bowtie2 index
   + Change `effective_genome_size` to the appropriate value, such as `2913022398` for hg38
-  + Set `genome_size` to `hs` for human in MACS2
+  + Set `genome_size` to `hs` for human in MACS2 peak calling
+ 
++ To switch from mm10 to mm39:
+  + Update `bowtie2_genome` path to the new mm39 Bowtie2 index
+  + Change `effective_genome_size` to the appropriate value, such as `2654621783` for mm39
+  + Keep `genome_size` set to `mm` for mouse in MACS2 peak calling
+ 
++ Other organisms or genome assemblies can also be used:
+  + Build or obtain a compatible Bowtie2 index
+  + Update `bowtie2_genome` to the location of the new index
+  + Update `effective_genome_size` for DeepTools normalization
+  + Set the MACS2 `genome_size` option to one of the built-in codes:
+    + `hs` for human
+    + `mm` for mouse
+    + `ce` for *C. elegans*
+    + `dm` for *D. melanogaster*
+  + For other organisms, provide an appropriate numeric effective genome size
+  + Ensure that all downstream reference files, chromosome names, and BED files use the same genome assembly
 
 ### **Tool Versions and Resources**
 
