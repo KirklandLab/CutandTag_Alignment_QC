@@ -40,10 +40,11 @@ downsample_target_fragments: 20000000
 # Used only when downsample_target_mode: "lowest_with_floor"
 downsample_minimum_acceptable_fragments: 20000000
 
-# Set to "none" for non-reproducible random downsampling.
-# For comparisons across duplicate-cap settings, keep this fixed.
-#downsample_seed: "none"
+# Use an integer for reproducible downsampling (keep this fixed for comparisons across duplicate-cap settings)
 downsample_seed: 12345
+
+# Or use "random" to generate a different seed for each execution
+# downsample_seed: "random"
 
 # ------------------------------------------------------------
 # Peak Calling
