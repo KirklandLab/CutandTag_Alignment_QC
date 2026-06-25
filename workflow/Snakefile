@@ -565,15 +565,18 @@ rule downsample_analysis_bam:
         configured_seed="{params.seed}"
         actual_seed="NA"
 
-        if [ "{params.use_downsampling}" = "True" ] && [ "$target" -gt 0 ] && [ "$fragments_before" -gt "$target" ]; then
-            fraction=$(awk -v target="$target" -v total="$fragments_before" 'BEGIN {{printf "%.10f", target / total}}')
+        if [ "{params.use_downsampling}" = "True" ] && \
+           [ "$target" -gt 0 ] && \
+           [ "$fragments_before" -gt "$target" ]; then
+
+            fraction=$(awk -v target="$target" -v total="$fragments_before" \
+                'BEGIN {{printf "%.10f", target / total}}')
 
             if [ "$configured_seed" = "random" ]; then
-                actual_seed=$(python3 -c 'import secrets; print(secrets.randbelow(2147483646) + 1)')
-                seed_mode="random"
+                actual_seed=$(python3 -c \
+                    'import secrets; print(secrets.randbelow(2147483646) + 1)')
             else
                 actual_seed="$configured_seed"
-                seed_mode="fixed"
             fi
 
             samtools view -@ {threads} -b \
@@ -587,15 +590,14 @@ rule downsample_analysis_bam:
             cp {input.bam} {output.bam}
             action="not_downsampled"
             fraction="1.0000000000"
-            seed_mode="not_used"
         fi
 
         samtools index -@ {threads} {output.bam} {output.bai}
 
         fragments_after=$(samtools view -@ {threads} -c -f 64 -F 12 {output.bam})
 
-        echo -e "Sample\\tAction\\tTargetMode\\tDownsamplingEnabled\\tTargetNote\\tTargetFragments\\tSeedMode\\tConfiguredSeed\\tActualSeed\\tSubsampleFraction\\tFragmentsBeforeDownsample\\tFragmentsAfterDownsample" > {output.metrics}
-        echo -e "{wildcards.sample}\\t$action\\t$target_mode\\t$target_enabled\\t$target_note\\t$target\\t$seed_mode\\t$configured_seed\\t$actual_seed\\t$fraction\\t$fragments_before\\t$fragments_after" >> {output.metrics}
+        echo -e "Sample\\tAction\\tTargetMode\\tDownsamplingEnabled\\tTargetNote\\tTargetFragments\\tSeed\\tSubsampleFraction\\tFragmentsBeforeDownsample\\tFragmentsAfterDownsample" > {output.metrics}
+        echo -e "{wildcards.sample}\\t$action\\t$target_mode\\t$target_enabled\\t$target_note\\t$target\\t$actual_seed\\t$fraction\\t$fragments_before\\t$fragments_after" >> {output.metrics}
         """
 
 ##################################################################
