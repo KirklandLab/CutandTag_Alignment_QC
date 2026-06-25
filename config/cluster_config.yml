@@ -8,7 +8,6 @@ __default__:
     output: results/logs/slurm-%x.%A.%a.log
 
 fastqc_reads:
-    cpus-per-task: 4
     mem: 32G
     time: 01:00:00
     name: "{rule}.{wildcards.sample}"
@@ -16,7 +15,6 @@ fastqc_reads:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 multiqc_raw:
-    cpus-per-task: 4
     mem: 16G
     time: 01:00:00
     name: "{rule}"
@@ -24,7 +22,6 @@ multiqc_raw:
     error: results/logs/{rule}.err
 
 fastq_screen:
-    cpus-per-task: 4
     mem: 32G
     time: 01:00:00
     name: "{rule}.{wildcards.sample}"
@@ -32,7 +29,6 @@ fastq_screen:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 align_with_bowtie2:
-    cpus-per-task: 16
     mem: 64G
     time: 06:00:00
     name: "{rule}.{wildcards.sample}"
@@ -40,7 +36,6 @@ align_with_bowtie2:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 sam_to_bam:
-    cpus-per-task: 4
     mem: 32G
     time: 02:00:00
     name: "{rule}.{wildcards.sample}"
@@ -48,7 +43,6 @@ sam_to_bam:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 sort_bam:
-    cpus-per-task: 4
     mem: 32G
     time: 02:00:00
     name: "{rule}.{wildcards.sample}"
@@ -56,7 +50,6 @@ sort_bam:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 cap_duplicate_fragments:
-    cpus-per-task: 4
     mem: 32G
     time: 03:00:00
     name: "{rule}.{wildcards.sample}"
@@ -64,7 +57,6 @@ cap_duplicate_fragments:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 downsample_analysis_bam:
-    cpus-per-task: 4
     mem: 32G
     time: 02:00:00
     name: "{rule}.{wildcards.sample}"
@@ -72,7 +64,6 @@ downsample_analysis_bam:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 calculate_downsample_target:
-    cpus-per-task: 2
     mem: 16G
     time: 01:00:00
     name: "{rule}"
@@ -80,7 +71,6 @@ calculate_downsample_target:
     error: results/logs/{rule}.err
 
 summarize_duplicate_metrics:
-    cpus-per-task: 2
     mem: 16G
     time: 01:00:00
     name: "{rule}"
@@ -88,7 +78,6 @@ summarize_duplicate_metrics:
     error: results/logs/{rule}.err
 
 calculate_analysis_scale_factor:
-    cpus-per-task: 2
     mem: 16G
     time: 01:00:00
     name: "{rule}.{wildcards.sample}"
@@ -96,7 +85,6 @@ calculate_analysis_scale_factor:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 make_bigwigs:
-    cpus-per-task: 8
     mem: 32G
     time: 06:00:00
     name: "{rule}.{wildcards.sample}"
@@ -104,7 +92,6 @@ make_bigwigs:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 macs2_peak_calling:
-    cpus-per-task: 8
     mem: 64G
     time: 04:00:00
     name: "{rule}.{wildcards.sample}"
@@ -112,7 +99,6 @@ macs2_peak_calling:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 generate_alignment_plots:
-    cpus-per-task: 2
     mem: 16G
     time: 01:30:00
     name: "{rule}"
@@ -120,7 +106,6 @@ generate_alignment_plots:
     error: results/logs/{rule}.err
 
 generate_fragmentLength_raw:
-    cpus-per-task: 2
     mem: 16G
     time: 01:30:00
     name: "{rule}.{wildcards.sample}"
@@ -128,7 +113,6 @@ generate_fragmentLength_raw:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 generate_fragmentLength_final:
-    cpus-per-task: 2
     mem: 16G
     time: 01:30:00
     name: "{rule}.{wildcards.sample}"
@@ -136,7 +120,6 @@ generate_fragmentLength_final:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 generate_fragLen_plots:
-    cpus-per-task: 2
     mem: 16G
     time: 01:30:00
     name: "{rule}"
@@ -144,7 +127,6 @@ generate_fragLen_plots:
     error: results/logs/{rule}.err
 
 process_fragment_length:
-    cpus-per-task: 4
     mem: 32G
     time: 01:30:00
     name: "{rule}.{wildcards.sample}"
@@ -152,7 +134,6 @@ process_fragment_length:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 calculate_frip:
-    cpus-per-task: 2
     mem: 16G
     time: 01:30:00
     name: "{rule}.{wildcards.sample}"
@@ -160,7 +141,6 @@ calculate_frip:
     error: results/logs/{rule}.{wildcards.sample}.err
 
 generate_correlation_plot:
-    cpus-per-task: 2
     mem: 16G
     time: 01:30:00
     name: "{rule}"
@@ -168,7 +148,6 @@ generate_correlation_plot:
     error: results/logs/{rule}.err
 
 generate_peak_summary_plots:
-    cpus-per-task: 2
     mem: 16G
     time: 01:30:00
     name: "{rule}"
