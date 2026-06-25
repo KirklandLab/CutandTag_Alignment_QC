@@ -103,7 +103,7 @@ if DOWNSAMPLE_TARGET_MODE not in VALID_DOWNSAMPLE_MODES:
 MACS2_QVALUE = config["macs2_qvalue"]
 MACS2_QVALUE_STR = str(MACS2_QVALUE)
 
-PEAK_QVALUE = (
+PEAK_NAME_PATTERN = (
     f"results/peakCalling/"
     f"{{sample}}_{MACS2_QVALUE_STR}_peaks.narrowPeak"
 )
@@ -226,7 +226,7 @@ rule all:
         expand("results/alignment/bigwig/{sample}_analysis.bw", sample=samples_table.index),
         expand("results/alignment/bigwig/{sample}_analysisCPM.bw", sample=samples_table.index),
         expand("results/alignment/bigwig/{sample}_analysisScaled.bw", sample=samples_table.index),
-        expand(PEAK_QVALUE, sample=samples_table.index),
+        expand(PEAK_NAME_PATTERN, sample=samples_table.index),
         expand("results/alignment/fragment_length/raw/{sample}_fragmentLen.raw.txt", sample=samples_table.index),
         expand("results/alignment/fragment_length/final/{sample}_fragmentLen.final.txt", sample=samples_table.index),
         "results/plots/fragment_length_plot.png",
@@ -704,7 +704,7 @@ rule macs2_peak_calling:
     input:
         bam=final_analysis_bam
     output:
-        peaks=PEAK_QVALUE
+        peaks=PEAK_NAME_PATTERN
     params:
         genome=config["genome_size"],
         qvalue=MACS2_QVALUE,
@@ -878,7 +878,7 @@ rule generate_fragLen_plots:
 rule calculate_frip:
     input:
         fragments_bed="results/alignment/bed/{sample}_bowtie2.fragments.bed",
-        peak_bed=PEAK_QVALUE
+        peak_bed=PEAK_NAME_PATTERN
     output:
         frip_data="results/alignment/bam/{sample}_frip.txt"
     envmodules:
@@ -928,7 +928,7 @@ rule generate_correlation_plot:
 
 rule generate_peak_summary_plots:
     input:
-        peak_list=expand(PEAK_QVALUE, sample=samples_table.index),
+        peak_list=expand(PEAK_NAME_PATTERN, sample=samples_table.index),
         frip_list=expand("results/alignment/bam/{sample}_frip.txt", sample=samples_table.index),
         metadata="config/samples.csv"
     output:
