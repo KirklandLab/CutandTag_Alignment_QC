@@ -5,152 +5,152 @@ __default__:
     time: 08:00:00
     mem: 16G
     name: "{rule}"
-    output: results/logs/{rule}.%A.log
-    error: results/logs/{rule}.%A.err
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
 
 fastqc_reads:
     mem: 32G
     time: 01:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 multiqc_raw:
     mem: 16G
     time: 01:00:00
     name: "{rule}"
-    output: results/logs/{rule}.log
-    error: results/logs/{rule}.err
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
 
 fastq_screen:
     mem: 32G
     time: 01:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 align_with_bowtie2:
     mem: 64G
     time: 06:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 sam_to_bam:
     mem: 32G
     time: 02:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 sort_bam:
     mem: 32G
     time: 02:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 cap_duplicate_fragments:
     mem: 32G
     time: 03:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 downsample_analysis_bam:
     mem: 32G
     time: 02:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 calculate_downsample_target:
     mem: 16G
     time: 01:00:00
     name: "{rule}"
-    output: results/logs/{rule}.log
-    error: results/logs/{rule}.err
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
 
 summarize_duplicate_metrics:
     mem: 16G
     time: 01:00:00
     name: "{rule}"
-    output: results/logs/{rule}.log
-    error: results/logs/{rule}.err
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
 
 calculate_analysis_scale_factor:
     mem: 16G
     time: 01:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 make_bigwigs:
     mem: 32G
     time: 06:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 macs2_peak_calling:
     mem: 64G
     time: 04:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 generate_alignment_plots:
     mem: 16G
     time: 01:30:00
     name: "{rule}"
-    output: results/logs/{rule}.log
-    error: results/logs/{rule}.err
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
 
 generate_fragmentLength_raw:
     mem: 16G
     time: 01:30:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 generate_fragmentLength_final:
     mem: 16G
     time: 01:30:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 generate_fragLen_plots:
     mem: 16G
     time: 01:30:00
     name: "{rule}"
-    output: results/logs/{rule}.log
-    error: results/logs/{rule}.err
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
 
 process_fragment_length:
     mem: 32G
     time: 01:30:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 calculate_frip:
     mem: 16G
     time: 01:30:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 generate_correlation_plot:
     mem: 16G
     time: 01:30:00
     name: "{rule}"
-    output: results/logs/{rule}.log
-    error: results/logs/{rule}.err
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
 
 generate_peak_summary_plots:
     mem: 16G
     time: 01:30:00
     name: "{rule}"
-    output: results/logs/{rule}.log
-    error: results/logs/{rule}.err
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
