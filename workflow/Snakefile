@@ -90,7 +90,27 @@ USE_DOWNSAMPLING = bool(config.get("use_downsampling", False))
 DOWNSAMPLE_TARGET_MODE = str(config.get("downsample_target_mode", "manual"))
 DOWNSAMPLE_TARGET = int(config.get("downsample_target_fragments", 0))
 DOWNSAMPLE_MIN_FLOOR = int(config.get("downsample_minimum_acceptable_fragments", 0))
+
 DOWNSAMPLE_SEED = config.get("downsample_seed", 12345)
+
+if isinstance(DOWNSAMPLE_SEED, str):
+    if DOWNSAMPLE_SEED.lower() != "random":
+        raise ValueError(
+            "downsample_seed must be an integer or the string 'random'."
+        )
+    DOWNSAMPLE_SEED = "random"
+else:
+    try:
+        DOWNSAMPLE_SEED = int(DOWNSAMPLE_SEED)
+    except (TypeError, ValueError):
+        raise ValueError(
+            "downsample_seed must be an integer or the string 'random'."
+        )
+
+    if DOWNSAMPLE_SEED < 0:
+        raise ValueError(
+            "downsample_seed must be a non-negative integer."
+        )
 
 VALID_DOWNSAMPLE_MODES = ["manual", "lowest_with_floor", "lowest"]
 
@@ -540,20 +560,25 @@ rule downsample_analysis_bam:
         target_enabled=$(awk 'NR==2 {{print $7}}' {input.target})
         target_note=$(awk 'NR==2 {{print $8}}' {input.target})
 
-        # Count mapped read1 records as mapped fragments/read pairs.
         fragments_before=$(samtools view -@ {threads} -c -f 64 -F 12 {input.bam})
 
-        if [ "{params.use_downsampling}" = "True" ] && [ "$target" -gt 0 ] && [ "$fragments_before" -gt "$target" ]; then
-            fraction=$(awk -v target="$target" -v total="$fragments_before" 'BEGIN {{ printf "%.10f", target / total }}')
+        configured_seed="{params.seed}"
+        actual_seed="NA"
 
-            seed_arg=""
-            if [ "{params.seed}" != "none" ] && [ "{params.seed}" != "None" ] && [ "{params.seed}" != "" ]; then
-                seed_arg="--subsample-seed {params.seed}"
+        if [ "{params.use_downsampling}" = "True" ] && [ "$target" -gt 0 ] && [ "$fragments_before" -gt "$target" ]; then
+            fraction=$(awk -v target="$target" -v total="$fragments_before" 'BEGIN {{printf "%.10f", target / total}}')
+
+            if [ "$configured_seed" = "random" ]; then
+                actual_seed=$(python3 -c 'import secrets; print(secrets.randbelow(2147483646) + 1)')
+                seed_mode="random"
+            else
+                actual_seed="$configured_seed"
+                seed_mode="fixed"
             fi
 
             samtools view -@ {threads} -b \
-                $seed_arg \
-                --subsample $fraction \
+                --subsample-seed "$actual_seed" \
+                --subsample "$fraction" \
                 {input.bam} | \
                 samtools sort -@ {threads} -o {output.bam}
 
@@ -562,14 +587,15 @@ rule downsample_analysis_bam:
             cp {input.bam} {output.bam}
             action="not_downsampled"
             fraction="1.0000000000"
+            seed_mode="not_used"
         fi
 
         samtools index -@ {threads} {output.bam} {output.bai}
 
         fragments_after=$(samtools view -@ {threads} -c -f 64 -F 12 {output.bam})
 
-        echo -e "Sample\\tAction\\tTargetMode\\tDownsamplingEnabled\\tTargetNote\\tTargetFragments\\tSeed\\tSubsampleFraction\\tFragmentsBeforeDownsample\\tFragmentsAfterDownsample" > {output.metrics}
-        echo -e "{wildcards.sample}\\t$action\\t$target_mode\\t$target_enabled\\t$target_note\\t$target\\t{params.seed}\\t$fraction\\t$fragments_before\\t$fragments_after" >> {output.metrics}
+        echo -e "Sample\\tAction\\tTargetMode\\tDownsamplingEnabled\\tTargetNote\\tTargetFragments\\tSeedMode\\tConfiguredSeed\\tActualSeed\\tSubsampleFraction\\tFragmentsBeforeDownsample\\tFragmentsAfterDownsample" > {output.metrics}
+        echo -e "{wildcards.sample}\\t$action\\t$target_mode\\t$target_enabled\\t$target_note\\t$target\\t$seed_mode\\t$configured_seed\\t$actual_seed\\t$fraction\\t$fragments_before\\t$fragments_after" >> {output.metrics}
         """
 
 ##################################################################
