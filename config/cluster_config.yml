@@ -3,9 +3,10 @@ __default__:
     account: kirklandj-lab
     partition: serial
     time: 08:00:00
-    cpus-per-task: 2
     mem: 16G
-    output: results/logs/slurm-%x.%A.%a.log
+    name: "{rule}"
+    output: results/logs/{rule}.%A.log
+    error: results/logs/{rule}.%A.err
 
 fastqc_reads:
     mem: 32G
