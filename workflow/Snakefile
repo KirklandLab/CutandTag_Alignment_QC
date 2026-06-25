@@ -226,7 +226,8 @@ rule all:
         expand("results/alignment/bed/{sample}_bowtie2.fragmentsCount.bin500.bed", sample=samples_table.index),
         expand("results/alignment/bam/{sample}_frip.txt", sample=samples_table.index),
         "results/plots/fragCount_correlation_plot.pdf",
-        "results/plots/peak_summary_plot.png"
+        "results/plots/peak_summary_plot.png",
+        "results/plots/peak_summary_report.pdf"
 
 ##################################################################
 ##                       Quality Control                        ##
@@ -912,7 +913,8 @@ rule generate_peak_summary_plots:
         frip_list=expand("results/alignment/bam/{sample}_frip.txt", sample=samples_table.index),
         metadata="config/samples.csv"
     output:
-        "results/plots/peak_summary_plot.png"
+        summary_png="results/plots/peak_summary_plot.png",
+        report_pdf="results/plots/peak_summary_report.pdf"
     params:
         out_dir="results/plots"
     envmodules:
