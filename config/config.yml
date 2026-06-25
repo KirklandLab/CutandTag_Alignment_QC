@@ -42,10 +42,10 @@ downsample_target_fragments: 20000000
 downsample_minimum_acceptable_fragments: 20000000
 
 # Use an integer for reproducible downsampling (keep this fixed for comparisons across duplicate-cap settings)
-downsample_seed: 12345
+#downsample_seed: 12345
 
 # Or use "random" to generate a different seed for each execution
-# downsample_seed: "random"
+downsample_seed: "random"
 
 # ------------------------------------------------------------
 # Peak Calling
