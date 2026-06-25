@@ -109,11 +109,20 @@ histone_levels <- unique(sample_metadata$histone)
 # ============================================================
 
 extract_peak_sample_name <- function(file_path) {
-  gsub(
-    "_0\\.05_peaks\\.narrowPeak$",
+  file_name <- basename(file_path)
+  sample_name <- sub(
+    "_[^_]+_peaks\\.narrowPeak$",
     "",
-    basename(file_path)
+    file_name
   )
+  if (identical(sample_name, file_name)) {
+    stop(
+      "Peak filename does not match the expected MACS2 format: ",
+      file_name,
+      "\nExpected format: <sample>_<qvalue>_peaks.narrowPeak"
+    )
+  }
+  return(sample_name)
 }
 
 empty_peak_dataframe <- function() {
