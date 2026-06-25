@@ -186,7 +186,7 @@ downsample_target_fragments: 30000000
 downsample_minimum_acceptable_fragments: 15000000
 
 # Random seed used by samtools downsampling
-downsample_seed: "none"
+downsample_seed: "random"
 ```
 
 ---
@@ -288,7 +288,7 @@ downsample_seed: 12345
 For normal operation, the workflow should be run without a fixed seed:
 
 ```yaml
-downsample_seed: "none"
+downsample_seed: "random"
 ```
 
 *Note: This lets downsampling remain random and may not select the exact same reads when the workflow is rerun. This is appropriate for routine processing.*
@@ -303,7 +303,7 @@ downsample_seed: "none"
 use_downsampling: true
 downsample_target_mode: "manual"
 downsample_target_fragments: 15000000
-downsample_seed: "none"
+downsample_seed: "random"
 ```
 
 The resolved target is set by the config:
@@ -343,7 +343,7 @@ Sample 5 is below the target, so it is not changed.
 use_downsampling: true
 downsample_target_mode: "lowest_with_floor"
 downsample_minimum_acceptable_fragments: 15000000
-downsample_seed: "none"
+downsample_seed: "random"
 ```
 
 Example post duplicate cap fragment depths:
@@ -382,7 +382,7 @@ Sample 5 is below the target, so it is not changed. Sample 3 set the target, so 
 ```yaml
 use_downsampling: true
 downsample_target_mode: "lowest"
-downsample_seed: "none"
+downsample_seed: "random"
 ```
 
 Example post duplicate cap fragment depths:
