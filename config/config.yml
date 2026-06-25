@@ -4,6 +4,7 @@
 # Bowtie2 genome index path
 bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"   # mm10 genome index file path = "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"
                                                                              # GRCh38 genome index file path = "/hpc-prj/kirkland/shared/scripts/hg38_bowtie2_index/hg38"
+                                                                             # mm39 genome index file path = "/hpc-prj/kirkland/shared/scripts/mm39_bowtie2_index/mm39"
 
 # ------------------------------------------------------------
 # Raw FASTQs Quality Control
