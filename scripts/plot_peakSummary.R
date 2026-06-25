@@ -424,6 +424,12 @@ for (hist in histone_levels) {
     # A directional overlap percentage cannot be meaningfully
     # calculated if either sample has no peaks.
     if (length(peaks1) == 0 || length(peaks2) == 0) {
+      warning(
+        "Skipping peak-overlap comparison because at least one sample has no peaks: ",
+        sample1,
+        " vs ",
+        sample2
+      )
       next
     }
 
@@ -502,7 +508,7 @@ for (hist in histone_levels) {
       Sample2 = sample2,
       Direction = paste0(
         sample1,
-        " \u2192 ",
+        " -> ",
         sample2
       ),
       DirectionOrder = "Sample 1 to Sample 2",
@@ -525,7 +531,7 @@ for (hist in histone_levels) {
       Sample2 = sample2,
       Direction = paste0(
         sample2,
-        " \u2192 ",
+        " -> ",
         sample1
       ),
       DirectionOrder = "Sample 2 to Sample 1",
@@ -933,6 +939,16 @@ if (nrow(reproducibility_summary) > 0) {
             "Sample 2 to Sample 1"
           )
         )
+      ) %>%
+      arrange(
+        Rank,
+        DirectionOrder
+      ) %>%
+      mutate(
+        Direction = factor(
+          Direction,
+          levels = unique(Direction)
+        )
       )
 
     page_mean_data <- page_summary %>%
@@ -1020,7 +1036,7 @@ if (nrow(reproducibility_summary) > 0) {
           "Ranked pairwise peak reproducibility: ",
           "comparisons ",
           first_rank,
-          "\u2013",
+          "-",
           last_rank,
           " of ",
           total_pairs
