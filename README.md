@@ -808,7 +808,7 @@ snakemake -npr
 ### 11E. Run on HPC with config options
 
 ```bash
-sbatch --wrap="snakemake -j 50 --resources mem_mb=200000 --use-envmodules --latency-wait 300 --cluster-config config/cluster_config.yml --configfile config/config.yml --cluster 'sbatch -A {cluster.account} -p {cluster.partition} --cpus-per-task {threads} -t {cluster.time} --mem {cluster.mem} --job-name {cluster.name} --output {cluster.output} --error {cluster.error}'"
+sbatch --wrap="snakemake -j 50 --resources --use-envmodules --latency-wait 300 --cluster-config config/cluster_config.yml --configfile config/config.yml --cluster 'sbatch -A {cluster.account} -p {cluster.partition} --cpus-per-task {threads} -t {cluster.time} --mem {cluster.mem} --job-name {cluster.name} --output {cluster.output} --error {cluster.error}'"
 ```
 
 ### 11F. Unlock a workflow directory if needed
