@@ -311,7 +311,7 @@ fig1 <- ggplot(
   ) +
   geom_jitter(
     aes(color = Replicate),
-    position = position_jitter(width = 0.15),
+    width = 0.15,
     height = 0
   ) +
   theme_bw(base_size = 18) +
@@ -813,7 +813,7 @@ if (nrow(frip_data) == 0) {
     ) +
     geom_jitter(
       aes(color = Replicate),
-      position = position_jitter(width = 0.15),
+      width = 0.15,
       height = 0
     ) +
     theme_bw(base_size = 18) +
