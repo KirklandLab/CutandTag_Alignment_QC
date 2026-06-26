@@ -66,16 +66,9 @@ if (!dir.exists(output_dir)) {
 # Load and validate sample metadata
 # ============================================================
 
-sample_metadata <- read.csv(
-  metadata_file,
-  stringsAsFactors = FALSE
-)
+sample_metadata <- read.csv(metadata_file, stringsAsFactors = FALSE)
 
-required_metadata_columns <- c(
-  "sample",
-  "histone",
-  "replicate"
-)
+required_metadata_columns <- c("sample","histone","replicate")
 
 missing_metadata_columns <- setdiff(
   required_metadata_columns,
@@ -170,9 +163,7 @@ for (file_path in peak_files) {
 
   sample_name <- extract_peak_sample_name(file_path)
 
-  metadata_match <- which(
-    sample_metadata$sample == sample_name
-  )
+  metadata_match <- which(sample_metadata$sample == sample_name)
 
   if (length(metadata_match) != 1) {
     stop(
@@ -298,35 +289,12 @@ if (nrow(peakData) > 0) {
 # Plot 1: Number of peaks
 # ============================================================
 
-fig1 <- ggplot(
-  peak_count_data,
-  aes(
-    x = Histone,
-    y = peakN,
-    fill = Histone
-  )
-) +
-  geom_boxplot(
-    outlier.shape = NA
-  ) +
-  geom_jitter(
-    aes(color = Replicate),
-    width = 0.15,
-    height = 0
-  ) +
+fig1 <- ggplot(peak_count_data, aes(x = Histone, y = peakN, fill = Histone)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(aes(color = Replicate), width = 0.15, height = 0) +
   theme_bw(base_size = 18) +
-  labs(
-    x = "",
-    y = "Number of Peaks",
-    title = "Peak counts"
-  ) +
-  theme(
-    axis.text.x = element_text(
-      angle = 90,
-      hjust = 1,
-      vjust = 0.5
-    )
-  )
+  labs(x = "", y = "Number of Peaks", title = "Peak counts") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
 # ============================================================
 # Plot 2: Width of peaks
@@ -334,34 +302,12 @@ fig1 <- ggplot(
 
 if (nrow(peakData) > 0) {
 
-  fig2 <- ggplot(
-    peakData,
-    aes(
-      x = Histone,
-      y = width,
-      fill = Histone
-    )
-  ) +
-    geom_violin(
-      scale = "width",
-      trim = TRUE
-    ) +
-    facet_grid(
-      Replicate ~ .
-    ) +
+  fig2 <- ggplot(peakData, aes( x = Histone, y = width, fill = Histone)) +
+    geom_violin(scale = "width", trim = TRUE) +
+    facet_grid(Replicate ~ .) +
     theme_bw(base_size = 18) +
-    labs(
-      x = "",
-      y = "Width of Peaks",
-      title = "Peak-width distributions"
-    ) +
-    theme(
-      axis.text.x = element_text(
-        angle = 90,
-        hjust = 1,
-        vjust = 0.5
-      )
-    )
+    labs(x = "", y = "Width of Peaks", title = "Peak-width distributions") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
 } else {
 
@@ -407,11 +353,7 @@ for (hist in histone_levels) {
     next
   }
 
-  sample_combinations <- combn(
-    hist_samples,
-    2,
-    simplify = FALSE
-  )
+  sample_combinations <- combn(hist_samples, 2, simplify = FALSE)
 
   for (pair in sample_combinations) {
 
@@ -475,9 +417,7 @@ for (hist in histone_levels) {
       sep = "__"
     )
 
-    reproducibility_summary_rows[
-      [length(reproducibility_summary_rows) + 1]
-    ] <- data.frame(
+    reproducibility_summary_rows[[length(reproducibility_summary_rows) + 1]] <- data.frame(
       PairID = pair_id,
       Histone = hist,
       Sample1 = sample1,
@@ -486,62 +426,41 @@ for (hist in histone_levels) {
       Replicate2 = replicate2,
       Sample1Peaks = length(peaks1),
       Sample2Peaks = length(peaks2),
-      Sample1OverlappingSample2 =
-        sample1_overlapping_sample2,
-      Sample2OverlappingSample1 =
-        sample2_overlapping_sample1,
-      PctSample1InSample2 =
-        pct_sample1_in_sample2,
-      PctSample2InSample1 =
-        pct_sample2_in_sample1,
-      MeanBidirectionalOverlap =
-        mean_bidirectional_overlap,
+      Sample1OverlappingSample2 = sample1_overlapping_sample2,
+      Sample2OverlappingSample1 = sample2_overlapping_sample1,
+      PctSample1InSample2 = pct_sample1_in_sample2,
+      PctSample2InSample1 = pct_sample2_in_sample1,
+      MeanBidirectionalOverlap = mean_bidirectional_overlap,
       stringsAsFactors = FALSE
     )
 
-    reproducibility_directional_rows[
-      [length(reproducibility_directional_rows) + 1]
-    ] <- data.frame(
+    reproducibility_directional_rows[[length(reproducibility_directional_rows) + 1]] <- data.frame(
       PairID = pair_id,
       Histone = hist,
       Sample1 = sample1,
       Sample2 = sample2,
-      Direction = paste0(
-        sample1,
-        " -> ",
-        sample2
-      ),
+      Direction = paste0(sample1," -> ", sample2),
       DirectionOrder = "Sample 1 to Sample 2",
       SourceSample = sample1,
       TargetSample = sample2,
       SourcePeaks = length(peaks1),
-      OverlappingPeaks =
-        sample1_overlapping_sample2,
-      OverlapRate =
-        pct_sample1_in_sample2,
+      OverlappingPeaks = sample1_overlapping_sample2,
+      OverlapRate = pct_sample1_in_sample2,
       stringsAsFactors = FALSE
     )
 
-    reproducibility_directional_rows[
-      [length(reproducibility_directional_rows) + 1]
-    ] <- data.frame(
+    reproducibility_directional_rows[[length(reproducibility_directional_rows) + 1]] <- data.frame(
       PairID = pair_id,
       Histone = hist,
       Sample1 = sample1,
       Sample2 = sample2,
-      Direction = paste0(
-        sample2,
-        " -> ",
-        sample1
-      ),
+      Direction = paste0(sample2," -> ", sample1),
       DirectionOrder = "Sample 2 to Sample 1",
       SourceSample = sample2,
       TargetSample = sample1,
       SourcePeaks = length(peaks2),
-      OverlappingPeaks =
-        sample2_overlapping_sample1,
-      OverlapRate =
-        pct_sample2_in_sample1,
+      OverlappingPeaks = sample2_overlapping_sample1,
+      OverlapRate = pct_sample2_in_sample1,
       stringsAsFactors = FALSE
     )
   }
@@ -568,13 +487,7 @@ if (length(reproducibility_summary_rows) > 0) {
         Sample2,
         MeanBidirectionalOverlap
       ),
-      OverviewLabel = paste0(
-        Histone,
-        ": ",
-        Sample1,
-        " vs ",
-        Sample2
-      )
+      OverviewLabel = paste0(Histone,": ", Sample1," vs ", Sample2)
     )
 
   reproducibility_directional <- bind_rows(
@@ -629,78 +542,29 @@ if (nrow(reproducibility_summary) > 0) {
 
   if (nrow(reproducibility_summary) > overview_pair_limit) {
 
-    reproducibility_title <- paste0(
-      "Top ",
-      overview_pair_limit,
-      " pairwise peak overlaps"
-    )
+    reproducibility_title <- paste0("Top ", overview_pair_limit," pairwise peak overlaps")
 
-    reproducibility_subtitle <- paste0(
-      "All ",
-      nrow(reproducibility_summary),
-      " ranked pairs are shown in the PDF report"
-    )
+    reproducibility_subtitle <- paste0("All ", nrow(reproducibility_summary)," ranked pairs are shown in the PDF report")
 
   } else {
 
-    reproducibility_title <- paste0(
-      "Pairwise peak reproducibility"
-    )
+    reproducibility_title <- paste0("Pairwise peak reproducibility")
 
-    reproducibility_subtitle <- paste0(
-      "Mean bidirectional overlap; at least 1 bp required"
-    )
+    reproducibility_subtitle <- paste0("Mean bidirectional overlap; at least 1 bp required")
   }
 
-  fig3 <- ggplot(
-    overview_data,
-    aes(
-      x = OverviewLabel,
-      y = MeanBidirectionalOverlap,
-      fill = Histone
-    )
-  ) +
-    geom_col(
-      width = 0.7
-    ) +
-    geom_text(
-      aes(
-        label = sprintf(
-          "%.1f%%",
-          MeanBidirectionalOverlap
-        )
-      ),
-      hjust = -0.15,
-      size = 3
-    ) +
-    coord_flip(
-      ylim = c(0, 108),
-      clip = "off"
-    ) +
+  fig3 <- ggplot(overview_data,aes(x = OverviewLabel, y = MeanBidirectionalOverlap, fill = Histone)) +
+    geom_col(width = 0.7) +
+    geom_text(aes(label = sprintf("%.1f%%", MeanBidirectionalOverlap)), hjust = -0.15, size = 3) +
+    coord_flip(ylim = c(0, 108),clip = "off") +
     theme_bw(base_size = 12) +
-    theme(
-      legend.position = "none",
-      axis.text.y = element_text(size = 7),
-      panel.grid.major.y = element_blank(),
-      plot.margin = margin(
-        t = 5.5,
-        r = 25,
-        b = 5.5,
-        l = 5.5
-      )
-    ) +
-    labs(
-      x = "",
-      y = "Mean bidirectional overlap (%)",
-      title = reproducibility_title,
-      subtitle = reproducibility_subtitle
-    )
+    theme(legend.position = "none", axis.text.y = element_text(size = 7), panel.grid.major.y = element_blank(), 
+          plot.margin = margin(t = 5.5, r = 25, b = 5.5, l = 5.5)) +
+    labs(x = "", y = "Mean bidirectional overlap (%)", title = reproducibility_title, subtitle = reproducibility_subtitle)
 
 } else {
 
-  fig3 <- make_empty_plot(
-    "No pairwise peak reproducibility data available"
-  )
+  fig3 <- make_empty_plot("No pairwise peak reproducibility data available")
 }
 
 # ============================================================
@@ -720,18 +584,9 @@ for (file_path in frip_files) {
     next
   }
 
-  frip_tmp <- read.table(
-    file_path,
-    header = TRUE,
-    sep = "\t",
-    quote = "",
-    comment.char = "",
-    stringsAsFactors = FALSE
-  )
+  frip_tmp <- read.table(file_path, header = TRUE, sep = "\t", quote = "", comment.char = "", stringsAsFactors = FALSE)
 
-  frip_data_list[
-    [length(frip_data_list) + 1]
-  ] <- frip_tmp
+  frip_data_list[[length(frip_data_list) + 1]] <- frip_tmp
 }
 
 frip_data <- bind_rows(frip_data_list)
@@ -800,90 +655,35 @@ if (nrow(frip_data) == 0) {
     frip_data$Replicate
   )
 
-  fig4 <- ggplot(
-    frip_data,
-    aes(
-      x = Histone,
-      y = FRiP,
-      fill = Histone
-    )
-  ) +
-    geom_boxplot(
-      outlier.shape = NA
-    ) +
-    geom_jitter(
-      aes(color = Replicate),
-      width = 0.15,
-      height = 0
-    ) +
+  fig4 <- ggplot(frip_data,aes(x = Histone, y = FRiP, fill = Histone)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_jitter(aes(color = Replicate), width = 0.15, height = 0) +
     theme_bw(base_size = 18) +
-    labs(
-      x = "",
-      y = "% of Fragments in Peaks (FRiP)",
-      title = "FRiP scores"
-    ) +
-    theme(
-      axis.text.x = element_text(
-        angle = 90,
-        hjust = 1,
-        vjust = 0.5
-      )
-    )
+    labs(x = "", y = "% of Fragments in Peaks (FRiP)", title = "FRiP scores") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 }
 
 # ============================================================
 # Combine four-panel overview
 # ============================================================
 
-final_plot <- ggarrange(
-  fig1,
-  fig2,
-  fig3,
-  fig4,
-  ncol = 2,
-  nrow = 2,
-  common.legend = TRUE,
-  legend = "bottom",
-  labels = c(
-    "A",
-    "B",
-    "C",
-    "D"
-  )
-)
+final_plot <- ggarrange(fig1, fig2, fig3, fig4, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom", labels = c("A","B","C","D"))
 
 # ============================================================
 # Save overview PNG
 # ============================================================
 
-summary_png <- file.path(
-  output_dir,
-  "peak_summary_plot.png"
-)
+summary_png <- file.path(output_dir,"peak_summary_plot.png")
 
-ggsave(
-  filename = summary_png,
-  plot = final_plot,
-  width = 14,
-  height = 10,
-  dpi = 300
-)
+ggsave(filename = summary_png, plot = final_plot, width = 14, height = 10, dpi = 300)
 
 # ============================================================
 # Create multi-page PDF report
 # ============================================================
 
-report_pdf <- file.path(
-  output_dir,
-  "peak_summary_report.pdf"
-)
+report_pdf <- file.path(output_dir,"peak_summary_report.pdf")
 
-pdf(
-  file = report_pdf,
-  width = 14,
-  height = 10,
-  onefile = TRUE
-)
+pdf(file = report_pdf, width = 14, height = 10, onefile = TRUE)
 
 # Page 1: four-panel summary
 print(final_plot)
@@ -959,95 +759,19 @@ if (nrow(reproducibility_summary) > 0) {
         )
       )
 
-    detail_plot <- ggplot(
-      page_directional,
-      aes(
-        x = Direction,
-        y = OverlapRate,
-        fill = DirectionOrder
-      )
-    ) +
-      geom_col(
-        width = 0.65
-      ) +
-      geom_text(
-        aes(
-          label = sprintf(
-            "%.1f%%",
-            OverlapRate
-          )
-        ),
-        vjust = -0.4,
-        size = 3.2
-      ) +
-      geom_hline(
-        data = page_mean_data,
-        aes(
-          yintercept =
-            MeanBidirectionalOverlap
-        ),
-        inherit.aes = FALSE,
-        linetype = "dashed",
-        linewidth = 0.6
-      ) +
-      facet_wrap(
-        ~ PairLabel,
-        ncol = detail_page_columns,
-        scales = "free_x"
-      ) +
-      scale_fill_viridis_d(
-        option = "magma",
-        begin = 0.2,
-        end = 0.8
-      ) +
-      coord_cartesian(
-        ylim = c(0, 108),
-        clip = "off"
-      ) +
+    detail_plot <- ggplot(page_directional,aes(x = Direction, y = OverlapRate, fill = DirectionOrder)) +
+      geom_col(width = 0.65) +
+      geom_text(aes(label = sprintf("%.1f%%", OverlapRate)), vjust = -0.4, size = 3.2) +
+      geom_hline(data = page_mean_data, aes(yintercept = MeanBidirectionalOverlap), inherit.aes = FALSE, linetype = "dashed", linewidth = 0.6) +
+      facet_wrap(~ PairLabel, ncol = detail_page_columns, scales = "free_x") +
+      scale_fill_viridis_d(option = "magma", begin = 0.2, end = 0.8) +
+      coord_cartesian(ylim = c(0, 108), clip = "off") +
       theme_bw(base_size = 12) +
-      theme(
-        axis.text.x = element_text(
-          angle = 25,
-          hjust = 1,
-          size = 8
-        ),
-        legend.position = "bottom",
-        strip.text = element_text(
-          size = 9,
-          face = "bold"
-        ),
-        panel.grid.major.x =
-          element_blank(),
-        plot.margin = margin(
-          t = 10,
-          r = 15,
-          b = 10,
-          l = 10
-        )
-      ) +
-      labs(
-        x = "",
-        y = paste0(
-          "Source-sample peaks overlapping ",
-          "the paired sample (%)"
-        ),
-        fill = "Direction",
-        title = paste0(
-          "Ranked pairwise peak reproducibility: ",
-          "comparisons ",
-          first_rank,
-          "-",
-          last_rank,
-          " of ",
-          total_pairs
-        ),
-        subtitle = paste0(
-          "Pairs are ordered by mean bidirectional overlap ",
-          "from highest to lowest. ",
-          "Dashed lines indicate the pair mean. ",
-          "At least 1 bp of overlap is required."
-        )
-      )
+      theme(axis.text.x = element_text(angle = 25, hjust = 1, size = 8), legend.position = "bottom", strip.text = element_text(size = 9, face = "bold"),
+            panel.grid.major.x = element_blank(), plot.margin = margin(t = 10, r = 15, b = 10, l = 10)) +
+      labs(x = "", y = paste0("Source-sample peaks overlapping ","the paired sample (%)"), fill = "Direction",
+           title = paste0("Ranked pairwise peak reproducibility: ","comparisons ", first_rank,"-", last_rank," of ", total_pairs),
+        subtitle = paste0("Pairs are ordered by mean bidirectional overlap ","from highest to lowest. ","Dashed lines indicate the pair mean. ","At least 1 bp of overlap is required."))
 
     print(detail_plot)
   }
@@ -1055,12 +779,5 @@ if (nrow(reproducibility_summary) > 0) {
 
 dev.off()
 
-message(
-  "Saved peak summary PNG: ",
-  summary_png
-)
-
-message(
-  "Saved multi-page peak summary PDF: ",
-  report_pdf
-)
+message("Saved peak summary PNG: ", summary_png)
+message("Saved multi-page peak summary PDF: ", report_pdf)
