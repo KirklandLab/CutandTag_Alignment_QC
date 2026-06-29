@@ -1,4 +1,4 @@
-# cluster_config.yml - cluster configuration
+# cluster_config.yml - cluster configuration (defaults set for Kirkland Lab on OMRF HPC)
 __default__:
     account: kirklandj-lab
     partition: serial
