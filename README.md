@@ -30,7 +30,7 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
 + **Optional: Raw QC & Contamination Check**
   + Generates **FastQC** reports for raw FASTQ files
   + Aggregates reports into a single **MultiQC** summary
-  + Performs contamination detection via **FastQ Screen**
+  + Performs contamination detection on R1 via **FastQ Screen**
   + Can be toggled on/off using `use_fastq_qc`
 
 + **Read Alignment & BAM Processing**
@@ -38,7 +38,7 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
   + Converts SAM to BAM, then sorts and indexes BAM files
   + Produces sorted BAM files for each sample
   + Defines a final analysis BAM based on duplicate capping and downsampling settings
-  + Includes preconfigured reference settings for the mouse **mm10**/**mm39** and human **hg38** geome builds
+  + Includes preconfigured reference settings for the mouse **mm10**/**mm39** and human **hg38** genome builds
   + Can be used with other organisms or genome assemblies by providing a compatible Bowtie2 index and updating the corresponding genome-size settings in the `config/config.yml`
 
 + **Optional: Duplicate Capping**
@@ -55,7 +55,7 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
     + `lowest`
     + `lowest_with_floor`
   + All downsampling methods:
-    + Use a fixed random seed for reproducibility
+    + Supports either a fixed seed for reproducibility or `"random"` to generate a new seed when downsampling is performed
     + Downsample only samples above the resolved target
     + Leaves samples below the target unchanged
     + Produces per sample downsampling metrics and final analysis fragment counts
@@ -74,11 +74,12 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
   + Performs per sample peak calling with **MACS2**
   + Uses paired end BAM mode
   + Uses a customizable q-value threshold and genome size setting
+  + Uses `--keep-dup all`, so duplicate handling is determined by the upstream duplicate-capping configuration rather than by MACS2
 
 + **Summary Plots**
   + Alignment statistics
   + Duplicate burden and downsampling behavior
-  + Fragment length distributions
+  + Final analysis fragment length distributions
   + FRiP scores and peak count summaries
   + Fragment count correlation between samples
 
@@ -133,7 +134,7 @@ All parameters and module versions are specified in `config/config.yml`.
 + `use_fastq_qc`: whether to run FastQC, MultiQC, and FastQ Screen
 + `use_duplicate_cap`: whether to cap duplicate fragments
 + `duplicate_cap_max`: maximum number of identical fragments retained at each genomic position
-+ `use_downsampling`: whether to randomly downsample final analysis BAMs
++ `use_downsampling`: whether to randomly downsample the duplicate-capped or aligned BAM when creating final analysis BAMs
 + `downsample_target_mode`: method used to select the downsampling target
 + `downsample_target_fragments`: manual target used when `downsample_target_mode: "manual"`
 + `downsample_minimum_acceptable_fragments`: minimum acceptable depth used when `downsample_target_mode: "lowest_with_floor"`
@@ -254,7 +255,7 @@ Downsampling can be toggled on or off:
 use_downsampling: true
 ```
 
-When enabled, the workflow resolves a target fragment depth and downscales samples above that target. Samples below the target are not upsampled and are left unchanged.
+When enabled, the workflow resolves a target fragment depth and randomly subsamples samples above that target toward the resolved depth. Samples below the target are not upsampled and are left unchanged.
 
 When disabled:
 
@@ -276,7 +277,7 @@ Valid options are:
 + `lowest`
 + `lowest_with_floor`
 
-Downsampling uses `samtools view --subsample`. For reproducible testing or direct run to run comparisons, set a fixed seed:
+Downsampling uses `samtools view --subsample`. This method performs probabilistic subsampling so the resulting fragment count should be close to, but may not exactly equal, the resolved target. The actual final fragment count is recorded in the per-sample downsampling metrics. For reproducible testing or direct run to run comparisons, set a fixed seed:
 
 ```yaml
 downsample_seed: 12345
@@ -285,13 +286,13 @@ downsample_seed: 12345
 *Note: This makes random downsampling reproducible when the same input BAM, target, and seed are used. A fixed seed is recommended when comparing duplicate cap or downsampling settings across repeated test runs.*
 
 
-For normal operation, the workflow should be run without a fixed seed:
+For routine operation, the workflow can instead generate a new seed:
 
 ```yaml
 downsample_seed: "random"
 ```
 
-*Note: This lets downsampling remain random and may not select the exact same reads when the workflow is rerun. This is appropriate for routine processing.*
+*Note: When `downsample_seed: "random"` is used, the workflow generates and records a new seed for each sample that is actually downsampled. Repeated runs may therefore select different fragments.*
 
 ---
 
@@ -371,7 +372,7 @@ Sample 5:  8,000,000 ->  8,000,000
 
 Sample 5 is below the target, so it is not changed. Sample 3 set the target, so it is also unchanged. 
 
-*Note: This mode prevents one very low depth sample from forcing all other samples down to an unnecessarily low depth.*
+*Note: This mode prevents one very low depth sample from forcing all other samples down to an unnecessarily low depth when at least one sample meets the floor. If no sample is at or above the floor, the workflow falls back to the overall lowest available fragment depth.*
 
 ---
 
@@ -664,9 +665,9 @@ Below are example plots generated by this pipeline.
 | 3. **Fragment Length Plot**                                                           | 4. **Fragment Count Correlation Plot**                                                     |
 | :-----------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------: |
 | <img src="/images/fragment_length_plot.png" width="300">                              | <img src="/images/fragCount_correlation_plot.png" width="300">                             |
-| *Fragment length summary plots*                                                       | *Correlation plot of fragment counts*                                                      |
+| *Final analysis fragment length summary plots*                                        | *Correlation of fragment counts across occupied 500-bp bins*                               |
 
-| 5. **Duplicate and Downsampling Summary Plot**                                        | 6. **FRiP and Peak Count Summary Plot**                                                     |
+| 5. **Duplicate and Downsampling Summary Plot**                                        | 6. **FRiP and Peak Count Summary Plot**                                                    |
 | :-----------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------: |
 | <img src="/images/duplicate_downsampling_summary.png" width="300">                    | <img src="/images/peak_summary_plot.png" width="300">                                      |
 | *Duplicate burden and retained fragment summary*                                      | *FRiP and called peak summary*                                                             |
@@ -743,7 +744,8 @@ Downsampling removes observed fragments from samples above the resolved target. 
 
 + Samples above the target are downsampled
 + Samples at or below the target are left unchanged
-+ Downsampling uses a fixed seed for reproducibility
++ Downsampling uses an integer as the configured seed to produce reproducible selection.
++ Another option in this workflow is using `"random"` which generates a new seed each time the workflow is run and downsampling is performed
 + Downsampling affects the final analysis BAM when enabled
 
 Downsampling can help make samples more comparable when sequencing depth differs substantially, but aggressive downsampling can also remove useful signal.
@@ -771,6 +773,16 @@ When downsampling is enabled, the target scaled BigWig uses the resolved downsam
 This workflow performs per sample peak calling with MACS2. These peaks are useful for sample level QC and FRiP score calculation.
 
 This workflow does not define final consensus peak sets or merge biological replicates. Those steps are handled by the downstream companion workflow.
+
+FRiP is calculated using the cleaned fragment BED generated from the final analysis BAM. This includes same-chromosome fragment pairs shorter than 1,000 bp that pass the workflow's BEDPE fragment-processing filters.
+
+---
+
+### **Fragment Count Correlation**
+
+The correlation plot is calculated from fragment midpoint counts in 500-bp bins generated from cleaned final analysis fragments. Only occupied bins represented in the binned fragment count files are included; genome wide bins with no fragments are not explicitly included as zero count bins.
+
+Because the calculation is restricted to occupied bins, correlation values may be inflated relative to a genome wide correlation that includes unoccupied bins. The plot should therefore be interpreted as a relative sample level QC measure of similarity among signal containing regions rather than an unbiased genome wide estimate of concordance.
 
 ---
 
