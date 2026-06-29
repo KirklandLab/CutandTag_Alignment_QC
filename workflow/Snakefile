@@ -273,10 +273,10 @@ rule fastqc_reads:
     envmodules:
         config["fastqc"]
     threads: 4
-    log: "results/logs/snakelogs/fastqc_reads.{sample}.log"
+    log: "results/logs/fastqc_reads.{sample}.log"
     shell:
         """
-        mkdir -p results/qc/fastqc results/logs/snakelogs
+        mkdir -p results/qc/fastqc
 
         # Run FastQC with output directed to writable folder
         fastqc -t {threads} -o results/qc/fastqc {input.fq1}
@@ -334,10 +334,10 @@ rule fastq_screen:
     envmodules:
         config["fastq_screen"]
     threads: 4
-    log: "results/logs/snakelogs/fastq_screen.{sample}.log"
+    log: "results/logs/fastq_screen.{sample}.log"
     shell:
         """
-        mkdir -p {params.out_dir} results/logs/snakelogs
+        mkdir -p {params.out_dir}
 
         fastq_screen --conf {params.config_file} --threads {threads} --outdir {params.out_dir} {input.fq1}
         
@@ -363,10 +363,10 @@ rule align_with_bowtie2:
     envmodules:
         config["bowtie2"]
     threads: 16
-    log: "results/logs/snakelogs/align_with_bowtie2.{sample}.log"
+    log: "results/logs/align_with_bowtie2.{sample}.log"
     shell:
         """
-        mkdir -p results/alignment/sam/bowtie2_summary results/logs/snakelogs
+        mkdir -p results/alignment/sam/bowtie2_summary
 
         bowtie2 --end-to-end --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 \
         -p {threads} \
@@ -386,10 +386,10 @@ rule sam_to_bam:
     envmodules:
         config["samtools"]
     threads: 4
-    log: "results/logs/snakelogs/sam_to_bam.{sample}.log"
+    log: "results/logs/sam_to_bam.{sample}.log"
     shell:
         """
-        mkdir -p results/alignment/bam results/logs/snakelogs
+        mkdir -p results/alignment/bam
 
         samtools view -@ {threads} -bS {input.sam_file} > {output.bam_file}
         """
@@ -407,10 +407,10 @@ rule sort_bam:
     envmodules:
         config["samtools"]
     threads: 4
-    log: "results/logs/snakelogs/sort_bam.{sample}.log"
+    log: "results/logs/sort_bam.{sample}.log"
     shell:
         """
-        mkdir -p results/alignment/bam results/logs/snakelogs
+        mkdir -p results/alignment/bam
 
         samtools sort -@ {threads} -o {output.sorted_bam} {input.bam_file}
         samtools index -@ {threads} {output.sorted_bam} {output.bai}
@@ -435,7 +435,7 @@ rule cap_duplicate_fragments:
         config["samtools"]
     threads: 4
     log:
-        "results/logs/snakelogs/cap_duplicate_fragments.{sample}.log"
+        "results/logs/cap_duplicate_fragments.{sample}.log"
     shell:
         """
         mkdir -p results/alignment/bam/dedup_cap results/qc/duplicates
