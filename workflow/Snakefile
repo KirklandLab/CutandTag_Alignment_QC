@@ -8,7 +8,7 @@ configfile: "config/config.yml"
 # Email: kevinboyd76@gmail.com
 # GitHub: https://github.com/kevinboyd76
 # Date Created: October 18, 2024
-# Last Modified: June 17, 2026
+# Last Modified: June 29, 2026
 # Version: 2.0.0
 #
 # Description: This Snakemake workflow processes CUT&Tag sequencing data
@@ -20,7 +20,7 @@ configfile: "config/config.yml"
 # per-sample peak files, FRiP scores, alignment summaries, duplicate/downsampling
 # summaries, and plots to assess sample quality and replicate consistency.
 #
-# Update Version 2.0.0 (May/June 2026): This workflow now includes config controlled 
+# Update Version 2.0.0 (June 2026): This workflow now includes config controlled 
 # toggles for raw FASTQ QC, duplicate capping, and random downsampling. Downsampling 
 # can be run using a manual target, the lowest sample depth, or the lowest sample 
 # depth above a minimum acceptable floor. Duplicate capping limits the number of
@@ -36,7 +36,7 @@ configfile: "config/config.yml"
 
 # Steps:
 # 1) Optional quality control using FastQC (per read) and MultiQC (summary report)
-# 2) Optional contamination check using FastQ Screen
+# 2) Optional contamination check of R1 using FastQ Screen
 # 3) Align reads to reference genome using Bowtie2 (paired-end)
 # 4) Convert SAM to BAM, then sort and index BAM files
 # 5) Optionally cap duplicate fragments by exact fragment coordinates
@@ -45,11 +45,11 @@ configfile: "config/config.yml"
 # 8) Generate raw, CPM-normalized, and target-scaled BigWig signal tracks
 # from the final analysis BAM
 # 9) Calculate final analysis fragment counts and BigWig scale factors
-# 10) Call peaks using MACS2 with fixed q-value threshold (per sample)
+# 10) Call peaks using MACS2 with configured q-value threshold (per sample)
 # 11) Extract raw and final fragment lengths from BAM files (per sample)
-# 12) Plot fragment length distributions using R (violin and line plots)
+# 12) Final fragment length distributions
 # 13) Process final analysis BAMs to BEDPE/BED-style fragment data for QC
-# 14) Calculate FRiP scores (Fraction of Reads in Peaks) for QC (per sample)
+# 14) Calculate FRiP scores (Fraction of Reads, or in our case, fragments in Peaks) for QC per sample
 # 15) Generate correlation plot of binned fragment counts across samples
 # 16) Create summary plots of alignment, duplicate/downsampling behavior,
 # peak counts, and FRiP scores
@@ -58,8 +58,8 @@ configfile: "config/config.yml"
 #    • Optional: FastQC and MultiQC HTML reports
 #    • Optional: FastQ Screen PNG plots
 #    • Bowtie2 alignment summaries
-#    • Sorted BAM files and final analysis BAM files
-#    • Duplicate-capping and downsampling metrics
+#    • Sorted BAM files and final analysis BAM files with optional duplicate capping and/or downsampling
+#    • Optional: Duplicate-capping and downsampling metrics, when enabled
 #    • Raw, CPM-normalized, and target-scaled BigWig files
 #    • MACS2 peak files (narrowPeak)
 #    • Raw and final fragment length text files
