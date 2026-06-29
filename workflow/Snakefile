@@ -71,6 +71,11 @@ configfile: "config/config.yml"
 ##################################################################
 
 import pandas as pd
+import os
+
+# create results and logs folders
+onstart:
+    os.makedirs("results/logs", exist_ok=True)
 
 # read the CSV file and set an index using the values in the "sample" column.
 samples_table = pd.read_csv("config/samples.csv").set_index("sample", drop=False)
@@ -273,7 +278,6 @@ rule fastqc_reads:
     envmodules:
         config["fastqc"]
     threads: 4
-    log: "results/logs/fastqc_reads.{sample}.log"
     shell:
         """
         mkdir -p results/qc/fastqc
@@ -310,13 +314,11 @@ rule multiqc_raw:
     envmodules:
         config["multiqc"]
     threads: 4
-    log:
-        "results/logs/multiqc/multiqc.log"
     shell:
         """
         rm -rf {params.outdir}
         mkdir -p {params.outdir} results/logs/multiqc
-        multiqc results/qc/fastqc -o {params.outdir} 2> {log}
+        multiqc results/qc/fastqc -o {params.outdir}
         """
 
 ##################################################################
@@ -334,7 +336,6 @@ rule fastq_screen:
     envmodules:
         config["fastq_screen"]
     threads: 4
-    log: "results/logs/fastq_screen.{sample}.log"
     shell:
         """
         mkdir -p {params.out_dir}
@@ -363,7 +364,6 @@ rule align_with_bowtie2:
     envmodules:
         config["bowtie2"]
     threads: 16
-    log: "results/logs/align_with_bowtie2.{sample}.log"
     shell:
         """
         mkdir -p results/alignment/sam/bowtie2_summary
@@ -386,7 +386,6 @@ rule sam_to_bam:
     envmodules:
         config["samtools"]
     threads: 4
-    log: "results/logs/sam_to_bam.{sample}.log"
     shell:
         """
         mkdir -p results/alignment/bam
@@ -407,7 +406,6 @@ rule sort_bam:
     envmodules:
         config["samtools"]
     threads: 4
-    log: "results/logs/sort_bam.{sample}.log"
     shell:
         """
         mkdir -p results/alignment/bam
@@ -434,8 +432,6 @@ rule cap_duplicate_fragments:
     envmodules:
         config["samtools"]
     threads: 4
-    log:
-        "results/logs/cap_duplicate_fragments.{sample}.log"
     shell:
         """
         mkdir -p results/alignment/bam/dedup_cap results/qc/duplicates
@@ -559,8 +555,6 @@ rule downsample_analysis_bam:
     envmodules:
         config["samtools"]
     threads: 4
-    log:
-        "results/logs/snakelogs/downsample_analysis_bam.{sample}.log"
     shell:
         """
         mkdir -p results/alignment/bam/analysis results/qc/downsampling
@@ -629,8 +623,6 @@ rule summarize_duplicate_metrics:
         config["R"],
         config["bioconductor"]
     threads: 2
-    log:
-        "results/logs/snakelogs/summarize_duplicate_metrics.log"
     shell:
         """
         mkdir -p results/qc/duplicates_downsampling results/plots
@@ -674,7 +666,6 @@ rule calculate_analysis_scale_factor:
     envmodules:
         config["samtools"]
     threads: 2
-    log: "results/logs/snakelogs/calculate_analysis_scale_factor.{sample}.log"
     shell:
         """
         mkdir -p results/alignment/bigwig/scale_reads
@@ -712,7 +703,6 @@ rule make_bigwigs:
     envmodules:
         config["deeptools"]
     threads: 8
-    log: "results/logs/snakelogs/make_bigwigs.{sample}.log"
     shell:
         """
         # Analysis BigWig
@@ -753,8 +743,6 @@ rule macs2_peak_calling:
     envmodules:
         config["macs2"]
     threads: 8
-    log:
-        "results/logs/snakelogs/macs2_peak_calling.{sample}.log"
     shell:
         """
         mkdir -p {params.output_dir}
@@ -787,8 +775,6 @@ rule generate_alignment_plots:
         config["R"],
         config["bioconductor"]
     threads: 2
-    log:
-        "results/logs/snakelogs/generate_alignment_plots.log"
     shell:
         """
         Rscript scripts/plot_alignment.R {input.sample_list} {input.metadata} {params.out_dir}
@@ -806,7 +792,6 @@ rule generate_fragmentLength_raw:
     envmodules:
         config["samtools"]
     threads: 2
-    log: "results/logs/snakelogs/generate_fragmentLength_raw.{sample}.log"
     shell:
         """
         mkdir -p results/alignment/fragment_length/raw
@@ -829,7 +814,6 @@ rule generate_fragmentLength_final:
     envmodules:
         config["samtools"]
     threads: 2
-    log: "results/logs/snakelogs/generate_fragmentLength_final.{sample}.log"
     shell:
         """
         mkdir -p results/alignment/fragment_length/final
@@ -902,8 +886,6 @@ rule generate_fragLen_plots:
         config["R"],
         config["bioconductor"]
     threads: 2
-    log:
-        "results/logs/snakelogs/generate_fragLen_plots.log"
     shell:
         """
         Rscript scripts/plot_fragLength.R {input.sample_list} {input.metadata} {params.out_dir}
@@ -922,7 +904,6 @@ rule calculate_frip:
     envmodules:
         config["bedtools"]
     threads: 2
-    log: "results/logs/snakelogs/calculate_frip.{sample}.log"
     shell:
         """
         total_fragments=$(wc -l < {input.fragments_bed})
@@ -954,7 +935,6 @@ rule generate_correlation_plot:
     envmodules:
         config["R"]
     threads: 2
-    log: "results/logs/snakelogs/generate_correlation_plot.log"
     shell:
         """
         Rscript scripts/plot_correlation.R {input.sample_list} {params.work_dir}
@@ -978,8 +958,6 @@ rule generate_peak_summary_plots:
         config["R"],
         config["bioconductor"]
     threads: 2
-    log:
-        "results/logs/snakelogs/generate_peak_summary_plots.log"
     shell:
         """
         Rscript scripts/plot_peakSummary.R "{input.peak_list}" "{input.frip_list}" {input.metadata} {params.out_dir}
