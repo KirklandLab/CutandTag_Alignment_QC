@@ -29,6 +29,13 @@ fastq_screen:
     output: results/logs/{rule}.{wildcards.sample}.%j.log
     error: results/logs/{rule}.{wildcards.sample}.%j.err
 
+trim_reads_cutadapt:
+    mem: 16G
+    time: 02:00:00
+    name: "{rule}.{wildcards.sample}"
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
+
 align_with_bowtie2:
     mem: 64G
     time: 06:00:00
