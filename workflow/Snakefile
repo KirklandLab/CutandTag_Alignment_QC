@@ -8,24 +8,26 @@ configfile: "config/config.yml"
 # Email: kevinboyd76@gmail.com
 # GitHub: https://github.com/kevinboyd76
 # Date Created: October 18, 2024
-# Last Modified: June 29, 2026
+# Last Modified: June 30, 2026
 # Version: 2.0.0
 #
 # Description: This Snakemake workflow processes CUT&Tag sequencing data
 # from raw paired-end FASTQ files through optional raw FASTQ quality control,
-# read alignment using Bowtie2, optional duplicate capping, optional random
-# downsampling, BigWig signal track generation (raw, CPM-normalized, and
-# target-scaled), peak calling via MACS2, fragment length analysis, and QC
-# visualizations. The pipeline outputs normalized and scaled coverage tracks,
-# per-sample peak files, FRiP scores, alignment summaries, duplicate/downsampling
-# summaries, and plots to assess sample quality and replicate consistency.
+# optional adapter trimming with Cutadapt, read alignment using Bowtie2, 
+# optional duplicate capping, optional random downsampling, BigWig signal track 
+# generation (raw, CPM-normalized, and target-scaled), peak calling via MACS2, 
+# fragment length analysis, and QC visualizations. The pipeline outputs normalized 
+# and scaled coverage tracks, per-sample peak files, FRiP scores, alignment 
+# summaries, duplicate/downsampling summaries, and plots to assess sample quality 
+# and replicate consistency.
 #
 # Update Version 2.0.0 (June 2026): This workflow now includes config controlled 
-# toggles for raw FASTQ QC, duplicate capping, and random downsampling. Downsampling 
-# can be run using a manual target, the lowest sample depth, or the lowest sample 
-# depth above a minimum acceptable floor. Duplicate capping limits the number of
-# identical fragments retained at each genomic position to reduce the influence
-# of PCR duplicates while preserving controlled duplicate signal.
+# toggles for raw FASTQ QC, adapter trimming, duplicate capping, and random 
+# downsampling. Downsampling can be run using a manual target, the lowest sample 
+# depth, or the lowest sample depth above a minimum acceptable floor. Duplicate 
+# capping limits the number of identical fragments retained at each genomic 
+# position to reduce the influence of PCR duplicates while preserving controlled 
+# duplicate signal.
 #
 # Adapted from: Ye Zheng, Kami Ahmad, Steven Henikoff
 # Original Protocol DOI: dx.doi.org/10.17504/protocols.io.bjk2kkye
@@ -37,26 +39,27 @@ configfile: "config/config.yml"
 # Steps:
 # 1) Optional quality control using FastQC (per read) and MultiQC (summary report)
 # 2) Optional contamination check of R1 using FastQ Screen
-# 3) Align reads to reference genome using Bowtie2 (paired-end)
-# 4) Convert SAM to BAM, then sort and index BAM files
-# 5) Optionally cap duplicate fragments by exact fragment coordinates
-# 6) Optionally downsample post-cap or aligned BAMs to a defined fragment target
-# 7) Define the final analysis BAM for each sample
-# 8) Generate raw, CPM-normalized, and target-scaled BigWig signal tracks
-# from the final analysis BAM
-# 9) Calculate final analysis fragment counts and BigWig scale factors
-# 10) Call peaks using MACS2 with configured q-value threshold (per sample)
-# 11) Extract raw and final fragment lengths from BAM files (per sample)
-# 12) Final fragment length distributions
-# 13) Process final analysis BAMs to BEDPE/BED-style fragment data for QC
-# 14) Calculate FRiP scores (Fraction of Reads, or in our case, fragments in Peaks) for QC per sample
-# 15) Generate correlation plot of binned fragment counts across samples
-# 16) Create summary plots of alignment, duplicate/downsampling behavior,
-# peak counts, and FRiP scores
+# 3) Optional adapter trimming with Cutadapt
+# 4) Align reads to reference genome using Bowtie2 (paired-end)
+# 5) Convert SAM to BAM, then sort and index BAM files
+# 6) Optionally cap duplicate fragments by exact fragment coordinates
+# 7) Optionally downsample post-cap or aligned BAMs to a defined fragment target
+# 8) Define the final analysis BAM for each sample
+# 9) Generate raw, CPM-normalized, and target-scaled BigWig signal tracks from the final analysis BAM
+# 10) Calculate final analysis fragment counts and BigWig scale factors
+# 11) Call peaks using MACS2 with configured q-value threshold (per sample)
+# 12) Extract raw and final fragment lengths from BAM files (per sample)
+# 13) Final fragment length distributions
+# 14) Process final analysis BAMs to BEDPE/BED-style fragment data for QC
+# 15) Calculate FRiP scores (Fraction of Reads, or in our case, fragments in Peaks) for QC per sample
+# 16) Generate correlation plot of binned fragment counts across samples
+# 17) Create summary plots of alignment, duplicate/downsampling behavior, peak counts, and FRiP scores
 #
 # Outputs:
 #    • Optional: FastQC and MultiQC HTML reports
 #    • Optional: FastQ Screen PNG plots
+#    • Optional: Cutadapt-trimmed paired-end FASTQ files
+#    • Optional: Per-sample Cutadapt trimming reports
 #    • Bowtie2 alignment summaries
 #    • Sorted BAM files and final analysis BAM files with optional duplicate capping and/or downsampling
 #    • Optional: Duplicate-capping and downsampling metrics, when enabled
@@ -87,7 +90,70 @@ def fq_dict_from_sample(wildcards):
     "fq2": samples_table.loc[wildcards.sample, "fastq2"]
   }
 
+def alignment_fq_dict_from_sample(wildcards):
+    """
+    FASTQ files used for Bowtie2 alignment.
+
+    If trimming is enabled, use Cutadapt outputs.
+    Otherwise, use the original FASTQ files from samples.csv.
+    """
+    if USE_TRIMMING:
+        return {
+            "fq1": (
+                f"results/trimming/"
+                f"{wildcards.sample}_R1.trimmed.fastq.gz"
+            ),
+            "fq2": (
+                f"results/trimming/"
+                f"{wildcards.sample}_R2.trimmed.fastq.gz"
+            )
+        }
+
+    return fq_dict_from_sample(wildcards)
+
 USE_FASTQ_QC = bool(config.get("use_fastq_qc", True))
+
+USE_TRIMMING = bool(config.get("use_trimming", False))
+CUTADAPT_ADAPTER_R1 = str(
+    config.get("cutadapt_adapter_r1", "CTGTCTCTTATACACATCT")
+).strip()
+CUTADAPT_ADAPTER_R2 = str(
+    config.get("cutadapt_adapter_r2", "CTGTCTCTTATACACATCT")
+).strip()
+CUTADAPT_MIN_LENGTH = int(
+    config.get("cutadapt_minimum_length", 1)
+)
+CUTADAPT_ERROR_RATE = float(
+    config.get("cutadapt_error_rate", 0.10)
+)
+CUTADAPT_MIN_OVERLAP = int(
+    config.get("cutadapt_minimum_overlap", 5)
+)
+
+if USE_TRIMMING:
+    if not CUTADAPT_ADAPTER_R1 or not CUTADAPT_ADAPTER_R2:
+        raise ValueError(
+            "cutadapt_adapter_r1 and cutadapt_adapter_r2 must be provided "
+            "when use_trimming is true."
+        )
+
+    if CUTADAPT_MIN_LENGTH < 1:
+        raise ValueError(
+            "cutadapt_minimum_length must be at least 1."
+        )
+
+    if not 0 <= CUTADAPT_ERROR_RATE <= 1:
+        raise ValueError(
+            "cutadapt_error_rate must be between 0 and 1."
+        )
+
+    if CUTADAPT_MIN_OVERLAP < 1:
+        raise ValueError(
+            "cutadapt_minimum_overlap must be at least 1."
+        )
+
+BOWTIE2_ALIGNMENT_MODE = "--local" if USE_TRIMMING else "--end-to-end"
+
 USE_DUP_CAP = bool(config.get("use_duplicate_cap", False))
 DUP_CAP_MAX = int(config.get("duplicate_cap_max", 0))
 
@@ -138,6 +204,26 @@ PEAK_NAME_PATTERN = (
 ##################################################################
 
 SAMPLES = list(samples_table.index)
+
+TRIMMED_FASTQ_OUTPUTS = (
+    expand(
+        "results/trimming/{sample}_R1.trimmed.fastq.gz",
+        sample=SAMPLES
+    ) +
+    expand(
+        "results/trimming/{sample}_R2.trimmed.fastq.gz",
+        sample=SAMPLES
+    )
+    if USE_TRIMMING else []
+)
+
+CUTADAPT_REPORTS = (
+    expand(
+        "results/qc/cutadapt/{sample}.cutadapt.txt",
+        sample=SAMPLES
+    )
+    if USE_TRIMMING else []
+)
 
 FASTQC_OUTPUTS = (
     expand("results/qc/fastqc/{sample}_R1_fastqc.html", sample=SAMPLES) +
@@ -235,6 +321,8 @@ rule all:
         FASTQC_OUTPUTS,
         MULTIQC_OUTPUTS,
         FASTQ_SCREEN_OUTPUTS,
+        TRIMMED_FASTQ_OUTPUTS,
+        CUTADAPT_REPORTS,
         expand("results/alignment/sam/{sample}_bowtie2.sam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}_bowtie2.bam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}.sorted.bam", sample=samples_table.index),
@@ -350,17 +438,57 @@ rule fastq_screen:
         """
 
 ##################################################################
+##                  Optional: Adapter Trimming                  ##
+##################################################################
+
+rule trim_reads_cutadapt:
+    input:
+        unpack(fq_dict_from_sample)
+    output:
+        fq1=("results/trimming/""{sample}_R1.trimmed.fastq.gz"),
+        fq2=("results/trimming/""{sample}_R2.trimmed.fastq.gz"),
+        report=("results/qc/cutadapt/""{sample}.cutadapt.txt")
+    params:
+        adapter_r1=CUTADAPT_ADAPTER_R1,
+        adapter_r2=CUTADAPT_ADAPTER_R2,
+        minimum_length=CUTADAPT_MIN_LENGTH,
+        error_rate=CUTADAPT_ERROR_RATE,
+        minimum_overlap=CUTADAPT_MIN_OVERLAP
+    envmodules:
+        config["cutadapt"]
+    threads: 4
+    shell:
+        """
+        mkdir -p results/trimming results/qc/cutadapt
+
+        cutadapt \
+            -j {threads} \
+            -a {params.adapter_r1} \
+            -A {params.adapter_r2} \
+            -e {params.error_rate} \
+            -O {params.minimum_overlap} \
+            -m {params.minimum_length} \
+            --pair-filter=any \
+            -o {output.fq1} \
+            -p {output.fq2} \
+            {input.fq1} \
+            {input.fq2} \
+            > {output.report} 2>&1
+        """
+
+##################################################################
 ##                       Read Alignment                         ##
 ##################################################################
 
 rule align_with_bowtie2:
     input:
-        unpack(fq_dict_from_sample)
+        unpack(alignment_fq_dict_from_sample)
     output:
         sam_file="results/alignment/sam/{sample}_bowtie2.sam",
         bowtie2_summary="results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt"
     params:
-        bowtie2_genome=config["bowtie2_genome"]
+        bowtie2_genome=config["bowtie2_genome"],
+        alignment_mode=BOWTIE2_ALIGNMENT_MODE
     envmodules:
         config["bowtie2"]
     threads: 16
@@ -368,10 +496,12 @@ rule align_with_bowtie2:
         """
         mkdir -p results/alignment/sam/bowtie2_summary
 
-        bowtie2 --end-to-end --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 \
-        -p {threads} \
-        -x {params.bowtie2_genome} \
-        -1 {input.fq1} -2 {input.fq2} -S {output.sam_file} &> {output.bowtie2_summary}
+        bowtie2 \
+            {params.alignment_mode} --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 \
+            -p {threads} \
+            -x {params.bowtie2_genome} \
+            -1 {input.fq1} -2 {input.fq2} -S {output.sam_file} \
+            &> {output.bowtie2_summary}
         """
 
 ##################################################################
@@ -394,7 +524,7 @@ rule sam_to_bam:
         """
 
 ##################################################################
-##                  BAM Sorting and Indexing                    ##
+##                    BAM Sorting and Indexing                  ##
 ##################################################################
 
 rule sort_bam:
@@ -415,7 +545,7 @@ rule sort_bam:
         """
 
 ##################################################################
-##              Duplicate Capping by Fragment Coordinate        ##
+##      Optional: Duplicate Capping by Fragment Coordinate      ##
 ##################################################################
 
 rule cap_duplicate_fragments:
@@ -450,7 +580,7 @@ rule cap_duplicate_fragments:
         """
 
 ##################################################################
-##             Calculate Analysis/Downsampling Target           ##
+##       Optional: Calculate Analysis/Downsampling Target       ##
 ##################################################################
 
 rule calculate_downsample_target:
@@ -723,7 +853,7 @@ rule make_bigwigs:
         """
 
 ##################################################################
-##                        MACS2 Peak Calling                    ##
+##                      MACS2 Peak Calling                      ##
 ##################################################################
 
 rule macs2_peak_calling:
@@ -779,7 +909,7 @@ rule generate_alignment_plots:
         """
 
 ##################################################################
-##             Raw Fragment Length Files from Sorted BAM        ##
+##           Raw Fragment Length Files from Sorted BAM          ##
 ##################################################################
 
 rule generate_fragmentLength_raw:
@@ -801,7 +931,7 @@ rule generate_fragmentLength_raw:
         """
 
 ##################################################################
-##            Final Fragment Length Files from Analysis BAM     ##
+##         Final Fragment Length Files from Analysis BAM        ##
 ##################################################################
 
 rule generate_fragmentLength_final:
