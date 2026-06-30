@@ -23,7 +23,10 @@ configfile: "config/config.yml"
 #
 # Update Version 2.0.0 (June 2026): This workflow now includes config controlled 
 # toggles for raw FASTQ QC, adapter trimming, duplicate capping, and random 
-# downsampling. Downsampling can be run using a manual target, the lowest sample 
+# downsampling. This version adds optional paired-end adapter trimming using Cutadapt. 
+# When trimming is enabled, Bowtie2 uses trimmed FASTQs and local alignment mode. 
+# When trimming is disabled, Bowtie2 uses the original FASTQs and end-to-end alignment 
+# mode. Downsampling can be run using a manual target, the lowest sample 
 # depth, or the lowest sample depth above a minimum acceptable floor. Duplicate 
 # capping limits the number of identical fragments retained at each genomic 
 # position to reduce the influence of PCR duplicates while preserving controlled 
@@ -445,9 +448,9 @@ rule trim_reads_cutadapt:
     input:
         unpack(fq_dict_from_sample)
     output:
-        fq1=("results/trimming/""{sample}_R1.trimmed.fastq.gz"),
-        fq2=("results/trimming/""{sample}_R2.trimmed.fastq.gz"),
-        report=("results/qc/cutadapt/""{sample}.cutadapt.txt")
+        fq1="results/trimming/{sample}_R1.trimmed.fastq.gz",
+        fq2="results/trimming/{sample}_R2.trimmed.fastq.gz",
+        report="results/qc/cutadapt/{sample}.cutadapt.txt"
     params:
         adapter_r1=CUTADAPT_ADAPTER_R1,
         adapter_r2=CUTADAPT_ADAPTER_R2,
