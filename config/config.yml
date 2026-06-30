@@ -1,4 +1,26 @@
 # -----------------------------------------------------------------------------------------
+# ADAPTER TRIMMING
+# -----------------------------------------------------------------------------------------
+# If true, trim paired-end CUT&Tag adapter sequence with Cutadapt before Bowtie2 alignment.
+# Raw FastQC and FastQ Screen still use the original untrimmed FASTQ files.
+use_trimming: false
+
+# Nextera/Tn5 transposase adapter sequence used by the CUT&Tag library design.
+# Confirm these sequences if a different library preparation chemistry was used.
+cutadapt_adapter_r1: "CTGTCTCTTATACACATCT"
+cutadapt_adapter_r2: "CTGTCTCTTATACACATCT"
+
+# Minimum retained read length after trimming.
+# A value of 1 only removes pairs containing an empty read and minimizes fragment-length bias.
+cutadapt_minimum_length: 1
+
+# Maximum adapter-match error rate.
+cutadapt_error_rate: 0.10
+
+# Minimum adapter overlap required for trimming.
+cutadapt_minimum_overlap: 5
+
+# -----------------------------------------------------------------------------------------
 # ALIGNMENT
 # -----------------------------------------------------------------------------------------
 # Bowtie2 genome index path
