@@ -1,8 +1,7 @@
 # -----------------------------------------------------------------------------------------
 # ADAPTER TRIMMING
 # -----------------------------------------------------------------------------------------
-# If true, trim paired-end CUT&Tag adapter sequence with Cutadapt before Bowtie2 alignment.
-# Raw FastQC and FastQ Screen still use the original untrimmed FASTQ files.
+# Aignment done with trimmed FASTQs but FastQC and FastQ Screen still use the original untrimmed FASTQs.
 use_trimming: false
 
 # Nextera/Tn5 transposase adapter sequence used by the CUT&Tag library design.
@@ -10,8 +9,7 @@ use_trimming: false
 cutadapt_adapter_r1: "CTGTCTCTTATACACATCT"
 cutadapt_adapter_r2: "CTGTCTCTTATACACATCT"
 
-# Minimum retained read length after trimming.
-# A value of 1 only removes pairs containing an empty read and minimizes fragment-length bias.
+# Minimum retained read length after trimming (1 only removes pairs containing an empty read which minimizes fragment-length bias).
 cutadapt_minimum_length: 1
 
 # Maximum adapter-match error rate.
@@ -31,8 +29,7 @@ bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"   # m
 # -----------------------------------------------------------------------------------------
 # RAW FASTQ QUALITY CONTROL
 # -----------------------------------------------------------------------------------------
-# If true, run FastQC, MultiQC, and FastQ Screen.
-# If false, skip these rules. Use for rerunning the workflow after raw FASTQ QC has already been completed.
+# Controlls FastQC, MultiQC, and FastQ Screen rules
 use_fastq_qc: true
 
 # -----------------------------------------------------------------------------------------
@@ -40,8 +37,7 @@ use_fastq_qc: true
 # -----------------------------------------------------------------------------------------
 use_duplicate_cap: true
 
-# Maximum number of read-pair fragments allowed at the exact same fragment coordinate.
-# Recommended sensitivity runs: 3, 5, 7, and off.
+# Maximum number of read-pair fragments allowed at the exact same fragment coordinate (recommended sensitivity runs: 3, 5, 7, and off).
 duplicate_cap_max: 5
 
 # -----------------------------------------------------------------------------------------
