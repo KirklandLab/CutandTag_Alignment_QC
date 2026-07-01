@@ -622,7 +622,7 @@ rule calculate_downsample_target:
         lowest_above_floor=""
 
         for bam in {input.bams}; do
-            count=$(samtools view -@ {threads} -c -f 64 -F 12 $bam)
+            count=$(samtools view -@ {threads} -c -f 0x42 -F 0x90C "$bam")
 
             if [ -z "$lowest" ] || [ "$count" -lt "$lowest" ]; then
                 lowest=$count
@@ -703,7 +703,7 @@ rule downsample_analysis_bam:
         target_enabled=$(awk 'NR==2 {{print $7}}' {input.target})
         target_note=$(awk 'NR==2 {{print $8}}' {input.target})
 
-        fragments_before=$(samtools view -@ {threads} -c -f 64 -F 12 {input.bam})
+        fragments_before=$(samtools view -@ {threads} -c -f 0x42 -F 0x90C {input.bam})
 
         configured_seed="{params.seed}"
         actual_seed="NA"
@@ -737,7 +737,7 @@ rule downsample_analysis_bam:
 
         samtools index -@ {threads} {output.bam} {output.bai}
 
-        fragments_after=$(samtools view -@ {threads} -c -f 64 -F 12 {output.bam})
+        fragments_after=$(samtools view -@ {threads} -c -f 0x42 -F 0x90C {output.bam})
 
         echo -e "Sample\\tAction\\tTargetMode\\tDownsamplingEnabled\\tTargetNote\\tTargetFragments\\tSeed\\tSubsampleFraction\\tFragmentsBeforeDownsample\\tFragmentsAfterDownsample" > {output.metrics}
         echo -e "{wildcards.sample}\\t$action\\t$target_mode\\t$target_enabled\\t$target_note\\t$target\\t$actual_seed\\t$fraction\\t$fragments_before\\t$fragments_after" >> {output.metrics}
@@ -811,8 +811,8 @@ rule calculate_analysis_scale_factor:
 
         target=$(awk 'NR==2 {{print $1}}' {input.target})
 
-        # Count mapped read1 records as mapped fragments/read pairs.
-        fragments=$(samtools view -@ {threads} -c -f 64 -F 12 {input.bam})
+        # Count primary read1 records from properly paired mapped templates as one fragment per paired-end template.
+        fragments=$(samtools view -@ {threads} -c -f 0x42 -F 0x90C {input.bam})
 
         if [ "$fragments" -gt 0 ] && [ "$target" -gt 0 ]; then
             scale_factor=$(awk -v target="$target" -v fragments="$fragments" 'BEGIN {{ printf "%.10f", target / fragments }}')
@@ -935,7 +935,7 @@ rule generate_fragmentLength_raw:
         """
         mkdir -p results/alignment/fragment_length/raw
 
-        samtools view -@ {threads} -f 64 -F 12 {input.bam_file} | \
+        samtools view -@ {threads} -f 0x42 -F 0x90C {input.bam_file} | \
         awk -F'\\t' '$9 != 0 {{print ($9 < 0 ? -$9 : $9)}}' | \
         sort | uniq -c | \
         awk -v OFS="\\t" '{{print $2, $1}}' > {output.fragLen}
@@ -957,7 +957,7 @@ rule generate_fragmentLength_final:
         """
         mkdir -p results/alignment/fragment_length/final
 
-        samtools view -@ {threads} -f 64 -F 12 {input.bam_file} | \
+        samtools view -@ {threads} -f 0x42 -F 0x90C {input.bam_file} | \
         awk -F'\\t' '$9 != 0 {{print ($9 < 0 ? -$9 : $9)}}' | \
         sort | uniq -c | \
         awk -v OFS="\\t" '{{print $2, $1}}' > {output.fragLen}
