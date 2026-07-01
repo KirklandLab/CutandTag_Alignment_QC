@@ -122,9 +122,26 @@ def alignment_fq_dict_from_sample(wildcards):
 
     return fq_dict_from_sample(wildcards)
 
-USE_FASTQ_QC = bool(config.get("use_fastq_qc", True))
+def get_config_bool(name, default):
+    """
+    Read a YAML boolean config option and reject strings such as
+    "true" or "false", which Python would otherwise interpret
+    incorrectly with bool().
+    """
+    value = config.get(name, default)
 
-USE_TRIMMING = bool(config.get("use_trimming", False))
+    if not isinstance(value, bool):
+        raise ValueError(
+            f"{name} must be written as the YAML boolean "
+            f"true or false without quotation marks. "
+            f"Received: {value!r}"
+        )
+
+    return value
+
+USE_FASTQ_QC = get_config_bool("use_fastq_qc", True)
+USE_TRIMMING = get_config_bool("use_trimming", False)
+
 CUTADAPT_ADAPTER_R1 = str(
     config.get("cutadapt_adapter_r1", "CTGTCTCTTATACACATCT")
 ).strip()
@@ -165,10 +182,10 @@ if USE_TRIMMING:
 
 BOWTIE2_ALIGNMENT_MODE = "--local" if USE_TRIMMING else "--end-to-end"
 
-USE_DUP_CAP = bool(config.get("use_duplicate_cap", False))
+USE_DUP_CAP = get_config_bool("use_duplicate_cap", False)
 DUP_CAP_MAX = int(config.get("duplicate_cap_max", 0))
 
-USE_DOWNSAMPLING = bool(config.get("use_downsampling", False))
+USE_DOWNSAMPLING = get_config_bool("use_downsampling", False)
 DOWNSAMPLE_TARGET_MODE = str(config.get("downsample_target_mode", "manual"))
 DOWNSAMPLE_TARGET = int(config.get("downsample_target_fragments", 0))
 DOWNSAMPLE_MIN_FLOOR = int(config.get("downsample_minimum_acceptable_fragments", 0))
