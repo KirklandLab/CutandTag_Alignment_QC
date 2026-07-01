@@ -725,6 +725,8 @@ Comparing several duplicate caps can help evaluate how duplicate burden affects 
 
 ## 10) Important Interpretation Notes
 
+Throughout duplicate metrics, downsampling calculations, scale-factor calculations, and fragment-length summaries, one mapped fragment is represented by the primary read-1 alignment from a properly paired template. Unmapped, secondary, and supplementary alignments are excluded.
+
 ### **Duplicate Capping**
 
 Duplicate capping limits the number of identical fragments retained at each genomic fragment position. It is intended to reduce the influence of PCR over amplification while avoiding complete duplicate removal.
