@@ -819,17 +819,30 @@ snakemake -npr
 
 ### 11E. Run on HPC with config options
 
+Submit the full workflow using the included Slurm submission script:
 ```bash
-sbatch --wrap="snakemake -j 50 --use-envmodules --latency-wait 300 --cluster-config config/cluster_config.yml --cluster 'sbatch -A {cluster.account} -p {cluster.partition} --cpus-per-task {threads} -t {cluster.time} --mem {cluster.mem} --job-name {cluster.name} --output {cluster.output} --error {cluster.error}'"
+sbatch run_workflow.sbatch
 ```
 
 ### 11F. Unlock a workflow directory if needed
 
 If a previous Snakemake run was interrupted, unlock the directory before rerunning:
-
 ```bash
 snakemake --unlock
 ```
+
+### 11G. Run only a specific target and its upstream rules
+
+To run only a specific target and its required upstream rules, provide the target after the script name:
+```bash
+sbatch submit_workflow.sbatch results/plots/alignment_summary_plot.png
+```
+Or target the rule by name:
+```bash
+sbatch submit_workflow.sbatch generate_alignment_plots
+```
+
+*Note: When no target is provided, Snakemake runs the default `rule all` and completes the full workflow.*
 
 ---
 
