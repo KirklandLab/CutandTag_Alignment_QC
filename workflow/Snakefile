@@ -8,7 +8,7 @@ configfile: "config/config.yml"
 # Email: kevinboyd76@gmail.com
 # GitHub: https://github.com/kevinboyd76
 # Date Created: October 18, 2024
-# Last Modified: June 30, 2026
+# Last Modified: July 1, 2026
 # Version: 2.0.0
 #
 # Description: This Snakemake workflow processes CUT&Tag sequencing data
