@@ -833,11 +833,11 @@ snakemake --unlock
 
 ### 11G. Run only a specific target and its upstream rules
 
-To run only a specific target and its required upstream rules, provide the target after the script name:
+To run the workflow to a specific file and its required upstream rules, provide the path and filename after the script:
 ```bash
 sbatch run_workflow.sbatch results/plots/alignment_summary_plot.png
 ```
-Or target the rule by name:
+Also the rule itself can be targeted by name:
 ```bash
 sbatch run_workflow.sbatch generate_alignment_plots
 ```
