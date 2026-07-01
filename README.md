@@ -71,10 +71,11 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
       + *When downsampling is **disabled**, no BAM downsampling target is used; the target scaled BigWig reference is resolved to the empirical lowest final analysis fragment count*
 
 + **Peak Calling**
-  + Performs per sample peak calling with **MACS2**
+  + Performs controll free per sample peak calling with **MACS2**
   + Uses paired end BAM mode
   + Uses a customizable q-value threshold and genome size setting
   + Uses `--keep-dup all`, so duplicate handling is determined by the upstream duplicate-capping configuration rather than by MACS2
+  + The workflow does not currently assign a matched IgG or other control BAM to each sample during MACS2 peak calling
 
 + **Summary Plots**
   + Alignment statistics
