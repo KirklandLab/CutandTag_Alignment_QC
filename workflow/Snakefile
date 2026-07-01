@@ -1051,7 +1051,8 @@ rule calculate_frip:
             intersected="0"
         else
             intersected=$(bedtools intersect -a {input.fragments_bed} -b {input.peak_bed} -u | wc -l)
-            frip=$(echo "scale=4; ($intersected / $total_fragments) * 100" | bc)
+            frip=$(awk -v intersected="$intersected" -v total="$total_fragments" \
+                'BEGIN {{printf "%.4f", (intersected / total) * 100}}')
         fi
 
         echo -e "Sample\\tTotalFragments\\tFragmentsInPeaks\\tFRiP" > {output.frip_data}
