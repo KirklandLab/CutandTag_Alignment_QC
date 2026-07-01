@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------------------
 # ADAPTER TRIMMING
 # -----------------------------------------------------------------------------------------
-# Aignment done with trimmed FASTQs but FastQC and FastQ Screen still use the original untrimmed FASTQs.
+# When true, aignment uses trimmed FASTQs but FastQC and FastQ Screen always use the original untrimmed FASTQs.
 use_trimming: false
 
 # Nextera/Tn5 transposase adapter sequence used by the CUT&Tag library design.
@@ -29,7 +29,7 @@ bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"   # m
 # -----------------------------------------------------------------------------------------
 # RAW FASTQ QUALITY CONTROL
 # -----------------------------------------------------------------------------------------
-# Controlls FastQC, MultiQC, and FastQ Screen rules
+# Controlls the FastQC, MultiQC, and FastQ Screen rules
 use_fastq_qc: true
 
 # -----------------------------------------------------------------------------------------
@@ -84,7 +84,13 @@ effective_genome_size: 2652783500                                            # m
 # -----------------------------------------------------------------------------------------
 # CONFIG NOTES
 # -----------------------------------------------------------------------------------------
-# Boolean settings must use unquoted YAML true or false values.
+# Boolean settings must use unquoted YAML values: true or false.
+# Numeric settings must be entered without commas, for example: 20000000
+# Text options such as "manual", "lowest_with_floor", "lowest", and "random" should remain quoted exactly as shown.
+# Settings associated with a disabled feature are ignored. For example, duplicate_cap_max is ignored when use_duplicate_cap is false.
+# The Bowtie2 index, MACS2 genome size, and deepTools effective genome size must all correspond to the same reference genome assembly.
+# Input sample names, FASTQ paths, target/group labels, and replicate labels are defined separately in config/samples.csv.
+# When comparing different duplicate-cap, trimming, or downsampling settings, run each configuration in a separate output directory to avoid mixing results.
 
 # -----------------------------------------------------------------------------------------
 # SOFTWARE MODULE VERSIONS
