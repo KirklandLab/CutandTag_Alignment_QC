@@ -21,7 +21,7 @@ configfile: "config/config.yml"
 # summaries, duplicate/downsampling summaries, and plots to assess sample quality 
 # and replicate consistency.
 #
-# Update Version 2.0.0 (June 2026): This workflow now includes config controlled 
+# Update Version 2.0.0 (July 2026): This workflow now includes config controlled 
 # toggles for raw FASTQ QC, adapter trimming, duplicate capping, and random 
 # downsampling. This version adds optional paired-end adapter trimming using Cutadapt. 
 # When trimming is enabled, Bowtie2 uses trimmed FASTQs and local alignment mode. 
@@ -61,16 +61,24 @@ configfile: "config/config.yml"
 # Outputs:
 #    • Optional: FastQC and MultiQC HTML reports
 #    • Optional: FastQ Screen PNG plots
-#    • Optional: Cutadapt-trimmed paired-end FASTQ files
+#    • Optional: Cutadapt trimmed paired end FASTQ files
 #    • Optional: Per-sample Cutadapt trimming reports
 #    • Bowtie2 alignment summaries
-#    • Sorted BAM files and final analysis BAM files with optional duplicate capping and/or downsampling
-#    • Optional: Duplicate-capping and downsampling metrics, when enabled
+#    • Optional: Duplicate capping with manually set value
+#    • Optional: Downsampling with three options; manual, lowest with floor, or lowest
+#    • Optional: Duplicate-capping and downsampling metrics, when either option is enabled
+#    • Final analysis BAM files and their associated sorted BAM files
 #    • Raw, CPM-normalized, and target-scaled BigWig files
 #    • MACS2 peak files (narrowPeak)
 #    • Raw and final fragment length text files
 #    • FRiP score tables
-#    • Summary plots: alignment, duplicate/downsampling, fragment length, correlation, peak count, and FRiP
+#    • Summary plots: 
+#        • alignments
+#        • duplicate/downsampling
+#        • fragment lengths
+#        • correlations
+#        • peak counts
+#        • FRiP
 
 ##################################################################
 ##                    Define input functions                    ##
