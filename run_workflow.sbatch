@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#SBATCH --job-name=CutandTag_Alignment_QC
+#SBATCH --job-name=Cut&Tag_Align_QC
 #SBATCH --time=48:00:00
 #SBATCH --mem=16G
 #SBATCH --cpus-per-task=2
