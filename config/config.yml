@@ -82,7 +82,7 @@ effective_genome_size: 2652783500                                            # m
                                                                              # GRCh38 genome size - 2913022398
 
 # -----------------------------------------------------------------------------------------
-# NOTES
+# CONFIG NOTES
 # -----------------------------------------------------------------------------------------
 # Boolean settings must use unquoted YAML true or false values.
 
