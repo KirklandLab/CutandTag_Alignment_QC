@@ -835,11 +835,11 @@ snakemake --unlock
 
 To run only a specific target and its required upstream rules, provide the target after the script name:
 ```bash
-sbatch submit_workflow.sbatch results/plots/alignment_summary_plot.png
+sbatch run_workflow.sbatch results/plots/alignment_summary_plot.png
 ```
 Or target the rule by name:
 ```bash
-sbatch submit_workflow.sbatch generate_alignment_plots
+sbatch run_workflow.sbatch generate_alignment_plots
 ```
 
 *Note: When no target is provided, Snakemake runs the default `rule all` and completes the full workflow.*
