@@ -142,55 +142,6 @@ All parameters and module versions are specified in `config/config.yml`.
 + `downsample_seed`: random seed used for reproducible downsampling
 + `fastqc`, `fastq_screen`, `multiqc`, `bowtie2`, `samtools`, `deeptools`, `bedtools`, `macs2`, `R`, `bioconductor`: module names and versions for use on an HPC
 
-### **Example Config Options**
-
-Below is an example section from `config/config.yml` showing the major workflow toggles.
-
-```yaml
-# ------------------------------------------------------------
-# Raw FASTQ QC
-# ------------------------------------------------------------
-# If true, run FastQC, MultiQC, and FastQ Screen.
-# If false, skip these rules. This is useful when rerunning
-# the workflow after raw FASTQ QC has already been completed.
-use_fastq_qc: true
-
-# ------------------------------------------------------------
-# Duplicate capping
-# ------------------------------------------------------------
-# If true, cap duplicate fragments by exact fragment coordinates.
-# If false, use sorted aligned BAMs directly for downstream steps
-# unless downsampling is enabled.
-use_duplicate_cap: true
-
-# Maximum number of identical fragments retained at each position.
-# Example: duplicate_cap_max: 5 keeps up to 5 duplicate fragments.
-duplicate_cap_max: 5
-
-# ------------------------------------------------------------
-# Random downsampling
-# ------------------------------------------------------------
-# If true, downsample samples above the resolved target.
-# If false, do not downsample BAMs.
-use_downsampling: true
-
-# Valid options:
-#   "manual"            = use downsample_target_fragments
-#   "lowest"            = use the lowest sample depth as the target
-#   "lowest_with_floor" = use the lowest sample depth that is >=
-#                         downsample_minimum_acceptable_fragments
-downsample_target_mode: "lowest_with_floor"
-
-# Used only when downsample_target_mode: "manual"
-downsample_target_fragments: 30000000
-
-# Used only when downsample_target_mode: "lowest_with_floor"
-downsample_minimum_acceptable_fragments: 15000000
-
-# Random seed used by samtools downsampling
-downsample_seed: "random"
-```
-
 ---
 
 ### **Raw FASTQ QC Toggle**
