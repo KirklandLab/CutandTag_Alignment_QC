@@ -734,9 +734,11 @@ FRiP is calculated using the cleaned fragment BED generated from the final analy
 
 ### **Fragment Count Correlation**
 
-The correlation plot is calculated from fragment midpoint counts in 500-bp bins generated from cleaned final analysis fragments. Only occupied bins represented in the binned fragment count files are included; genome wide bins with no fragments are not explicitly included as zero count bins.
+The correlation plot is calculated from fragment midpoint counts in 500-bp bins generated from cleaned final analysis fragments. The binned fragment count files contain only bins with at least one fragment, and missing bins are not explicitly represented as zero-count bins.
 
-Because the calculation is restricted to occupied bins, correlation values may be inflated relative to a genome wide correlation that includes unoccupied bins. The plot should therefore be interpreted as a relative sample level QC measure of similarity among signal containing regions rather than an unbiased genome wide estimate of concordance.
+When the sample files are combined, correlation is calculated using complete observations. Therefore, only 500-bp bins containing fragments in every sample included in the correlation matrix contribute to the reported correlation values. Bins occupied in only a subset of samples and genome-wide bins with no fragments are excluded.
+
+Restricting the calculation to shared occupied bins conditions the analysis on regions containing signal across all samples and may inflate correlation values relative to methods that evaluate a broader set of genomic bins. The correlation plot should therefore be interpreted as an exploratory sample-level QC measure of similarity among shared signal-containing regions, rather than as an unbiased genome-wide estimate of concordance or a formal measure of replicate reproducibility.
 
 ---
 
