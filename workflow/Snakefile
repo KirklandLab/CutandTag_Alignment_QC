@@ -428,7 +428,6 @@ rule all:
 ##                       Quality Control                        ##
 ##################################################################
 
-# run fastqc on fastq.gz files before trimming
 rule fastqc_reads:
     input:
         unpack(fq_dict_from_sample)
