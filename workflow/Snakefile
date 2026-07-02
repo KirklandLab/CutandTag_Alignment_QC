@@ -451,15 +451,31 @@ rule fastqc_reads:
         baseR1=${{baseR1%.gz}}
         baseR1=${{baseR1%.fastq}}
         baseR1=${{baseR1%.fq}}
-        mv "$dir/${{baseR1}}_fastqc.html" "{output.html1}"
-        mv "$dir/${{baseR1}}_fastqc.zip" "{output.zip1}"
+        src_html="$dir/${{baseR1}}_fastqc.html"
+        src_zip="$dir/${{baseR1}}_fastqc.zip"
+
+        if [ "$src_html" != "{output.html1}" ]; then
+            mv "$src_html" "{output.html1}"
+        fi
+
+        if [ "$src_zip" != "{output.zip1}" ]; then
+            mv "$src_zip" "{output.zip1}"
+        fi
 
         baseR2=$(basename "{input.fq2}")
         baseR2=${{baseR2%.gz}}
         baseR2=${{baseR2%.fastq}}
         baseR2=${{baseR2%.fq}}
-        mv "$dir/${{baseR2}}_fastqc.html" "{output.html2}"
-        mv "$dir/${{baseR2}}_fastqc.zip" "{output.zip2}"
+        src_html="$dir/${{baseR2}}_fastqc.html"
+        src_zip="$dir/${{baseR2}}_fastqc.zip"
+
+        if [ "$src_html" != "{output.html2}" ]; then
+            mv "$src_html" "{output.html2}"
+        fi
+
+        if [ "$src_zip" != "{output.zip2}" ]; then
+            mv "$src_zip" "{output.zip2}"
+        fi
         """
 
 ##################################################################
@@ -510,7 +526,11 @@ rule fastq_screen:
         base_name=${{base_name%.fastq}}
         base_name=${{base_name%.fq}}
 
-        mv {params.out_dir}/${{base_name}}_screen.png {output.fastq_info}
+        src_png="{params.out_dir}/${{base_name}}_screen.png"
+
+        if [ "$src_png" != "{output.fastq_info}" ]; then
+            mv "$src_png" "{output.fastq_info}"
+        fi
         """
 
 ##################################################################
