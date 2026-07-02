@@ -506,10 +506,11 @@ rule fastq_screen:
 
         fastq_screen --conf {params.config_file} --threads {threads} --outdir {params.out_dir} {input.fq1}
         
-        # Extract the base name without .fastq.gz
-        base_name=$(basename {input.fq1} .fastq.gz)
-        
-        # Move or link the output file to the expected output
+        base_name=$(basename "{input.fq1}")
+        base_name=${{base_name%.gz}}
+        base_name=${{base_name%.fastq}}
+        base_name=${{base_name%.fq}}
+
         mv {params.out_dir}/${{base_name}}_screen.png {output.fastq_info}
         """
 
