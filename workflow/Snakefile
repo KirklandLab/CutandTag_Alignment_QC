@@ -649,7 +649,7 @@ rule cap_duplicate_fragments:
             --names-out {output.names} \
             --metrics-out {output.metrics}
 
-        samtools view -@ {threads} -b -N {output.names} {input.sorted_bam} | \
+        samtools view -@ {threads} -b -f 0x2 -F 0x90C -N {output.names} {input.sorted_bam} | \
             samtools sort -@ {threads} -o {output.bam}
 
         samtools index -@ {threads} {output.bam} {output.bai}
