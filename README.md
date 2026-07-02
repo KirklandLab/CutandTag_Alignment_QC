@@ -436,6 +436,7 @@ This workflow uses the following tools through environment modules on an HPC sys
 + **FastQC**: for assessing raw FASTQ file quality
 + **FastQ Screen**: for detecting sample contamination via database alignment
 + **MultiQC**: for aggregating QC outputs into a single HTML report
++ **Cutadapt**: for adapter trimming
 + **Bowtie2**: for aligning paired end reads to a reference genome
 + **Samtools**: for converting, sorting, indexing, filtering, downsampling, and counting SAM/BAM files
 + **DeepTools**: `bamCoverage` generates BigWig tracks from final analysis BAMs
@@ -446,6 +447,10 @@ This workflow uses the following tools through environment modules on an HPC sys
 + **Python**: for duplicate capping logic, metric generation, and workflow support scripts
 
 **Note**: All tool paths, versions, and parameters are centrally managed in `config.yml`, making the pipeline reproducible, portable, and easy to maintain.
+
++ The workflow was developed and tested using **Snakemake 7.32.4**
++ The included `run_workflow.sbatch` script uses Snakemake's generic `--cluster` and `--cluster-config` submission interface
++ Other Snakemake versions, particularly version 8 or newer, may require migration to a Slurm executor plugin
 
 ---
 
