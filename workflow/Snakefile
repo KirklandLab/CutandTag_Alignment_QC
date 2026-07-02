@@ -946,7 +946,7 @@ rule macs2_peak_calling:
         output_dir="results/peakCalling/"
     envmodules:
         config["macs2"]
-    threads: 8
+    threads: 1
     shell:
         """
         mkdir -p {params.output_dir}
