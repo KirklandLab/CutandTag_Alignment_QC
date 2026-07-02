@@ -444,21 +444,23 @@ rule fastqc_reads:
         """
         mkdir -p results/qc/fastqc
 
-        # Run FastQC with output directed to writable folder
-        fastqc -t {threads} -o results/qc/fastqc {input.fq1}
-        fastqc -t {threads} -o results/qc/fastqc {input.fq2}
+        fastqc -t {threads} -o results/qc/fastqc {input.fq1} {input.fq2}
 
-        # Rename output files to match specified output paths
         dir="results/qc/fastqc"
-        bsename=$(basename {input.fq1} .gz)
-        bsename=$(basename ${{bsename}} .fastq)
-        mv ${{dir}}/${{bsename}}_fastqc.html {output.html1}
-        mv ${{dir}}/${{bsename}}_fastqc.zip {output.zip1}
-        
-        bsename=$(basename {input.fq2} .gz)
-        bsename=$(basename ${{bsename}} .fastq)
-        mv ${{dir}}/${{bsename}}_fastqc.html {output.html2}
-        mv ${{dir}}/${{bsename}}_fastqc.zip {output.zip2}
+
+        baseR1=$(basename "{input.fq1}")
+        baseR1=${{baseR1%.gz}}
+        baseR1=${{baseR1%.fastq}}
+        baseR1=${{baseR1%.fq}}
+        mv "$dir/${{baseR1}}_fastqc.html" "{output.html1}"
+        mv "$dir/${{baseR1}}_fastqc.zip" "{output.zip1}"
+
+        baseR2=$(basename "{input.fq2}")
+        baseR2=${{baseR2%.gz}}
+        baseR2=${{baseR2%.fastq}}
+        baseR2=${{baseR2%.fq}}
+        mv "$dir/${{baseR2}}_fastqc.html" "{output.html2}"
+        mv "$dir/${{baseR2}}_fastqc.zip" "{output.zip2}"
         """
 
 ##################################################################
