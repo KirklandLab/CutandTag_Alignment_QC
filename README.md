@@ -33,6 +33,13 @@ Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](h
   + Performs contamination detection on R1 via **FastQ Screen**
   + Can be toggled on/off using `use_fastq_qc`
 
++ **Optional: Adapter Trimming**
+  + Can be toggled on/off using `use_trimming`
+  + Uses **Cutadapt** to remove the configured adapter sequence from paired-end reads
+  + Produces trimmed paired-end FASTQ files and a per-sample trimming report
+  + When trimming is enabled, Bowtie2 aligns the trimmed FASTQs using local alignment mode
+  + When trimming is disabled, Bowtie2 aligns the original FASTQs using end-to-end alignment mode
+
 + **Read Alignment & BAM Processing**
   + Aligns paired end reads using **Bowtie2**
   + Converts SAM to BAM, then sorts and indexes BAM files
@@ -107,6 +114,7 @@ This pipeline is designed for the initial processing and quality assessment of p
 
 + Performs **initial alignment and QC** of CUT&Tag sequencing data
 + Optionally runs raw FASTQ QC using **FastQC**, **MultiQC**, and **FastQ Screen**
++ Optionally trims paired-end adapter sequence using **Cutadapt**
 + Creates sorted BAM files and config dependent final analysis BAMs
 + Optionally caps duplicate fragments to reduce PCR duplicate burden
 + Optionally downsamples samples to a manual, lowest sample, or floor filtered target depth
@@ -127,6 +135,12 @@ All parameters and module versions are specified in `config/config.yml`.
 
 ### **Key fields include:**
 
++ `use_trimming`: whether to trim paired-end FASTQ files before alignment
++ `cutadapt_adapter_r1`: adapter sequence removed from R1
++ `cutadapt_adapter_r2`: adapter sequence removed from R2
++ `cutadapt_minimum_length`: minimum read length retained after trimming
++ `cutadapt_error_rate`: maximum allowed adapter-matching error rate
++ `cutadapt_minimum_overlap`: minimum adapter overlap required for trimming
 + `bowtie2_genome`: path to the Bowtie2 index for the reference genome, such as mm10 or hg38
 + `effective_genome_size`: effective genome size used by DeepTools for coverage normalization
 + `genome_size`: genome size string used by MACS2, such as `mm` or `hs`
@@ -141,6 +155,36 @@ All parameters and module versions are specified in `config/config.yml`.
 + `downsample_minimum_acceptable_fragments`: minimum acceptable depth used when `downsample_target_mode: "lowest_with_floor"`
 + `downsample_seed`: random seed used for reproducible downsampling
 + `fastqc`, `fastq_screen`, `multiqc`, `bowtie2`, `samtools`, `deeptools`, `bedtools`, `macs2`, `R`, `bioconductor`: module names and versions for use on an HPC
+
+---
+
+### **Adapter Trimming Settings**
+
+Adapter trimming can be toggled on or off:
+
+```yaml
+use_trimming: true
+```
+
+When `use_trimming: true`, paired-end reads are processed with Cutadapt using the configured R1 and R2 adapter sequences. The trimmed FASTQ files are used for Bowtie2 alignment, and Bowtie2 runs in `--local` alignment mode.
+
+```yaml
+use_trimming: false
+```
+
+When `use_trimming: false`, the original FASTQ files are aligned directly, and Bowtie2 runs in `--end-to-end` alignment mode.
+
+The trimming parameters are controlled by:
+
+```yaml
+cutadapt_adapter_r1: "CTGTCTCTTATACACATCT"
+cutadapt_adapter_r2: "CTGTCTCTTATACACATCT"
+cutadapt_minimum_length: 1
+cutadapt_error_rate: 0.10
+cutadapt_minimum_overlap: 5
+```
+
+Cutadapt reports are written to `results/qc/cutadapt/`, and trimmed FASTQ files are written to `results/trimming/`.
 
 ---
 
@@ -503,10 +547,11 @@ Example FASTQ names to **not** use:
 
 ## 7) Output Overview
 
-| Category                           | Output Folder/Format                                                                 |
+| Category                           | Output Folder/Format                                                                  |
 |------------------------------------|---------------------------------------------------------------------------------------|
-| **Optional Raw FASTQ QC**          | `results/qc/fastqc/`, `results/qc/multiqc/`, `results/qc/fastq_screen/`              |
-| **Alignments**                     | `results/alignment/sam/`, `results/alignment/bam/`                                   |
+| **Optional Raw FASTQ QC**          | `results/qc/fastqc/`, `results/qc/multiqc/`, `results/qc/fastq_screen/`               |
+| **Optional Trimmed FASTQs**        | `results/trimming/`, with reports in `results/qc/cutadapt/`                           |
+| **Alignments**                     | `results/alignment/sam/`, `results/alignment/bam/`                                    |
 | **Duplicate Capping Metrics**      | `results/qc/duplicates/`                                                              |
 | **Downsampling Metrics**           | `results/qc/downsampling/`                                                            |
 | **Duplicate/Downsampling Summary** | `results/qc/duplicates_downsampling/`, `results/plots/duplicate_downsampling_summary.png` |
