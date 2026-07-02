@@ -154,7 +154,7 @@ All parameters and module versions are specified in `config/config.yml`.
 + `downsample_target_fragments`: manual target used when `downsample_target_mode: "manual"`
 + `downsample_minimum_acceptable_fragments`: minimum acceptable depth used when `downsample_target_mode: "lowest_with_floor"`
 + `downsample_seed`: random seed used for reproducible downsampling
-+ `fastqc`, `fastq_screen`, `multiqc`, `bowtie2`, `samtools`, `deeptools`, `bedtools`, `macs2`, `R`, `bioconductor`: module names and versions for use on an HPC
++ `fastqc`, `fastq_screen`, `multiqc`, `cutadapt`, `bowtie2`, `samtools`, `deeptools`, `bedtools`, `macs2`, `R`, `bioconductor`: module names and versions for use on an HPC
 
 ---
 
@@ -490,7 +490,7 @@ This workflow uses the following tools through environment modules on an HPC sys
 + **Bioconductor**: for R based QC visualizations
 + **Python**: for duplicate capping logic, metric generation, and workflow support scripts
 
-**Note**: All tool paths, versions, and parameters are centrally managed in `config.yml`, making the pipeline reproducible, portable, and easy to maintain.
+**Note**: Tool module versions, reference paths, and major configurable analysis settings are managed in `config/config.yml`, supporting reproducible and maintainable workflow execution.
 
 + The workflow was developed and tested using **Snakemake 7.32.4**
 + The included `run_workflow.sbatch` script uses Snakemake's generic `--cluster` and `--cluster-config` submission interface
