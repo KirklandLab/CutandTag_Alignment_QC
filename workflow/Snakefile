@@ -512,7 +512,7 @@ rule fastq_screen:
         rm -rf "$temp_dir"
         mkdir -p "$temp_dir" "$final_dir"
 
-        fastq_screen --conf {params.config_file} --threads {threads} --outdir "$temp_dir" "{input.fq1}"
+        fastq_screen --conf {params.config_file} --threads {threads} --outdir "$temp_dir" {input.fq1}
 
         base_name=$(basename "{input.fq1}")
         base_name=${{base_name%.gz}}
