@@ -2,7 +2,7 @@
 # ADAPTER TRIMMING
 # -----------------------------------------------------------------------------------------
 # When true, aignment uses trimmed FASTQs but FastQC and FastQ Screen always use the original untrimmed FASTQs.
-use_trimming: false
+use_trimming: true
 
 # Nextera/Tn5 transposase adapter sequence used by the CUT&Tag library design.
 # Confirm these sequences if a different library preparation chemistry was used.
