@@ -441,41 +441,30 @@ rule fastqc_reads:
     threads: 4
     shell:
         """
-        mkdir -p results/qc/fastqc
+        final_dir="results/qc/fastqc"
+        temp_dir="$final_dir/.tmp/{wildcards.sample}"
 
-        fastqc -t {threads} -o results/qc/fastqc {input.fq1} {input.fq2}
+        rm -rf "$temp_dir"
+        mkdir -p "$temp_dir" "$final_dir"
 
-        dir="results/qc/fastqc"
+        fastqc -t {threads} -o "$temp_dir" "{input.fq1}" "{input.fq2}"
 
         baseR1=$(basename "{input.fq1}")
         baseR1=${{baseR1%.gz}}
         baseR1=${{baseR1%.fastq}}
         baseR1=${{baseR1%.fq}}
-        src_html="$dir/${{baseR1}}_fastqc.html"
-        src_zip="$dir/${{baseR1}}_fastqc.zip"
-
-        if [ "$src_html" != "{output.html1}" ]; then
-            mv "$src_html" "{output.html1}"
-        fi
-
-        if [ "$src_zip" != "{output.zip1}" ]; then
-            mv "$src_zip" "{output.zip1}"
-        fi
 
         baseR2=$(basename "{input.fq2}")
         baseR2=${{baseR2%.gz}}
         baseR2=${{baseR2%.fastq}}
         baseR2=${{baseR2%.fq}}
-        src_html="$dir/${{baseR2}}_fastqc.html"
-        src_zip="$dir/${{baseR2}}_fastqc.zip"
 
-        if [ "$src_html" != "{output.html2}" ]; then
-            mv "$src_html" "{output.html2}"
-        fi
+        mv "$temp_dir/${{baseR1}}_fastqc.html" "{output.html1}"
+        mv "$temp_dir/${{baseR1}}_fastqc.zip"  "{output.zip1}"
+        mv "$temp_dir/${{baseR2}}_fastqc.html" "{output.html2}"
+        mv "$temp_dir/${{baseR2}}_fastqc.zip"  "{output.zip2}"
 
-        if [ "$src_zip" != "{output.zip2}" ]; then
-            mv "$src_zip" "{output.zip2}"
-        fi
+        rm -rf "$temp_dir"
         """
 
 ##################################################################
@@ -517,20 +506,22 @@ rule fastq_screen:
     threads: 4
     shell:
         """
-        mkdir -p {params.out_dir}
+        final_dir="{params.out_dir}"
+        temp_dir="$final_dir/.tmp/{wildcards.sample}"
 
-        fastq_screen --conf {params.config_file} --threads {threads} --outdir {params.out_dir} {input.fq1}
-        
+        rm -rf "$temp_dir"
+        mkdir -p "$temp_dir" "$final_dir"
+
+        fastq_screen --conf {params.config_file} --threads {threads} --outdir "$temp_dir" "{input.fq1}"
+
         base_name=$(basename "{input.fq1}")
         base_name=${{base_name%.gz}}
         base_name=${{base_name%.fastq}}
         base_name=${{base_name%.fq}}
 
-        src_png="{params.out_dir}/${{base_name}}_screen.png"
+        mv "$temp_dir/${{base_name}}_screen.png" "{output.fastq_info}"
 
-        if [ "$src_png" != "{output.fastq_info}" ]; then
-            mv "$src_png" "{output.fastq_info}"
-        fi
+        rm -rf "$temp_dir"
         """
 
 ##################################################################
