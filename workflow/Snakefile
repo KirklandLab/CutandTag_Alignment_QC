@@ -320,12 +320,6 @@ if EFFECTIVE_GENOME_SIZE < 1:
 
 MACS2_QVALUE_STR = str(MACS2_QVALUE)
 
-if DOWNSAMPLE_TARGET_MODE not in VALID_DOWNSAMPLE_MODES:
-    raise ValueError(
-        f"Invalid downsample_target_mode: {DOWNSAMPLE_TARGET_MODE}. "
-        f"Choose one of: {VALID_DOWNSAMPLE_MODES}"
-    )
-
 PEAK_NAME_PATTERN = (
     f"results/peakCalling/"
     f"{{sample}}_{MACS2_QVALUE_STR}_peaks.narrowPeak"
@@ -971,8 +965,8 @@ rule make_bigwigs:
         bigwig_cpm="results/alignment/bigwig/{sample}_analysisCPM.bw",
         bigwig_scaled="results/alignment/bigwig/{sample}_analysisScaled.bw"
     params:
-        genome_size=EFFECTIVE_GENOME_SIZE_genome_size"],
-        binSize=BIGWIG_BIN_SIZESize"]
+        genome_size=EFFECTIVE_GENOME_SIZE,
+        binSize=BIGWIG_BIN_SIZE
     envmodules:
         config["deeptools"]
     threads: 8
