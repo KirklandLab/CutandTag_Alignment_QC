@@ -27,10 +27,10 @@ configfile: "config/config.yml"
 # When trimming is enabled, Bowtie2 uses trimmed FASTQs and local alignment mode. 
 # When trimming is disabled, Bowtie2 uses the original FASTQs and end-to-end alignment 
 # mode. Downsampling can be run using a manual target, the lowest sample 
-# depth, or the lowest sample depth above a minimum acceptable floor. Duplicate 
-# capping limits the number of identical fragments retained at each genomic 
-# position to reduce the influence of PCR duplicates while preserving controlled 
-# duplicate signal.
+# depth, or the lowest sample depth above a minimum acceptable floor. Duplicate capping 
+# limits the number of identical fragments retained at each exact genomic fragment 
+# position to reduce the influence of highly repeated fragment coordinates while 
+# preserving controlled duplicate signal.
 #
 # Adapted from: Ye Zheng, Kami Ahmad, Steven Henikoff
 # Original Protocol DOI: dx.doi.org/10.17504/protocols.io.bjk2kkye
