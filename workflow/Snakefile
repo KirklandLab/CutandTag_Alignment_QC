@@ -265,8 +265,66 @@ if DOWNSAMPLE_TARGET_MODE not in VALID_DOWNSAMPLE_MODES:
         f"Choose one of: {VALID_DOWNSAMPLE_MODES}"
     )
 
-MACS2_QVALUE = config["macs2_qvalue"]
+# --------------------------------------------------------------
+# Validate enabled numeric settings
+# --------------------------------------------------------------
+
+if USE_DUP_CAP and DUP_CAP_MAX < 1:
+    raise ValueError(
+        "duplicate_cap_max must be at least 1 when "
+        "use_duplicate_cap is true."
+    )
+
+if (
+    USE_DOWNSAMPLING
+    and DOWNSAMPLE_TARGET_MODE == "manual"
+    and DOWNSAMPLE_TARGET < 1
+):
+    raise ValueError(
+        "downsample_target_fragments must be at least 1 when "
+        "use_downsampling is true and "
+        "downsample_target_mode is 'manual'."
+    )
+
+if (
+    USE_DOWNSAMPLING
+    and DOWNSAMPLE_TARGET_MODE == "lowest_with_floor"
+    and DOWNSAMPLE_MIN_FLOOR < 1
+):
+    raise ValueError(
+        "downsample_minimum_acceptable_fragments must be at least 1 "
+        "when use_downsampling is true and "
+        "downsample_target_mode is 'lowest_with_floor'."
+    )
+
+MACS2_QVALUE = float(config["macs2_qvalue"])
+
+if not 0 < MACS2_QVALUE <= 1:
+    raise ValueError(
+        "macs2_qvalue must be greater than 0 and less than or equal to 1."
+    )
+
+BIGWIG_BIN_SIZE = int(config["binSize"])
+
+if BIGWIG_BIN_SIZE < 1:
+    raise ValueError(
+        "binSize must be an integer of at least 1."
+    )
+
+EFFECTIVE_GENOME_SIZE = int(config["effective_genome_size"])
+
+if EFFECTIVE_GENOME_SIZE < 1:
+    raise ValueError(
+        "effective_genome_size must be an integer of at least 1."
+    )
+
 MACS2_QVALUE_STR = str(MACS2_QVALUE)
+
+if DOWNSAMPLE_TARGET_MODE not in VALID_DOWNSAMPLE_MODES:
+    raise ValueError(
+        f"Invalid downsample_target_mode: {DOWNSAMPLE_TARGET_MODE}. "
+        f"Choose one of: {VALID_DOWNSAMPLE_MODES}"
+    )
 
 PEAK_NAME_PATTERN = (
     f"results/peakCalling/"
@@ -913,8 +971,8 @@ rule make_bigwigs:
         bigwig_cpm="results/alignment/bigwig/{sample}_analysisCPM.bw",
         bigwig_scaled="results/alignment/bigwig/{sample}_analysisScaled.bw"
     params:
-        genome_size=config["effective_genome_size"],
-        binSize=config["binSize"]
+        genome_size=EFFECTIVE_GENOME_SIZE_genome_size"],
+        binSize=BIGWIG_BIN_SIZESize"]
     envmodules:
         config["deeptools"]
     threads: 8
