@@ -138,6 +138,44 @@ if samples_table["sample"].duplicated().any():
         + ", ".join(duplicated_samples)
     )
 
+# Validate required values in each sample row.
+for column in ["fastq1", "fastq2", "histone", "replicate"]:
+    missing_values = (
+        samples_table[column].isna()
+        | (samples_table[column].astype(str).str.strip() == "")
+    )
+
+    if missing_values.any():
+        affected_samples = (
+            samples_table.loc[missing_values, "sample"]
+            .astype(str)
+            .tolist()
+        )
+
+        raise ValueError(
+            f"config/samples.csv contains missing or blank values "
+            f"in column '{column}' for sample(s): "
+            + ", ".join(affected_samples)
+        )
+
+# R1 and R2 should not point to the same file.
+same_fastq = (
+    samples_table["fastq1"].astype(str).str.strip()
+    == samples_table["fastq2"].astype(str).str.strip()
+)
+
+if same_fastq.any():
+    affected_samples = (
+        samples_table.loc[same_fastq, "sample"]
+        .astype(str)
+        .tolist()
+    )
+
+    raise ValueError(
+        "fastq1 and fastq2 must point to different files for sample(s): "
+        + ", ".join(affected_samples)
+    )
+
 samples_table = samples_table.set_index("sample", drop=False)
 
 # fastq filename input function definition set to Python dictionary
