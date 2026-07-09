@@ -82,13 +82,14 @@ effective_genome_size: 2652783500                                            # m
 # -----------------------------------------------------------------------------------------
 # CONFIG NOTES
 # -----------------------------------------------------------------------------------------
-# Boolean settings must use unquoted YAML values: true or false.
-# Numeric settings must be entered without commas, for example: 20000000
-# Text options such as "manual", "lowest_with_floor", "lowest", and "random" should remain quoted exactly as shown.
-# Settings associated with a disabled feature are ignored. For example, duplicate_cap_max is ignored when use_duplicate_cap is false.
-# The Bowtie2 index, MACS2 genome size, and deepTools effective genome size must all correspond to the same reference genome assembly.
-# Input sample names, FASTQ paths, target/group labels, and replicate labels are defined separately in config/samples.csv.
-# When comparing different duplicate-cap, trimming, or downsampling settings, run each configuration in a separate output directory to avoid mixing results.
+# 1) Boolean settings must use unquoted YAML values: true or false.
+# 2) Numeric settings must be entered without commas, for example: 20000000
+# 3) Text options such as "manual", "lowest_with_floor", "lowest", and "random" should remain quoted exactly as shown.
+# 4) Settings associated with a disabled feature are ignored. For example, duplicate_cap_max is ignored when use_duplicate_cap is false.
+# 5) The Bowtie2 index, MACS2 genome size, and deepTools effective genome size must all correspond to the same reference genome assembly.
+# 6) Input sample names, FASTQ paths, target/group labels, and replicate labels are defined separately in config/samples.csv.
+# 7) When comparing different duplicate-cap, trimming, or downsampling settings, run each configuration in a separate output directory to avoid mixing results.
+# 8) Effective genome size is not used by the current raw, CPM, or fragment depth scaled BigWigs. It is retained for an optional RPGC-normalized track to be added later.
 
 # -----------------------------------------------------------------------------------------
 # SOFTWARE MODULE VERSIONS
