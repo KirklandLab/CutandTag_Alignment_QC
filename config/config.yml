@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------------------
 # ADAPTER TRIMMING
 # -----------------------------------------------------------------------------------------
-# When true, aignment uses trimmed FASTQs but FastQC and FastQ Screen always use the original untrimmed FASTQs.
+# When true, alignment uses trimmed FASTQs but FastQC and FastQ Screen always use the original untrimmed FASTQs.
 use_trimming: true
 
 # Nextera/Tn5 transposase adapter sequence used by the CUT&Tag library design.
@@ -29,7 +29,7 @@ bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"   # m
 # -----------------------------------------------------------------------------------------
 # RAW FASTQ QUALITY CONTROL
 # -----------------------------------------------------------------------------------------
-# Controlls the FastQC, MultiQC, and FastQ Screen rules
+# Controls the FastQC, MultiQC, and FastQ Screen rules
 use_fastq_qc: true
 
 # -----------------------------------------------------------------------------------------
