@@ -1,6 +1,6 @@
 # cluster_config.yml - cluster configuration (defaults set for Kirkland Lab on OMRF HPC)
 __default__:
-    account: sansam-lab
+    account: kirkland-lab
     partition: serial
     time: 08:00:00
     mem: 16G
