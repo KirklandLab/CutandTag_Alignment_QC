@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below and cite the original CUT&Tag processing tutorial."
+title: "CutandTag_Alignment_QC"
+type: software
+version: 2.0.0
+date-released: 2026-07-13
+authors:
+  - family-names: Boyd
+    given-names: Kevin A.
+    orcid: "https://orcid.org/0000-0001-6739-8103"
+    affiliation: Oklahoma Medical Research Foundation
+  - family-names: Kirkland
+    given-names: Jacob
+    orcid: "https://orcid.org/0000-0001-5617-7065"
+    affiliation: Oklahoma Medical Research Foundation
+repository-code: "https://github.com/KirklandLab/CutandTag_Alignment_QC"
+license: Apache-2.0
