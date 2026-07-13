@@ -16,7 +16,7 @@
 
 ## 1) Project Description
 
-**CutandTag_Alignment_QC** is a Snakemake workflow adapted from the protocol by Ye Zheng, Kami Ahmad, and Steven Henikoff ([dx.doi.org/10.17504/protocols.io.bjk2kkye](https://dx.doi.org/10.17504/protocols.io.bjk2kkye)). This pipeline is designed to process CUT&Tag sequencing data from raw paired end FASTQ files through raw FASTQ quality control, read alignment, optional duplicate capping, optional random downsampling, BigWig signal track generation, per sample peak calling, fragment length analysis, and QC visualization.
+**CutandTag_Alignment_QC** is a Snakemake workflow adapted from the protocol by Ye Zheng, Kami Ahmad, and Steven Henikoff ([dx.doi.org/10.17504/protocols.io.bjk2kkye](https://dx.doi.org/10.17504/protocols.io.bjk2kkye)). This pipeline is designed to process CUT&Tag sequencing data from raw paired end FASTQ files through raw FASTQ quality control, optional adapter trimming, read alignment, optional duplicate capping, optional random downsampling, BigWig signal track generation, per sample peak calling, fragment length analysis, and QC visualization.
 
 The workflow aligns reads with **Bowtie2**, creates sorted and indexed BAM files, optionally limits PCR duplicate burden using fragment coordinate duplicate capping, optionally downscales samples to a defined fragment depth, and outputs a final analysis BAM for each sample. Final analysis BAMs are then used to generate raw, CPM normalized, and target scaled BigWig files for genome browser visualization, call per sample peaks with MACS2, calculate raw and final fragment length distributions, compute FRiP scores, generate fragment count correlations, and produce alignment, duplicate/downsampling, and peak summary plots.
 
