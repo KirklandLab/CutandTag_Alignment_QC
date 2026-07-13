@@ -24,6 +24,8 @@ Automated raw FASTQ quality checks are done using **FastQC**, **MultiQC**, and *
 
 Downstream analysis can be performed in the [CutandTag_ReplicatePeak_Analysis](https://github.com/KirklandLab/CutandTag_ReplicatePeak_Analysis) Snakemake workflow. This companion pipeline starts with aligned BAM files and focuses on identifying reproducible peaks, generating consensus peak sets, and visualizing overlaps and signal distributions across multiple samples and experimental conditions.
 
+While this workflow is adapted from the CUT&Tag data-processing tutorial by Zheng, Ahmad, and Henikoff; it is not a direct software implementation of every tutorial step. Important differences include optional fragment-coordinate duplicate capping, optional random downsampling, MACS2-based per-sample peak calling instead of SEACR, target-based BigWig scaling, and the absence of spike-in normalization. These additions and substitutions are intended to support configurable sample-level preprocessing and QC while preserving the original tutorial’s paired-end alignment and fragment-based analysis principles.
+
 ### **Key Features**
 *Note: Optional features can be toggled on and off in the `config` file found in `config/config.yml`.  
 
@@ -858,7 +860,7 @@ If you use this workflow in your research, please cite both the original CUT&Tag
 
 + Zheng, Y., Ahmad, K., & Henikoff, S. (2019). CUT&Tag for efficient epigenomic profiling of small samples and single cells. *Protocols.io*. https://dx.doi.org/10.17504/protocols.io.bjk2kkye
 
-+ **Boyd, K.A.** (2025). *CutandTag_Alignment_QC: A reproducible Snakemake workflow for alignment, quality control, and signal generation from Cut-and-Tag sequencing data*. *Zenodo*. https://doi.org/10.5281/zenodo.15232228
++ **Boyd, K.A.** (2026). *CutandTag_Alignment_QC: A reproducible Snakemake workflow for alignment, quality control, and signal generation from Cut-and-Tag sequencing data*. *Zenodo*. https://doi.org/10.5281/zenodo.15232228
 
 [![DOI](https://zenodo.org/badge/873121124.svg)](https://doi.org/10.5281/zenodo.15232228)
 
