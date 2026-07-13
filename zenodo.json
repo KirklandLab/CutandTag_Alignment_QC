@@ -1,47 +1,60 @@
 {
-  "title": "CutandTag_Alignment_QC: A reproducible Snakemake workflow for alignment, quality control, and signal generation from Cut-and-Tag sequencing data.",
+  "title": "CutandTag_Alignment_QC: A reproducible Snakemake workflow for alignment, quality control, and signal generation from CUT&Tag sequencing data",
   "upload_type": "software",
-  "description": "CutandTag_Alignment_QC is a Snakemake workflow designed to process Cut-and-Tag sequencing data to facilitate the analysis of chromatin accessibility and DNA-protein interactions. It uses raw FASTQs as input and includes automated steps for read alignment, quality control, signal track generation (raw and scaled), peak calling, and various visualizations, enabling high-resolution profiling of protein-DNA binding sites. The pipeline performs automated quality checks using FastQC, MultiQC, and FastQ Screen reports while also aligning reads with Bowtie2. Outputs include raw and scaled BigWig files, which allow users to visualize signal intensity across the genome. Additionally, peak calling is performed using MACS2, and fragment length and alignment summary plots are generated for detailed data exploration. The workflow is automated with Snakemake and dependencies are managed through module environments, ensuring reproducibility and flexibility.",
+  "version": "2.0.0",
+  "access_right": "open",
+  "language": "eng",
+  "description": "CutandTag_Alignment_QC is a Snakemake workflow for initial processing and quality assessment of paired-end CUT&Tag sequencing data. The workflow performs optional raw FASTQ quality control with FastQC, MultiQC, and FastQ Screen; paired-end read alignment with Bowtie2; SAM/BAM conversion, sorting, and indexing with SAMtools; optional fragment-coordinate duplicate capping; optional random downsampling using configurable target-selection modes and reproducible or randomly generated seeds; generation of raw, CPM-normalized, and target-scaled BigWig tracks with deepTools; per-sample peak calling with MACS2 in paired-end BAM mode; fragment-length analysis; per-sample FRiP calculation; fragment-count correlation; and QC summary plotting. Final analysis BAM selection is determined by the duplicate-capping and downsampling settings. The workflow is designed for Slurm-managed HPC execution with Snakemake and environment modules and is intended for alignment, preprocessing, signal generation, and sample-level QC before downstream replicate-aware analysis.",
   "creators": [
     {
       "name": "Boyd, Kevin A.",
       "affiliation": "Oklahoma Medical Research Foundation",
       "orcid": "0000-0001-6739-8103"
+    },
+    {
+      "name": "Kirkland, Jacob",
+      "affiliation": "Oklahoma Medical Research Foundation"
+      "orcid": "0000-0001-5617-7065"
     }
   ],
   "license": "Apache-2.0",
   "keywords": [
-    "Cut-and-Tag",
+    "CUT&Tag",
     "Snakemake",
     "chromatin profiling",
-    "MACS2",
-    "Bowtie2",
-    "FastQC",
-    "FastQ Screen",
-    "BigWig",
-    "peak calling",
     "epigenomics",
     "bioinformatics",
     "workflow",
+    "paired-end sequencing",
+    "Bowtie2",
+    "SAMtools",
+    "deepTools",
+    "BigWig",
+    "MACS2",
+    "peak calling",
+    "FastQC",
+    "MultiQC",
+    "FastQ Screen",
+    "duplicate capping",
+    "downsampling",
     "fragment length",
-    "genomics",
+    "FRiP",
+    "quality control",
+    "Slurm",
     "open science"
   ],
   "related_identifiers": [
     {
       "identifier": "https://github.com/KirklandLab/CutandTag_Alignment_QC",
-      "relation": "isSupplementTo",
-      "scheme": "url"
+      "relation": "isIdenticalTo"
     },
     {
       "identifier": "https://github.com/KirklandLab/CutandTag_ReplicatePeak_Analysis",
-      "relation": "isPartOf",
-      "scheme": "url"
+      "relation": "isSupplementTo"
     },
     {
       "identifier": "https://doi.org/10.17504/protocols.io.bjk2kkye",
-      "relation": "isDerivedFrom",
-      "scheme": "doi"
+      "relation": "isDerivedFrom"
     }
   ]
 }

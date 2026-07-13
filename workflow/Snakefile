@@ -8,55 +8,175 @@ configfile: "config/config.yml"
 # Email: kevinboyd76@gmail.com
 # GitHub: https://github.com/kevinboyd76
 # Date Created: October 18, 2024
-# Last Modified: August 4, 2025
-# Version: 1.2.0
+# Last Modified: July 1, 2026
+# Version: 2.0.0
 #
-# Description: This Snakemake workflow processes Cut-and-Tag sequencing data
-# from raw paired-end FASTQ files through quality control, read alignment using
-# Bowtie2, BigWig signal track generation (raw, CPM-normalized, and scaled),
-# peak calling via MACS2, fragment length analysis, and QC visualizations.
-# The pipeline outputs scaled and normalized coverage tracks, peak files,
-# FRiP scores, and summary plots to assess quality and replicate consistency.
-# 
+# Description: This Snakemake workflow processes CUT&Tag sequencing data
+# from raw paired-end FASTQ files through optional raw FASTQ quality control,
+# optional adapter trimming with Cutadapt, read alignment using Bowtie2, 
+# optional duplicate capping, optional random downsampling, BigWig signal track 
+# generation (raw, CPM-normalized, and target-scaled), peak calling via MACS2, 
+# fragment length analysis, and QC visualizations. The pipeline outputs normalized 
+# and scaled coverage tracks, per-sample peak files, FRiP scores, alignment 
+# summaries, duplicate/downsampling summaries, and plots to assess sample quality 
+# and replicate consistency.
+#
+# Update Version 2.0.0 (July 2026): This workflow now includes config controlled 
+# toggles for raw FASTQ QC, adapter trimming, duplicate capping, and random 
+# downsampling. This version adds optional paired-end adapter trimming using Cutadapt. 
+# When trimming is enabled, Bowtie2 uses trimmed FASTQs and local alignment mode. 
+# When trimming is disabled, Bowtie2 uses the original FASTQs and end-to-end alignment 
+# mode. Downsampling can be run using a manual target, the lowest sample 
+# depth, or the lowest sample depth above a minimum acceptable floor. Duplicate capping 
+# limits the number of identical fragments retained at each exact genomic fragment 
+# position to reduce the influence of highly repeated fragment coordinates while 
+# preserving controlled duplicate signal.
+#
 # Adapted from: Ye Zheng, Kami Ahmad, Steven Henikoff
 # Original Protocol DOI: dx.doi.org/10.17504/protocols.io.bjk2kkye
 
 ##################################################################
-##                  Specific Steps in Pipeline                  ##
+##                    Specific Steps in Pipeline                ##
 ##################################################################
 
-#  Steps:
-#  1) Quality control using FastQC (per read) and MultiQC (summary report)
-#  2) Contamination check using FastQ Screen
-#  3) Align reads to reference genome using Bowtie2 (paired-end)
-#  4) Convert SAM to BAM, then sort and index BAM files
-#  5) Generate raw and CPM-normalized BigWig signal tracks (per sample)
-#  6) Calculate total aligned reads and scale factors (1 / reads per million)
-#  7) Generate scaled BigWig tracks using scale factor (per sample)
-#  8) Call peaks using MACS2 with fixed q-value threshold (per sample)
-#  9) Extract fragment lengths from aligned SAM files (per sample)
-# 10) Plot fragment length distributions using R (violin and line plots)
-# 11) Process BAM to BED, filter and bin fragment data (for correlation analysis)
-# 12) Calculate FRiP scores (Fraction of Reads in Peaks) for QC (per sample)
-# 13) Generate correlation plot of binned fragment counts across samples
-# 14) Create summary plot of peak count and FRiP scores
-# 
-#  Outputs:
-#    • FastQC and MultiQC HTML reports
-#    • FastQ Screen PNG plots
-#    • Raw, CPM, and scaled BigWig files
+# Steps:
+# 1) Optional quality control using FastQC (per read) and MultiQC (summary report)
+# 2) Optional contamination check of R1 using FastQ Screen
+# 3) Optional adapter trimming with Cutadapt
+# 4) Align reads to reference genome using Bowtie2 (paired-end)
+# 5) Convert SAM to BAM, then sort and index BAM files
+# 6) Optionally cap duplicate fragments by exact fragment coordinates
+# 7) Optionally downsample post-cap or aligned BAMs to a defined fragment target
+# 8) Define the final analysis BAM for each sample
+# 9) Generate raw, CPM-normalized, and target-scaled BigWig signal tracks from the final analysis BAM
+# 10) Calculate final analysis fragment counts and BigWig scale factors
+# 11) Call peaks using MACS2 with configured q-value threshold (per sample)
+# 12) Extract raw and final fragment lengths from BAM files (per sample)
+# 13) Final fragment length distributions
+# 14) Process final analysis BAMs to BEDPE/BED-style fragment data for QC
+# 15) Calculate FRiP scores (Fraction of Reads, or in our case, fragments in Peaks) for QC per sample
+# 16) Generate correlation plot of binned fragment counts across samples
+# 17) Create summary plots of alignment, duplicate/downsampling behavior, peak counts, and FRiP scores
+#
+# Outputs:
+#    • Optional: FastQC and MultiQC HTML reports
+#    • Optional: FastQ Screen PNG plots
+#    • Optional: Cutadapt trimmed paired end FASTQ files
+#    • Optional: Per-sample Cutadapt trimming reports
+#    • Bowtie2 alignment summaries
+#    • Optional: Duplicate capping with manually set value
+#    • Optional: Downsampling with three options; manual, lowest with floor, or lowest
+#    • Optional: Duplicate-capping and downsampling metrics, when either option is enabled
+#    • Final analysis BAM files and their associated sorted BAM files
+#    • Raw, CPM-normalized, and target-scaled BigWig files
 #    • MACS2 peak files (narrowPeak)
-#    • Fragment length text files
-#    • Summary plots: alignment, fragment length, correlation, and peaks
+#    • Raw and final fragment length text files
+#    • FRiP score tables
+#    • Summary plots: 
+#        • alignments
+#        • duplicate/downsampling
+#        • fragment lengths
+#        • correlations
+#        • peak counts
+#        • FRiP
 
 ##################################################################
 ##                    Define input functions                    ##
 ##################################################################
 
 import pandas as pd
+import os
+
+# create results and logs folders
+onstart:
+    os.makedirs("results/logs", exist_ok=True)
 
 # read the CSV file and set an index using the values in the "sample" column.
-samples_table = pd.read_csv("config/samples.csv").set_index("sample", drop=False)
+samples_table = pd.read_csv("config/samples.csv")
+
+REQUIRED_SAMPLE_COLUMNS = {
+    "sample",
+    "fastq1",
+    "fastq2",
+    "histone",
+    "replicate"
+}
+
+missing_columns = REQUIRED_SAMPLE_COLUMNS - set(samples_table.columns)
+
+if missing_columns:
+    raise ValueError(
+        "config/samples.csv is missing required columns: "
+        + ", ".join(sorted(missing_columns))
+    )
+
+if samples_table.empty:
+    raise ValueError(
+        "config/samples.csv does not contain any samples."
+    )
+
+if samples_table["sample"].isna().any() or (
+    samples_table["sample"].astype(str).str.strip() == ""
+).any():
+    raise ValueError(
+        "config/samples.csv contains a missing or blank sample name."
+    )
+
+if samples_table["sample"].duplicated().any():
+    duplicated_samples = (
+        samples_table.loc[
+            samples_table["sample"].duplicated(keep=False),
+            "sample"
+        ]
+        .astype(str)
+        .unique()
+    )
+
+    raise ValueError(
+        "Sample names must be unique in config/samples.csv. "
+        "Duplicated samples: "
+        + ", ".join(duplicated_samples)
+    )
+
+# Validate required values in each sample row.
+for column in ["fastq1", "fastq2", "histone", "replicate"]:
+    missing_values = (
+        samples_table[column].isna()
+        | (samples_table[column].astype(str).str.strip() == "")
+    )
+
+    if missing_values.any():
+        affected_samples = (
+            samples_table.loc[missing_values, "sample"]
+            .astype(str)
+            .tolist()
+        )
+
+        raise ValueError(
+            f"config/samples.csv contains missing or blank values "
+            f"in column '{column}' for sample(s): "
+            + ", ".join(affected_samples)
+        )
+
+# R1 and R2 should not point to the same file.
+same_fastq = (
+    samples_table["fastq1"].astype(str).str.strip()
+    == samples_table["fastq2"].astype(str).str.strip()
+)
+
+if same_fastq.any():
+    affected_samples = (
+        samples_table.loc[same_fastq, "sample"]
+        .astype(str)
+        .tolist()
+    )
+
+    raise ValueError(
+        "fastq1 and fastq2 must point to different files for sample(s): "
+        + ", ".join(affected_samples)
+    )
+
+samples_table = samples_table.set_index("sample", drop=False)
 
 # fastq filename input function definition set to Python dictionary
 def fq_dict_from_sample(wildcards):
@@ -65,36 +185,339 @@ def fq_dict_from_sample(wildcards):
     "fq2": samples_table.loc[wildcards.sample, "fastq2"]
   }
 
+def alignment_fq_dict_from_sample(wildcards):
+    """
+    FASTQ files used for Bowtie2 alignment.
+
+    If trimming is enabled, use Cutadapt outputs.
+    Otherwise, use the original FASTQ files from samples.csv.
+    """
+    if USE_TRIMMING:
+        return {
+            "fq1": (
+                f"results/trimming/"
+                f"{wildcards.sample}_R1.trimmed.fastq.gz"
+            ),
+            "fq2": (
+                f"results/trimming/"
+                f"{wildcards.sample}_R2.trimmed.fastq.gz"
+            )
+        }
+
+    return fq_dict_from_sample(wildcards)
+
+def get_config_bool(name, default):
+    """
+    Read a YAML boolean config option and reject strings such as
+    "true" or "false", which Python would otherwise interpret
+    incorrectly with bool().
+    """
+    value = config.get(name, default)
+
+    if not isinstance(value, bool):
+        raise ValueError(
+            f"{name} must be written as the YAML boolean "
+            f"true or false without quotation marks. "
+            f"Received: {value!r}"
+        )
+
+    return value
+
+USE_FASTQ_QC = get_config_bool("use_fastq_qc", True)
+USE_TRIMMING = get_config_bool("use_trimming", False)
+
+CUTADAPT_ADAPTER_R1 = str(
+    config.get("cutadapt_adapter_r1", "CTGTCTCTTATACACATCT")
+).strip()
+CUTADAPT_ADAPTER_R2 = str(
+    config.get("cutadapt_adapter_r2", "CTGTCTCTTATACACATCT")
+).strip()
+CUTADAPT_MIN_LENGTH = int(
+    config.get("cutadapt_minimum_length", 1)
+)
+CUTADAPT_ERROR_RATE = float(
+    config.get("cutadapt_error_rate", 0.10)
+)
+CUTADAPT_MIN_OVERLAP = int(
+    config.get("cutadapt_minimum_overlap", 5)
+)
+
+if USE_TRIMMING:
+    if not CUTADAPT_ADAPTER_R1 or not CUTADAPT_ADAPTER_R2:
+        raise ValueError(
+            "cutadapt_adapter_r1 and cutadapt_adapter_r2 must be provided "
+            "when use_trimming is true."
+        )
+
+    if CUTADAPT_MIN_LENGTH < 1:
+        raise ValueError(
+            "cutadapt_minimum_length must be at least 1."
+        )
+
+    if not 0 <= CUTADAPT_ERROR_RATE <= 1:
+        raise ValueError(
+            "cutadapt_error_rate must be between 0 and 1."
+        )
+
+    if CUTADAPT_MIN_OVERLAP < 1:
+        raise ValueError(
+            "cutadapt_minimum_overlap must be at least 1."
+        )
+
+BOWTIE2_ALIGNMENT_MODE = "--local" if USE_TRIMMING else "--end-to-end"
+
+USE_DUP_CAP = get_config_bool("use_duplicate_cap", False)
+DUP_CAP_MAX = int(config.get("duplicate_cap_max", 0))
+
+USE_DOWNSAMPLING = get_config_bool("use_downsampling", False)
+DOWNSAMPLE_TARGET_MODE = str(config.get("downsample_target_mode", "manual"))
+DOWNSAMPLE_TARGET = int(config.get("downsample_target_fragments", 0))
+DOWNSAMPLE_MIN_FLOOR = int(config.get("downsample_minimum_acceptable_fragments", 0))
+
+DOWNSAMPLE_SEED = config.get("downsample_seed", 12345)
+
+if isinstance(DOWNSAMPLE_SEED, str):
+    if DOWNSAMPLE_SEED.lower() != "random":
+        raise ValueError(
+            "downsample_seed must be an integer or the string 'random'."
+        )
+    DOWNSAMPLE_SEED = "random"
+else:
+    try:
+        DOWNSAMPLE_SEED = int(DOWNSAMPLE_SEED)
+    except (TypeError, ValueError):
+        raise ValueError(
+            "downsample_seed must be an integer or the string 'random'."
+        )
+
+    if DOWNSAMPLE_SEED < 0:
+        raise ValueError(
+            "downsample_seed must be a non-negative integer."
+        )
+
+VALID_DOWNSAMPLE_MODES = ["manual", "lowest_with_floor", "lowest"]
+
+if DOWNSAMPLE_TARGET_MODE not in VALID_DOWNSAMPLE_MODES:
+    raise ValueError(
+        f"Invalid downsample_target_mode: {DOWNSAMPLE_TARGET_MODE}. "
+        f"Choose one of: {VALID_DOWNSAMPLE_MODES}"
+    )
+
+# --------------------------------------------------------------
+# Validate enabled numeric settings
+# --------------------------------------------------------------
+
+if USE_DUP_CAP and DUP_CAP_MAX < 1:
+    raise ValueError(
+        "duplicate_cap_max must be at least 1 when "
+        "use_duplicate_cap is true."
+    )
+
+if (
+    USE_DOWNSAMPLING
+    and DOWNSAMPLE_TARGET_MODE == "manual"
+    and DOWNSAMPLE_TARGET < 1
+):
+    raise ValueError(
+        "downsample_target_fragments must be at least 1 when "
+        "use_downsampling is true and "
+        "downsample_target_mode is 'manual'."
+    )
+
+if (
+    USE_DOWNSAMPLING
+    and DOWNSAMPLE_TARGET_MODE == "lowest_with_floor"
+    and DOWNSAMPLE_MIN_FLOOR < 1
+):
+    raise ValueError(
+        "downsample_minimum_acceptable_fragments must be at least 1 "
+        "when use_downsampling is true and "
+        "downsample_target_mode is 'lowest_with_floor'."
+    )
+
+MACS2_QVALUE = float(config["macs2_qvalue"])
+
+if not 0 < MACS2_QVALUE <= 1:
+    raise ValueError(
+        "macs2_qvalue must be greater than 0 and less than or equal to 1."
+    )
+
+BIGWIG_BIN_SIZE = int(config["binSize"])
+
+if BIGWIG_BIN_SIZE < 1:
+    raise ValueError(
+        "binSize must be an integer of at least 1."
+    )
+
+EFFECTIVE_GENOME_SIZE = int(config["effective_genome_size"])
+
+if EFFECTIVE_GENOME_SIZE < 1:
+    raise ValueError(
+        "effective_genome_size must be an integer of at least 1."
+    )
+
+MACS2_QVALUE_STR = str(MACS2_QVALUE)
+
+PEAK_NAME_PATTERN = (
+    f"results/peakCalling/"
+    f"{{sample}}_{MACS2_QVALUE_STR}_peaks.narrowPeak"
+)
+
+##################################################################
+##                 Conditional analysis BAM logic               ##
+##################################################################
+
+SAMPLES = list(samples_table.index)
+
+TRIMMED_FASTQ_OUTPUTS = (
+    expand(
+        "results/trimming/{sample}_R1.trimmed.fastq.gz",
+        sample=SAMPLES
+    ) +
+    expand(
+        "results/trimming/{sample}_R2.trimmed.fastq.gz",
+        sample=SAMPLES
+    )
+    if USE_TRIMMING else []
+)
+
+CUTADAPT_REPORTS = (
+    expand(
+        "results/qc/cutadapt/{sample}.cutadapt.txt",
+        sample=SAMPLES
+    )
+    if USE_TRIMMING else []
+)
+
+FASTQC_OUTPUTS = (
+    expand("results/qc/fastqc/{sample}_R1_fastqc.html", sample=SAMPLES) +
+    expand("results/qc/fastqc/{sample}_R2_fastqc.html", sample=SAMPLES)
+    if USE_FASTQ_QC else []
+)
+
+MULTIQC_OUTPUTS = (
+    ["results/qc/multiqc/multiqc_report.html"]
+    if USE_FASTQ_QC else []
+)
+
+FASTQ_SCREEN_OUTPUTS = (
+    expand("results/qc/fastq_screen/{sample}_screen.png", sample=SAMPLES)
+    if USE_FASTQ_QC else []
+)
+
+DUP_CAP_BAMS = (
+    expand("results/alignment/bam/dedup_cap/{sample}.dupCap.bam", sample=SAMPLES)
+    if USE_DUP_CAP else []
+)
+
+DUP_CAP_BAIS = (
+    expand("results/alignment/bam/dedup_cap/{sample}.dupCap.bam.bai", sample=SAMPLES)
+    if USE_DUP_CAP else []
+)
+
+DUP_CAP_METRICS = (
+    expand("results/qc/duplicates/{sample}.duplicate_metrics.txt", sample=SAMPLES)
+    if USE_DUP_CAP else []
+)
+
+DOWNSAMPLE_BAMS = (
+    expand("results/alignment/bam/analysis/{sample}.analysis.bam", sample=SAMPLES)
+    if USE_DOWNSAMPLING else []
+)
+
+DOWNSAMPLE_BAIS = (
+    expand("results/alignment/bam/analysis/{sample}.analysis.bam.bai", sample=SAMPLES)
+    if USE_DOWNSAMPLING else []
+)
+
+DOWNSAMPLE_METRICS = (
+    expand("results/qc/downsampling/{sample}.downsample_metrics.txt", sample=SAMPLES)
+    if USE_DOWNSAMPLING else []
+)
+
+DOWNSAMPLE_TARGET_FILE = ["results/qc/downsampling/downsample_target.txt"]
+
+DUP_DOWNSAMPLE_SUMMARY_FILES = (
+    [
+        "results/qc/duplicates_downsampling/duplicate_downsampling_summary.tsv",
+        "results/plots/duplicate_downsampling_summary.png"
+    ]
+    if (USE_DUP_CAP or USE_DOWNSAMPLING) else []
+)
+
+
+def post_dup_bam(wildcards):
+    """
+    BAM used as input to downsampling.
+    If duplicate capping is enabled, use dupCap.bam.
+    Otherwise use the original coordinate-sorted BAM.
+    """
+    if USE_DUP_CAP:
+        return f"results/alignment/bam/dedup_cap/{wildcards.sample}.dupCap.bam"
+    return f"results/alignment/bam/{wildcards.sample}.sorted.bam"
+
+
+def post_dup_bai(wildcards):
+    if USE_DUP_CAP:
+        return f"results/alignment/bam/dedup_cap/{wildcards.sample}.dupCap.bam.bai"
+    return f"results/alignment/bam/{wildcards.sample}.sorted.bam.bai"
+
+
+def final_analysis_bam(wildcards):
+    """
+    Final BAM used by bigWig, MACS2, final fragment length, BEDPE, FRiP, and correlation.
+    If downsampling is enabled, use analysis.bam.
+    Else if duplicate capping is enabled, use dupCap.bam.
+    Else use sorted.bam directly.
+    """
+    if USE_DOWNSAMPLING:
+        return f"results/alignment/bam/analysis/{wildcards.sample}.analysis.bam"
+    if USE_DUP_CAP:
+        return f"results/alignment/bam/dedup_cap/{wildcards.sample}.dupCap.bam"
+    return f"results/alignment/bam/{wildcards.sample}.sorted.bam"
+
 ##################################################################
 ##                          Rule All                            ##
 ##################################################################
 
 rule all:
     input:
-        expand("results/qc/fastqc/{sample}_R1_fastqc.html", sample=samples_table.index),
-        "results/qc/multiqc/multiqc_report.html",
-        expand("results/qc/fastq_screen/{sample}_screen.png", sample=samples_table.index),
+        FASTQC_OUTPUTS,
+        MULTIQC_OUTPUTS,
+        FASTQ_SCREEN_OUTPUTS,
+        TRIMMED_FASTQ_OUTPUTS,
+        CUTADAPT_REPORTS,
         expand("results/alignment/sam/{sample}_bowtie2.sam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}_bowtie2.bam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}.sorted.bam", sample=samples_table.index),
-        expand("results/alignment/bigwig/{sample}_raw.bw", sample=samples_table.index),
-        expand("results/alignment/{sample}_total_reads.txt", sample=samples_table.index),
-        expand("results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt", sample=samples_table.index),
-        expand("results/alignment/bigwig/scale_reads/{sample}_scaled.bw", sample=samples_table.index),
-        expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index),
-        expand("results/alignment/sam/{sample}_fragmentLen.txt", sample=samples_table.index),
-        "results/plots/alignment_summary_plot.png",
+        DUP_CAP_BAMS,
+        DUP_CAP_BAIS,
+        DUP_CAP_METRICS,
+        DOWNSAMPLE_BAMS,
+        DOWNSAMPLE_BAIS,
+        DOWNSAMPLE_METRICS,
+        DOWNSAMPLE_TARGET_FILE,
+        DUP_DOWNSAMPLE_SUMMARY_FILES,
+        expand("results/alignment/bigwig/scale_reads/{sample}_analysis_fragments.txt", sample=samples_table.index),
+        expand("results/alignment/bigwig/scale_reads/{sample}_analysis_scale_factor.txt", sample=samples_table.index),
+        expand("results/alignment/bigwig/{sample}_analysis.bw", sample=samples_table.index),
+        expand("results/alignment/bigwig/{sample}_analysisCPM.bw", sample=samples_table.index),
+        expand("results/alignment/bigwig/{sample}_analysisScaled.bw", sample=samples_table.index),
+        expand(PEAK_NAME_PATTERN, sample=samples_table.index),
+        expand("results/alignment/fragment_length/raw/{sample}_fragmentLen.raw.txt", sample=samples_table.index),
+        expand("results/alignment/fragment_length/final/{sample}_fragmentLen.final.txt", sample=samples_table.index),
         "results/plots/fragment_length_plot.png",
+        "results/plots/alignment_summary_plot.png",
         expand("results/alignment/bed/{sample}_bowtie2.fragmentsCount.bin500.bed", sample=samples_table.index),
         expand("results/alignment/bam/{sample}_frip.txt", sample=samples_table.index),
         "results/plots/fragCount_correlation_plot.pdf",
-        "results/plots/peak_summary_plot.png"
+        "results/plots/peak_summary_plot.png",
+        "results/plots/peak_summary_report.pdf"
 
 ##################################################################
 ##                       Quality Control                        ##
 ##################################################################
 
-# run fastqc on fastq.gz files before trimming
 rule fastqc_reads:
     input:
         unpack(fq_dict_from_sample)
@@ -106,24 +529,32 @@ rule fastqc_reads:
     envmodules:
         config["fastqc"]
     threads: 4
-    log: "results/logs/snakelogs/fastqc_reads.{sample}.log"
     shell:
         """
-        # Run FastQC with output directed to writable folder
-        fastqc -t {threads} -o results/qc/fastqc {input.fq1}
-        fastqc -t {threads} -o results/qc/fastqc {input.fq2}
+        final_dir="results/qc/fastqc"
+        temp_dir="$final_dir/.tmp/{wildcards.sample}"
 
-        # Rename output files to match specified output paths
-        dir="results/qc/fastqc"
-        bsename=$(basename {input.fq1} .gz)
-        bsename=$(basename ${{bsename}} .fastq)
-        mv ${{dir}}/${{bsename}}_fastqc.html {output.html1}
-        mv ${{dir}}/${{bsename}}_fastqc.zip {output.zip1}
-        
-        bsename=$(basename {input.fq2} .gz)
-        bsename=$(basename ${{bsename}} .fastq)
-        mv ${{dir}}/${{bsename}}_fastqc.html {output.html2}
-        mv ${{dir}}/${{bsename}}_fastqc.zip {output.zip2}
+        rm -rf "$temp_dir"
+        mkdir -p "$temp_dir" "$final_dir"
+
+        fastqc -t {threads} -o "$temp_dir" "{input.fq1}" "{input.fq2}"
+
+        baseR1=$(basename "{input.fq1}")
+        baseR1=${{baseR1%.gz}}
+        baseR1=${{baseR1%.fastq}}
+        baseR1=${{baseR1%.fq}}
+
+        baseR2=$(basename "{input.fq2}")
+        baseR2=${{baseR2%.gz}}
+        baseR2=${{baseR2%.fastq}}
+        baseR2=${{baseR2%.fq}}
+
+        mv "$temp_dir/${{baseR1}}_fastqc.html" "{output.html1}"
+        mv "$temp_dir/${{baseR1}}_fastqc.zip"  "{output.zip1}"
+        mv "$temp_dir/${{baseR2}}_fastqc.html" "{output.html2}"
+        mv "$temp_dir/${{baseR2}}_fastqc.zip"  "{output.zip2}"
+
+        rm -rf "$temp_dir"
         """
 
 ##################################################################
@@ -141,13 +572,11 @@ rule multiqc_raw:
     envmodules:
         config["multiqc"]
     threads: 4
-    log:
-        "results/logs/multiqc/multiqc.log"
     shell:
         """
         rm -rf {params.outdir}
-        mkdir -p {params.outdir}
-        multiqc results/qc/fastqc -o {params.outdir} 2> {log}
+        mkdir -p {params.outdir} results/logs/multiqc
+        multiqc results/qc/fastqc -o {params.outdir}
         """
 
 ##################################################################
@@ -165,16 +594,63 @@ rule fastq_screen:
     envmodules:
         config["fastq_screen"]
     threads: 4
-    log: "results/logs/snakelogs/fastq_screen.{sample}.log"
     shell:
         """
-        fastq_screen --conf {params.config_file} --threads {threads} --outdir {params.out_dir} {input.fq1}
-        
-        # Extract the base name without .fastq.gz
-        base_name=$(basename {input.fq1} .fastq.gz)
-        
-        # Move or link the output file to the expected output
-        mv {params.out_dir}/${{base_name}}_screen.png {output.fastq_info}
+        final_dir="{params.out_dir}"
+        temp_dir="$final_dir/.tmp/{wildcards.sample}"
+
+        rm -rf "$temp_dir"
+        mkdir -p "$temp_dir" "$final_dir"
+
+        fastq_screen --conf {params.config_file} --threads {threads} --outdir "$temp_dir" {input.fq1}
+
+        base_name=$(basename "{input.fq1}")
+        base_name=${{base_name%.gz}}
+        base_name=${{base_name%.fastq}}
+        base_name=${{base_name%.fq}}
+
+        mv "$temp_dir/${{base_name}}_screen.png" "{output.fastq_info}"
+
+        rm -rf "$temp_dir"
+        """
+
+##################################################################
+##                  Optional: Adapter Trimming                  ##
+##################################################################
+
+rule trim_reads_cutadapt:
+    input:
+        unpack(fq_dict_from_sample)
+    output:
+        fq1="results/trimming/{sample}_R1.trimmed.fastq.gz",
+        fq2="results/trimming/{sample}_R2.trimmed.fastq.gz",
+        report="results/qc/cutadapt/{sample}.cutadapt.txt"
+    params:
+        adapter_r1=CUTADAPT_ADAPTER_R1,
+        adapter_r2=CUTADAPT_ADAPTER_R2,
+        minimum_length=CUTADAPT_MIN_LENGTH,
+        error_rate=CUTADAPT_ERROR_RATE,
+        minimum_overlap=CUTADAPT_MIN_OVERLAP
+    envmodules:
+        config["cutadapt"]
+    threads: 4
+    shell:
+        """
+        mkdir -p results/trimming results/qc/cutadapt
+
+        cutadapt \
+            -j {threads} \
+            -a {params.adapter_r1} \
+            -A {params.adapter_r2} \
+            -e {params.error_rate} \
+            -O {params.minimum_overlap} \
+            -m {params.minimum_length} \
+            --pair-filter=any \
+            -o {output.fq1} \
+            -p {output.fq2} \
+            {input.fq1} \
+            {input.fq2} \
+            > {output.report} 2>&1
         """
 
 ##################################################################
@@ -183,22 +659,26 @@ rule fastq_screen:
 
 rule align_with_bowtie2:
     input:
-        unpack(fq_dict_from_sample)
+        unpack(alignment_fq_dict_from_sample)
     output:
         sam_file="results/alignment/sam/{sample}_bowtie2.sam",
         bowtie2_summary="results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt"
     params:
-        bowtie2_genome=config["bowtie2_genome"]
+        bowtie2_genome=config["bowtie2_genome"],
+        alignment_mode=BOWTIE2_ALIGNMENT_MODE
     envmodules:
         config["bowtie2"]
     threads: 16
-    log: "results/logs/snakelogs/align_with_bowtie2.{sample}.log"
     shell:
         """
-        bowtie2 --end-to-end --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 \
-        -p {threads} \
-        -x {params.bowtie2_genome} \
-        -1 {input.fq1} -2 {input.fq2} -S {output.sam_file} &> {output.bowtie2_summary}
+        mkdir -p results/alignment/sam/bowtie2_summary
+
+        bowtie2 \
+            {params.alignment_mode} --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 \
+            -p {threads} \
+            -x {params.bowtie2_genome} \
+            -1 {input.fq1} -2 {input.fq2} -S {output.sam_file} \
+            &> {output.bowtie2_summary}
         """
 
 ##################################################################
@@ -213,14 +693,15 @@ rule sam_to_bam:
     envmodules:
         config["samtools"]
     threads: 4
-    log: "results/logs/snakelogs/sam_to_bam.{sample}.log"
     shell:
         """
+        mkdir -p results/alignment/bam
+
         samtools view -@ {threads} -bS {input.sam_file} > {output.bam_file}
         """
 
 ##################################################################
-##                  BAM Sorting and Indexing                    ##
+##                    BAM Sorting and Indexing                  ##
 ##################################################################
 
 rule sort_bam:
@@ -232,106 +713,354 @@ rule sort_bam:
     envmodules:
         config["samtools"]
     threads: 4
-    log: "results/logs/snakelogs/sort_bam.{sample}.log"
     shell:
         """
+        mkdir -p results/alignment/bam
+
         samtools sort -@ {threads} -o {output.sorted_bam} {input.bam_file}
         samtools index -@ {threads} {output.sorted_bam} {output.bai}
+        """
+
+##################################################################
+##      Optional: Duplicate Capping by Fragment Coordinate      ##
+##################################################################
+
+rule cap_duplicate_fragments:
+    input:
+        sorted_bam="results/alignment/bam/{sample}.sorted.bam",
+        bai="results/alignment/bam/{sample}.sorted.bam.bai"
+    output:
+        bam="results/alignment/bam/dedup_cap/{sample}.dupCap.bam",
+        bai="results/alignment/bam/dedup_cap/{sample}.dupCap.bam.bai",
+        names="results/qc/duplicates/{sample}.dupCap.keep_names.txt",
+        metrics="results/qc/duplicates/{sample}.duplicate_metrics.txt"
+    params:
+        max_dups=lambda wildcards: DUP_CAP_MAX if USE_DUP_CAP else 0
+    envmodules:
+        config["samtools"]
+    threads: 4
+    shell:
+        """
+        mkdir -p results/alignment/bam/dedup_cap results/qc/duplicates
+
+        samtools view -@ {threads} {input.sorted_bam} | \
+        python scripts/select_duplicate_capped_names.py \
+            --sample {wildcards.sample} \
+            --max-dups {params.max_dups} \
+            --names-out {output.names} \
+            --metrics-out {output.metrics}
+
+        samtools view -@ {threads} -b -f 0x2 -F 0x90C -N {output.names} {input.sorted_bam} | \
+            samtools sort -@ {threads} -o {output.bam}
+
+        samtools index -@ {threads} {output.bam} {output.bai}
+        """
+
+##################################################################
+##       Optional: Calculate Analysis/Downsampling Target       ##
+##################################################################
+
+rule calculate_downsample_target:
+    input:
+        bams=lambda wildcards: [
+            f"results/alignment/bam/dedup_cap/{sample}.dupCap.bam"
+            if USE_DUP_CAP else
+            f"results/alignment/bam/{sample}.sorted.bam"
+            for sample in samples_table.index
+        ]
+    output:
+        target="results/qc/downsampling/downsample_target.txt"
+    params:
+        use_downsampling=USE_DOWNSAMPLING,
+        mode=DOWNSAMPLE_TARGET_MODE,
+        manual_target=DOWNSAMPLE_TARGET,
+        floor=DOWNSAMPLE_MIN_FLOOR
+    envmodules:
+        config["samtools"]
+    threads: 2
+    shell:
+        """
+        mkdir -p results/qc/downsampling
+
+        echo -e "target_fragments\\tmode\\tlowest_fragments\\tlowest_above_floor\\tfloor\\tmanual_target\\tdownsampling_enabled\\tnote" > {output.target}
+
+        lowest=""
+        lowest_above_floor=""
+
+        for bam in {input.bams}; do
+            count=$(samtools view -@ {threads} -c -f 0x42 -F 0x90C "$bam")
+
+            if [ -z "$lowest" ] || [ "$count" -lt "$lowest" ]; then
+                lowest=$count
+            fi
+
+            if [ "{params.floor}" -gt 0 ] && [ "$count" -ge "{params.floor}" ]; then
+                if [ -z "$lowest_above_floor" ] || [ "$count" -lt "$lowest_above_floor" ]; then
+                    lowest_above_floor=$count
+                fi
+            fi
+        done
+
+        # If downsampling is disabled, use the empirical lowest final-analysis
+        # fragment count as the BigWig scaling target only.
+        if [ "{params.use_downsampling}" != "True" ]; then
+            target=$lowest
+            note="downsampling_disabled_lowest_used_for_bigwig_scaling"
+
+            echo -e "$target\\tno_downsampling\\t$lowest\\t$lowest_above_floor\\t{params.floor}\\tNA\\t{params.use_downsampling}\\t$note" >> {output.target}
+            exit 0
+        fi
+
+        if [ "{params.mode}" = "manual" ]; then
+            target="{params.manual_target}"
+            note="manual_target_used"
+
+            echo -e "$target\\tmanual\\t$lowest\\t$lowest_above_floor\\t{params.floor}\\t{params.manual_target}\\t{params.use_downsampling}\\t$note" >> {output.target}
+            exit 0
+        fi
+
+        if [ "{params.mode}" = "lowest" ]; then
+            target=$lowest
+            note="lowest_sample_used_no_floor"
+
+            echo -e "$target\\tlowest\\t$lowest\\t$lowest_above_floor\\t{params.floor}\\tNA\\t{params.use_downsampling}\\t$note" >> {output.target}
+            exit 0
+        fi
+
+        if [ "{params.mode}" = "lowest_with_floor" ]; then
+            if [ -n "$lowest_above_floor" ]; then
+                target=$lowest_above_floor
+                note="lowest_sample_at_or_above_floor_used"
+            else
+                target=$lowest
+                note="no_sample_met_floor_lowest_sample_used"
+            fi
+
+            echo -e "$target\\tlowest_with_floor\\t$lowest\\t$lowest_above_floor\\t{params.floor}\\tNA\\t{params.use_downsampling}\\t$note" >> {output.target}
+            exit 0
+        fi
+        """
+
+##################################################################
+##             Optional: Downsampling After Dup Cap             ##
+##################################################################
+
+rule downsample_analysis_bam:
+    input:
+        bam=post_dup_bam,
+        bai=post_dup_bai,
+        target="results/qc/downsampling/downsample_target.txt"
+    output:
+        bam="results/alignment/bam/analysis/{sample}.analysis.bam",
+        bai="results/alignment/bam/analysis/{sample}.analysis.bam.bai",
+        metrics="results/qc/downsampling/{sample}.downsample_metrics.txt"
+    params:
+        use_downsampling=USE_DOWNSAMPLING,
+        seed=DOWNSAMPLE_SEED
+    envmodules:
+        config["samtools"]
+    threads: 4
+    shell:
+        """
+        mkdir -p results/alignment/bam/analysis results/qc/downsampling
+
+        target=$(awk 'NR==2 {{print $1}}' {input.target})
+        target_mode=$(awk 'NR==2 {{print $2}}' {input.target})
+        target_enabled=$(awk 'NR==2 {{print $7}}' {input.target})
+        target_note=$(awk 'NR==2 {{print $8}}' {input.target})
+
+        fragments_before=$(samtools view -@ {threads} -c -f 0x42 -F 0x90C {input.bam})
+
+        configured_seed="{params.seed}"
+        actual_seed="NA"
+
+        if [ "{params.use_downsampling}" = "True" ] && \
+           [ "$target" -gt 0 ] && \
+           [ "$fragments_before" -gt "$target" ]; then
+
+            fraction=$(awk -v target="$target" -v total="$fragments_before" \
+                'BEGIN {{printf "%.10f", target / total}}')
+
+            if [ "$configured_seed" = "random" ]; then
+                actual_seed=$(python3 -c \
+                    'import secrets; print(secrets.randbelow(2147483646) + 1)')
+            else
+                actual_seed="$configured_seed"
+            fi
+
+            samtools view -@ {threads} -b \
+                --subsample-seed "$actual_seed" \
+                --subsample "$fraction" \
+                {input.bam} | \
+                samtools sort -@ {threads} -o {output.bam}
+
+            action="downsampled"
+        else
+            cp {input.bam} {output.bam}
+            action="not_downsampled"
+            fraction="1.0000000000"
+        fi
+
+        samtools index -@ {threads} {output.bam} {output.bai}
+
+        fragments_after=$(samtools view -@ {threads} -c -f 0x42 -F 0x90C {output.bam})
+
+        echo -e "Sample\\tAction\\tTargetMode\\tDownsamplingEnabled\\tTargetNote\\tTargetFragments\\tSeed\\tSubsampleFraction\\tFragmentsBeforeDownsample\\tFragmentsAfterDownsample" > {output.metrics}
+        echo -e "{wildcards.sample}\\t$action\\t$target_mode\\t$target_enabled\\t$target_note\\t$target\\t$actual_seed\\t$fraction\\t$fragments_before\\t$fragments_after" >> {output.metrics}
+        """
+
+##################################################################
+##             Duplicate + Downsampling Metrics Summary         ##
+##################################################################
+
+rule summarize_duplicate_metrics:
+    input:
+        dup_metrics=DUP_CAP_METRICS,
+        down_metrics=DOWNSAMPLE_METRICS,
+        down_target=DOWNSAMPLE_TARGET_FILE,
+        metadata="config/samples.csv"
+    output:
+        combined_summary="results/qc/duplicates_downsampling/duplicate_downsampling_summary.tsv",
+        plot="results/plots/duplicate_downsampling_summary.png"
+    params:
+        out_dir="results/plots"
+    envmodules:
+        config["R"],
+        config["bioconductor"]
+    threads: 2
+    shell:
+        """
+        mkdir -p results/qc/duplicates_downsampling results/plots
+
+        dup_metrics_arg="{input.dup_metrics}"
+        down_metrics_arg="{input.down_metrics}"
+        down_target_arg="{input.down_target}"
+
+        if [ -z "$dup_metrics_arg" ]; then
+            dup_metrics_arg="NA"
+        fi
+
+        if [ -z "$down_metrics_arg" ]; then
+            down_metrics_arg="NA"
+        fi
+
+        if [ -z "$down_target_arg" ]; then
+            down_target_arg="NA"
+        fi
+
+        Rscript scripts/plot_duplicate_metrics.R \
+            "$dup_metrics_arg" \
+            "$down_metrics_arg" \
+            "$down_target_arg" \
+            {input.metadata} \
+            {output.combined_summary} \
+            {output.plot}
+        """
+
+##################################################################
+##          Final Analysis Fragments and BW Scale Factor        ##
+##################################################################
+
+rule calculate_analysis_scale_factor:
+    input:
+        bam=final_analysis_bam,
+        target="results/qc/downsampling/downsample_target.txt"
+    output:
+        total_fragments="results/alignment/bigwig/scale_reads/{sample}_analysis_fragments.txt",
+        scale_factor="results/alignment/bigwig/scale_reads/{sample}_analysis_scale_factor.txt"
+    envmodules:
+        config["samtools"]
+    threads: 2
+    shell:
+        """
+        mkdir -p results/alignment/bigwig/scale_reads
+
+        target=$(awk 'NR==2 {{print $1}}' {input.target})
+
+        # Count primary read1 records from properly paired mapped templates as one fragment per paired-end template.
+        fragments=$(samtools view -@ {threads} -c -f 0x42 -F 0x90C {input.bam})
+
+        if [ "$fragments" -gt 0 ] && [ "$target" -gt 0 ]; then
+            scale_factor=$(awk -v target="$target" -v fragments="$fragments" 'BEGIN {{ printf "%.10f", target / fragments }}')
+        else
+            scale_factor="1.0000000000"
+        fi
+
+        echo $fragments > {output.total_fragments}
+        echo $scale_factor > {output.scale_factor}
         """
 
 ##################################################################
 ##                       BigWig Generation                      ##
 ##################################################################
 
-rule make_bigwig_raw:
+rule make_bigwigs:
     input:
-        sorted_bam="results/alignment/bam/{sample}.sorted.bam"
+        bam=final_analysis_bam,
+        scale_factor="results/alignment/bigwig/scale_reads/{sample}_analysis_scale_factor.txt"
     output:
-        bigwig="results/alignment/bigwig/{sample}_raw.bw",
-        bigwig_cpm="results/alignment/bigwig/{sample}_cpm.bw"
+        bigwig="results/alignment/bigwig/{sample}_analysis.bw",
+        bigwig_cpm="results/alignment/bigwig/{sample}_analysisCPM.bw",
+        bigwig_scaled="results/alignment/bigwig/{sample}_analysisScaled.bw"
     params:
-        genome_size=config["effective_genome_size"],
-        binSize=config["binSize"]
+        genome_size=EFFECTIVE_GENOME_SIZE,
+        binSize=BIGWIG_BIN_SIZE
     envmodules:
         config["deeptools"]
-    threads: 4
-    log: "results/logs/snakelogs/make_bigwig_raw.{sample}.log"
+    threads: 8
     shell:
         """
-        bamCoverage -p {threads} -b {input.sorted_bam} -o {output.bigwig} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize}
-        bamCoverage -p {threads} -b {input.sorted_bam} -o {output.bigwig_cpm} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize} --normalizeUsing CPM
-        """
+        # Analysis BigWig
+        bamCoverage -p {threads} -b {input.bam} -o {output.bigwig} \
+            --effectiveGenomeSize {params.genome_size} \
+            --binSize {params.binSize}
 
+        # CPM BigWig
+        bamCoverage -p {threads} -b {input.bam} -o {output.bigwig_cpm} \
+            --effectiveGenomeSize {params.genome_size} \
+            --binSize {params.binSize} \
+            --normalizeUsing CPM
 
-##################################################################
-##                  Total Reads and Scale Factor                ##
-##################################################################
-
-rule calculate_total_reads:
-    input:
-        sorted_bam="results/alignment/bam/{sample}.sorted.bam"
-    output:
-        total_reads="results/alignment/{sample}_total_reads.txt",
-        scale_factor="results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt"
-    envmodules:
-        config["samtools"]
-    threads: 2
-    log: "results/logs/snakelogs/calculate_total_reads.{sample}.log"
-    shell:
-        """
-        total_reads=$(samtools view -@ {threads} -c -F 4 {input.sorted_bam})
-        scale_factor=$(echo "1 / ($total_reads / 1000000)" | bc -l)
-        echo $total_reads > {output.total_reads}
-        echo $scale_factor > {output.scale_factor}
-        """
-
-##################################################################
-##              Scaled BigWig with Normalization                ##
-##################################################################
-
-rule make_bigwig_scaled:
-    input:
-        sorted_bam="results/alignment/bam/{sample}.sorted.bam",
-        scale_factor="results/alignment/bigwig/scale_reads/{sample}_scale_factor.txt"
-    output:
-        bigwig_scaled="results/alignment/bigwig/scale_reads/{sample}_scaled.bw"
-    params:
-        genome_size=config["effective_genome_size"],
-        binSize=config["binSize"]
-    envmodules:
-        config["deeptools"]
-    threads: 4
-    log: "results/logs/snakelogs/make_bigwig_scaled.{sample}.log"
-    shell:
-        """
+        # Scaled-to-target BigWig
         scale_factor=$(cat {input.scale_factor})
-        bamCoverage -p {threads} -b {input.sorted_bam} -o {output.bigwig_scaled} --effectiveGenomeSize {params.genome_size} --binSize {params.binSize} --scaleFactor $scale_factor
+        bamCoverage -p {threads} -b {input.bam} -o {output.bigwig_scaled} \
+            --effectiveGenomeSize {params.genome_size} \
+            --binSize {params.binSize} \
+            --scaleFactor $scale_factor
         """
 
 ##################################################################
-##                        MACS2 Peak Calling                    ##
+##                      MACS2 Peak Calling                      ##
 ##################################################################
 
 rule macs2_peak_calling:
     input:
-        bam="results/alignment/bam/{sample}.sorted.bam"
+        bam=final_analysis_bam
     output:
-        peaks="results/peakCalling/{sample}_0.05_peaks.narrowPeak"
+        peaks=PEAK_NAME_PATTERN
     params:
         genome=config["genome_size"],
-        qvalue=config["macs2_qvalue"],
-        sample_name="{sample}",
+        qvalue=MACS2_QVALUE,
+        prefix=lambda wildcards: (
+            f"{wildcards.sample}_{MACS2_QVALUE_STR}"
+        ),
         output_dir="results/peakCalling/"
     envmodules:
         config["macs2"]
-    threads: 8
-    log: "results/logs/snakelogs/macs2_peak_calling.{sample}.log"
+    threads: 1
     shell:
         """
-        macs2 callpeak -t {input.bam} \
-        -g {params.genome} -f BAMPE -n {params.sample_name}_{params.qvalue} \
-        --outdir {params.output_dir} -q {params.qvalue} --keep-dup all --nomodel \
-        2>{params.output_dir}/{params.sample_name}_macs2Peak_summary.txt
+        mkdir -p {params.output_dir}
+
+        macs2 callpeak \
+            -t {input.bam} \
+            -g {params.genome} \
+            -f BAMPE \
+            -n {params.prefix} \
+            --outdir {params.output_dir} \
+            -q {params.qvalue} \
+            --keep-dup all \
+            --nomodel
         """
 
 ##################################################################
@@ -350,56 +1079,53 @@ rule generate_alignment_plots:
         config["R"],
         config["bioconductor"]
     threads: 2
-    log:
-        "results/logs/snakelogs/generate_alignment_plots.log"
     shell:
         """
         Rscript scripts/plot_alignment.R {input.sample_list} {input.metadata} {params.out_dir}
         """
 
 ##################################################################
-##                   Fragment Length Files                      ##
+##           Raw Fragment Length Files from Sorted BAM          ##
 ##################################################################
 
-rule generate_fragmentLength_files:
+rule generate_fragmentLength_raw:
     input:
-        # Input for each Bowtie2 sam
-        sam_file="results/alignment/sam/{sample}_bowtie2.sam"
+        bam_file="results/alignment/bam/{sample}.sorted.bam"
     output:
-        fragLen="results/alignment/sam/{sample}_fragmentLen.txt"
+        fragLen="results/alignment/fragment_length/raw/{sample}_fragmentLen.raw.txt"
     envmodules:
         config["samtools"]
     threads: 2
-    log: "results/logs/snakelogs/generate_fragmentLength_files.{sample}.log"
     shell:
         """
-        samtools view -@ {threads} -F 0x04 {input.sam_file} | \
-        awk -F'\\t' '{{print ($9 < 0 ? -$9 : $9)}}' | \
+        mkdir -p results/alignment/fragment_length/raw
+
+        samtools view -@ {threads} -f 0x42 -F 0x90C {input.bam_file} | \
+        awk -F'\\t' '$9 != 0 {{print ($9 < 0 ? -$9 : $9)}}' | \
         sort | uniq -c | \
-        awk -v OFS="\\t" '{{print $2, $1/2}}' > {output.fragLen}
+        awk -v OFS="\\t" '{{print $2, $1}}' > {output.fragLen}
         """
 
 ##################################################################
-##                    Fragment Length Plot                      ##
+##         Final Fragment Length Files from Analysis BAM        ##
 ##################################################################
 
-rule generate_fragLen_plots:
+rule generate_fragmentLength_final:
     input:
-        sample_list=expand("results/alignment/sam/{sample}_fragmentLen.txt", sample=samples_table.index),
-        metadata="config/samples.csv"
+        bam_file=final_analysis_bam
     output:
-        "results/plots/fragment_length_plot.png"
-    params:
-        out_dir="results/plots"
+        fragLen="results/alignment/fragment_length/final/{sample}_fragmentLen.final.txt"
     envmodules:
-        config["R"],
-        config["bioconductor"]
+        config["samtools"]
     threads: 2
-    log:
-        "results/logs/snakelogs/generate_fragLen_plots.log"
     shell:
         """
-        Rscript scripts/plot_fragLength.R {input.sample_list} {input.metadata} {params.out_dir}
+        mkdir -p results/alignment/fragment_length/final
+
+        samtools view -@ {threads} -f 0x42 -F 0x90C {input.bam_file} | \
+        awk -F'\\t' '$9 != 0 {{print ($9 < 0 ? -$9 : $9)}}' | \
+        sort | uniq -c | \
+        awk -v OFS="\\t" '{{print $2, $1}}' > {output.fragLen}
         """
 
 ##################################################################
@@ -408,9 +1134,10 @@ rule generate_fragLen_plots:
 
 rule process_fragment_length:
     input:
-        sam_file="results/alignment/sam/{sample}_bowtie2.sam"
+        bam_file=final_analysis_bam
     output:
         mapped_bam="results/alignment/bam/{sample}_bowtie2.mapped.bam",
+        name_sorted_bam=temp("results/alignment/bam/{sample}_bowtie2.mapped.nameSorted.bam"),
         bed_file="results/alignment/bed/{sample}_bowtie2.bed",
         clean_bed="results/alignment/bed/{sample}_bowtie2.clean.bed",
         fragments_bed="results/alignment/bed/{sample}_bowtie2.fragments.bed",
@@ -421,29 +1148,50 @@ rule process_fragment_length:
         config["samtools"],
         config["bedtools"]
     threads: 4
-    log: "results/logs/snakelogs/process_fragment_length.{sample}.log"
     shell:
         """
-        # Set variables
-        sampleName={wildcards.sample}
-        histName=$(basename "{input.sam_file}")
+        mkdir -p results/alignment/bed results/alignment/bam
 
-        # Filter and keep the mapped read pairs
-        samtools view -@ {threads} -bS -F 0x04 {input.sam_file} -o {output.mapped_bam}
+        # Keep mapped reads from the final analysis BAM.
+        samtools view -@ {threads} -b -f 0x2 -F 0x90C {input.bam_file} -o {output.mapped_bam}
 
-        # Convert into bed file format
-        bedtools bamtobed -i {output.mapped_bam} -bedpe > {output.bed_file}
+        # Name-sort before BEDPE conversion so mates are paired correctly.
+        samtools sort -@ {threads} -n -o {output.name_sorted_bam} {output.mapped_bam}
 
-        # Keep the read pairs that are on the same chromosome and fragment length less than 1000bp
-        awk '$1==$4 && $6-$2 < 1000 {{print $0}}' {output.bed_file} > {output.clean_bed}
+        # Convert name-sorted BAM into BEDPE format.
+        bedtools bamtobed -i {output.name_sorted_bam} -bedpe > {output.bed_file}
 
-        # Only extract the fragment-related columns
+        # Keep read pairs on the same chromosome with fragment length less than 1000 bp.
+        awk '$1==$4 && $6>$2 && $6-$2 < 1000 {{print $0}}' {output.bed_file} > {output.clean_bed}
+
+        # Extract fragment coordinates.
         cut -f 1,2,6 {output.clean_bed} | sort -k1,1 -k2,2n -k3,3n > {output.fragments_bed}
 
-        # Bin the fragment counts
+        # Bin fragment counts by fragment midpoint.
         awk -v w={params.binLen} '{{print $1, int(($2 + $3)/(2*w))*w + w/2}}' {output.fragments_bed} | \
         sort -k1,1V -k2,2n | uniq -c | \
         awk -v OFS="\\t" '{{print $2, $3, $1}}' | sort -k1,1V -k2,2n > {output.binned_counts}
+        """
+
+##################################################################
+##                    Fragment Length Plot                      ##
+##################################################################
+
+rule generate_fragLen_plots:
+    input:
+        sample_list=expand("results/alignment/fragment_length/final/{sample}_fragmentLen.final.txt", sample=samples_table.index),
+        metadata="config/samples.csv"
+    output:
+        "results/plots/fragment_length_plot.png"
+    params:
+        out_dir="results/plots"
+    envmodules:
+        config["R"],
+        config["bioconductor"]
+    threads: 2
+    shell:
+        """
+        Rscript scripts/plot_fragLength.R {input.sample_list} {input.metadata} {params.out_dir}
         """
 
 ##################################################################
@@ -452,30 +1200,28 @@ rule process_fragment_length:
 
 rule calculate_frip:
     input:
-        mapped_bam="results/alignment/bam/{sample}_bowtie2.mapped.bam",
-        clean_bed="results/alignment/bed/{sample}_bowtie2.clean.bed",
-        peak_bed="results/peakCalling/{sample}_0.05_peaks.narrowPeak"
+        fragments_bed="results/alignment/bed/{sample}_bowtie2.fragments.bed",
+        peak_bed=PEAK_NAME_PATTERN
     output:
         frip_data="results/alignment/bam/{sample}_frip.txt"
     envmodules:
-        config["samtools"],
         config["bedtools"]
     threads: 2
-    log: "results/logs/snakelogs/calculate_frip.{sample}.log"
     shell:
         """
-        # Count total mapped reads
-        total_mapped=$(samtools view -@ {threads} -c {input.mapped_bam})
-        
-        # Intersect fragments with peaks
-        intersected=$(bedtools intersect -a {input.clean_bed} -b {input.peak_bed} -u | wc -l)
-        
-        # Calculate FRiP value
-        frip=$(echo "scale=4; ($intersected / $total_mapped) * 100" | bc)
-        
-        # Write to output
-        echo -e "Sample\\tTotalMapped\\tInPeaks\\tFRiP" > {output.frip_data}
-        echo -e "{wildcards.sample}\\t$total_mapped\\t$intersected\\t$frip" >> {output.frip_data}
+        total_fragments=$(wc -l < {input.fragments_bed})
+
+        if [ "$total_fragments" -eq 0 ]; then
+            frip="0"
+            intersected="0"
+        else
+            intersected=$(bedtools intersect -a {input.fragments_bed} -b {input.peak_bed} -u | wc -l)
+            frip=$(awk -v intersected="$intersected" -v total="$total_fragments" \
+                'BEGIN {{printf "%.4f", (intersected / total) * 100}}')
+        fi
+
+        echo -e "Sample\\tTotalFragments\\tFragmentsInPeaks\\tFRiP" > {output.frip_data}
+        echo -e "{wildcards.sample}\\t$total_fragments\\t$intersected\\t$frip" >> {output.frip_data}
         """
 
 ##################################################################
@@ -493,7 +1239,6 @@ rule generate_correlation_plot:
     envmodules:
         config["R"]
     threads: 2
-    log: "results/logs/snakelogs/generate_correlation_plot.log"
     shell:
         """
         Rscript scripts/plot_correlation.R {input.sample_list} {params.work_dir}
@@ -505,21 +1250,19 @@ rule generate_correlation_plot:
 
 rule generate_peak_summary_plots:
     input:
-        peak_list=expand("results/peakCalling/{sample}_0.05_peaks.narrowPeak", sample=samples_table.index),
+        peak_list=expand(PEAK_NAME_PATTERN, sample=samples_table.index),
         frip_list=expand("results/alignment/bam/{sample}_frip.txt", sample=samples_table.index),
         metadata="config/samples.csv"
     output:
-        "results/plots/peak_summary_plot.png"
+        summary_png="results/plots/peak_summary_plot.png",
+        report_pdf="results/plots/peak_summary_report.pdf"
     params:
         out_dir="results/plots"
     envmodules:
         config["R"],
         config["bioconductor"]
     threads: 2
-    log:
-        "results/logs/snakelogs/generate_peak_summary_plots.log"
     shell:
         """
         Rscript scripts/plot_peakSummary.R "{input.peak_list}" "{input.frip_list}" {input.metadata} {params.out_dir}
         """
-

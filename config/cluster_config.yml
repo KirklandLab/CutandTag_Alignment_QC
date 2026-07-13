@@ -1,144 +1,163 @@
-# cluster_config.yml - cluster configuration
+# cluster_config.yml - cluster configuration (defaults set for Kirkland Lab on OMRF HPC)
 __default__:
-    account: kirklandj-lab
+    account: sansam-lab
     partition: serial
     time: 08:00:00
-    cpus-per-task: 2
     mem: 16G
-    output: results/logs/slurm-%x.%A.%a.log
+    name: "{rule}"
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
 
 fastqc_reads:
-    cpus-per-task: 4
     mem: 32G
     time: 01:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 multiqc_raw:
-    cpus-per-task: 4
     mem: 16G
     time: 01:00:00
     name: "{rule}"
-    output: results/logs/{rule}.log
-    error: results/logs/{rule}.err
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
 
 fastq_screen:
-    cpus-per-task: 4
     mem: 32G
     time: 01:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
+
+trim_reads_cutadapt:
+    mem: 16G
+    time: 02:00:00
+    name: "{rule}.{wildcards.sample}"
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 align_with_bowtie2:
-    cpus-per-task: 16
     mem: 64G
     time: 06:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 sam_to_bam:
-    cpus-per-task: 4
     mem: 32G
     time: 02:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 sort_bam:
-    cpus-per-task: 4
     mem: 32G
     time: 02:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
-make_bigwig_raw:
-    cpus-per-task: 4
+cap_duplicate_fragments:
     mem: 32G
     time: 03:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
-calculate_total_reads:
-    cpus-per-task: 2
+downsample_analysis_bam:
+    mem: 32G
+    time: 02:00:00
+    name: "{rule}.{wildcards.sample}"
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
+
+calculate_downsample_target:
+    mem: 16G
+    time: 01:00:00
+    name: "{rule}"
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
+
+summarize_duplicate_metrics:
+    mem: 16G
+    time: 01:00:00
+    name: "{rule}"
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
+
+calculate_analysis_scale_factor:
     mem: 16G
     time: 01:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
-make_bigwig_scaled:
-    cpus-per-task: 4
+make_bigwigs:
     mem: 32G
-    time: 03:00:00
+    time: 06:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 macs2_peak_calling:
-    cpus-per-task: 8
     mem: 64G
     time: 04:00:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 generate_alignment_plots:
-    cpus-per-task: 2
     mem: 16G
     time: 01:30:00
     name: "{rule}"
-    output: results/logs/{rule}.log
-    error: results/logs/{rule}.err
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
 
-generate_fragmentLength_files:
-    cpus-per-task: 2
+generate_fragmentLength_raw:
     mem: 16G
     time: 01:30:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
+
+generate_fragmentLength_final:
+    mem: 16G
+    time: 01:30:00
+    name: "{rule}.{wildcards.sample}"
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 generate_fragLen_plots:
-    cpus-per-task: 2
     mem: 16G
     time: 01:30:00
     name: "{rule}"
-    output: results/logs/{rule}.log
-    error: results/logs/{rule}.err
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
 
 process_fragment_length:
-    cpus-per-task: 4
     mem: 32G
     time: 01:30:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 calculate_frip:
-    cpus-per-task: 2
     mem: 16G
     time: 01:30:00
     name: "{rule}.{wildcards.sample}"
-    output: results/logs/{rule}.{wildcards.sample}.log
-    error: results/logs/{rule}.{wildcards.sample}.err
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
 
 generate_correlation_plot:
-    cpus-per-task: 2
     mem: 16G
     time: 01:30:00
     name: "{rule}"
-    output: results/logs/{rule}.log
-    error: results/logs/{rule}.err
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err
 
 generate_peak_summary_plots:
-    cpus-per-task: 2
     mem: 16G
     time: 01:30:00
     name: "{rule}"
-    output: results/logs/{rule}.log
-    error: results/logs/{rule}.err
+    output: results/logs/{rule}.%j.log
+    error: results/logs/{rule}.%j.err

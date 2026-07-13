@@ -1,19 +1,105 @@
+# -----------------------------------------------------------------------------------------
+# ADAPTER TRIMMING
+# -----------------------------------------------------------------------------------------
+# When true, alignment uses trimmed FASTQs but FastQC and FastQ Screen always use the original untrimmed FASTQs.
+use_trimming: true
+
+# Nextera/Tn5 transposase adapter sequence used by the CUT&Tag library design.
+# Confirm these sequences if a different library preparation chemistry was used.
+cutadapt_adapter_r1: "CTGTCTCTTATACACATCT"
+cutadapt_adapter_r2: "CTGTCTCTTATACACATCT"
+
+# Minimum retained read length after trimming (1 only removes pairs containing an empty read which minimizes fragment-length bias).
+cutadapt_minimum_length: 1
+
+# Maximum adapter-match error rate.
+cutadapt_error_rate: 0.10
+
+# Minimum adapter overlap required for trimming.
+cutadapt_minimum_overlap: 5
+
+# -----------------------------------------------------------------------------------------
+# ALIGNMENT
+# -----------------------------------------------------------------------------------------
 # Bowtie2 genome index path
 bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"   # mm10 genome index file path = "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"
+                                                                             # mm39 genome index file path = "/hpc-prj/kirkland/shared/scripts/mm39_bowtie2_index/mm39"
                                                                              # GRCh38 genome index file path = "/hpc-prj/kirkland/shared/scripts/hg38_bowtie2_index/hg38"
 
+# -----------------------------------------------------------------------------------------
+# RAW FASTQ QUALITY CONTROL
+# -----------------------------------------------------------------------------------------
+# Controls the FastQC, MultiQC, and FastQ Screen rules
+use_fastq_qc: true
+
+# -----------------------------------------------------------------------------------------
+# DUPLICATE CAPPING
+# -----------------------------------------------------------------------------------------
+use_duplicate_cap: true
+
+# Maximum number of read-pair fragments allowed at the exact same fragment coordinate (recommended sensitivity runs: 3, 5, 7, and off).
+duplicate_cap_max: 5
+
+# -----------------------------------------------------------------------------------------
+# RANDOM DOWNSAMPLING
+# -----------------------------------------------------------------------------------------
+use_downsampling: true
+
+# Options:
+#    "manual" = uses `downsample_target_fragments` as downsample target and lets samples <= target through without downsampling
+#    "lowest_with_floor" = use the lowest post-duplicate-cap sample that is >= downsample_minimum_acceptable_fragments as the target and leaves samples below the target unchanged.
+#    "lowest" = use the lowest post-duplicate-cap sample as target
+downsample_target_mode: "manual"
+
+# Used only when downsample_target_mode: "manual"
+downsample_target_fragments: 20000000
+
+# Used only when downsample_target_mode: "lowest_with_floor"
+downsample_minimum_acceptable_fragments: 20000000
+
+# Use an integer for reproducible downsampling (keep this fixed for comparisons across duplicate-cap settings)
+downsample_seed: 12345
+
+# Or use "random" to generate a different seed for each execution
+#downsample_seed: "random"
+
+# -----------------------------------------------------------------------------------------
+# PEAK CALLING
+# -----------------------------------------------------------------------------------------
 # MACS2 parameters for peak calling
 genome_size: "mm"                                                            # For human genome - "hs" / for mouse genome - "mm"
 macs2_qvalue: 0.05                                                           # q-value cutoff for significant peaks
 
+# -----------------------------------------------------------------------------------------
+# BIGWIG
+# -----------------------------------------------------------------------------------------
 # bamCoverage parameters for BigWig generation
 binSize: 50                                                                  # default bin = 50 
-effective_genome_size: 2730871774                                            # mm10 genome size - 2730871774       
+effective_genome_size: 2652783500                                            # mm10 genome size - 2652783500 
+                                                                             # mm39 genome size - 2654621783
                                                                              # GRCh38 genome size - 2913022398
+
+# -----------------------------------------------------------------------------------------
+# CONFIG NOTES
+# -----------------------------------------------------------------------------------------
+# 1) Boolean settings must use unquoted YAML values: true or false.
+# 2) Numeric settings must be entered without commas, for example: 20000000
+# 3) Text options such as "manual", "lowest_with_floor", "lowest", and "random" should remain quoted exactly as shown.
+# 4) Settings associated with a disabled feature are not used by that processing step. Their values are still read when the workflow is initialized and should remain
+#    valid. For example, duplicate_cap_max does not affect results when use_duplicate_cap is false, but it should still be entered as an integer.
+# 5) The Bowtie2 index, MACS2 genome size, and deepTools effective genome size must all correspond to the same reference genome assembly.
+# 6) Input sample names, FASTQ paths, target/group labels, and replicate labels are defined separately in config/samples.csv.
+# 7) When comparing different duplicate-cap, trimming, or downsampling settings, run each configuration in a separate output directory to avoid mixing results.
+# 8) Effective genome size is not used by the current raw, CPM, or fragment depth scaled BigWigs. It is retained for an optional RPGC-normalized track to be added later.
+
+# -----------------------------------------------------------------------------------------
+# SOFTWARE MODULE VERSIONS
+# -----------------------------------------------------------------------------------------
 # Modules (for loading software dependencies)
 fastqc: "fastqc/0.12.1"
 multiqc: "multiqc/1.21"
 fastq_screen: "fastq-screen/0.15.2"
+cutadapt: "cutadapt/5.0"
 samtools: "samtools/1.18"
 bowtie2: "bowtie2/2.5.0"
 deeptools: "deeptools/3.4.3"

@@ -33,22 +33,57 @@ alignResult <- data.frame()
 # -------------------------
 for (file_path in input_files) {
   sample_name <- gsub("_bowtie2.txt", "", basename(file_path))
-  
-  # Lookup metadata
+
   histone <- sample_metadata$histone[sample_metadata$sample == sample_name]
   replicate <- sample_metadata$replicate[sample_metadata$sample == sample_name]
-  
-  # Read summary file
-  alignRes <- read.table(file_path, header = FALSE, fill = TRUE, stringsAsFactors = FALSE)
-  
-  # Extract alignment metrics (using line assumptions from Bowtie2 output)
-  sequencingDepth <- as.numeric(gsub("[^0-9]", "", alignRes$V1[1]))  # Total reads
-  mappedFragNum <- as.numeric(gsub("[^0-9]", "", alignRes$V1[4])) + 
-                   as.numeric(gsub("[^0-9]", "", alignRes$V1[5]))    # Mapped fragments
-  alignmentRate <- as.numeric(gsub("[^0-9.]", "", alignRes$V1[6]))   # Aligned %
-  unalignedRate <- 100 - alignmentRate
 
-  # Append results
+  if (length(histone) != 1 || length(replicate) != 1) {
+    stop("Sample not found uniquely in metadata: ", sample_name)
+  }
+
+  lines <- readLines(file_path, warn = FALSE)
+
+  get_first_number <- function(pattern) {
+    line <- grep(pattern, lines, value = TRUE)
+    if (length(line) == 0) return(NA_real_)
+    as.numeric(sub("^\\s*([0-9,]+).*", "\\1", gsub(",", "", line[1])))
+  }
+
+  get_percent <- function(pattern) {
+  line <- grep(pattern, lines, value = TRUE)
+  if (length(line) == 0) return(NA_real_)
+  match <- regmatches(line[1], regexpr("[0-9.]+(?=%)", line[1], perl = TRUE))
+  if (length(match) == 0) return(NA_real_)
+  as.numeric(match)
+  }
+
+  sequencingDepth <- get_first_number("reads; of these:")
+  pairedReads <- get_first_number("were paired; of these:")
+  concordant_zero <- get_first_number("aligned concordantly 0 times")
+  concordant_one <- get_first_number("aligned concordantly exactly 1 time")
+  concordant_multi <- get_first_number("aligned concordantly >1 times")
+  alignmentRate <- get_percent("overall alignment rate")
+
+  mappedFragNum <- concordant_one + concordant_multi
+
+  uniqueMappedRate <- ifelse(
+    pairedReads > 0,
+    100 * concordant_one / pairedReads,
+    NA_real_
+  )
+
+  multiMappedRate <- ifelse(
+    pairedReads > 0,
+    100 * concordant_multi / pairedReads,
+    NA_real_
+  )
+
+  unalignedRate <- ifelse(
+    pairedReads > 0,
+    100 * concordant_zero / pairedReads,
+    NA_real_
+  )
+
   alignResult <- rbind(
     alignResult,
     data.frame(
@@ -56,8 +91,14 @@ for (file_path in input_files) {
       Histone = histone,
       Replicate = replicate,
       SequencingDepth = sequencingDepth,
+      PairedReads = pairedReads,
+      ConcordantZero = concordant_zero,
+      ConcordantOne = concordant_one,
+      ConcordantMulti = concordant_multi,
       MappedFragNum = mappedFragNum,
       AlignmentRate = alignmentRate,
+      UniqueMappedRate = uniqueMappedRate,
+      MultiMappedRate = multiMappedRate,
       UnalignedRate = unalignedRate
     )
   )
@@ -75,7 +116,7 @@ alignResult$Replicate <- as.factor(alignResult$Replicate)
 
 fig1 <- ggplot(alignResult, aes(x = Histone, y = SequencingDepth / 1e6, fill = Histone)) +
   geom_boxplot() +
-  geom_jitter(aes(color = Replicate), width = 0.2) +
+  geom_jitter(aes(color = Replicate), width = 0.2, height = 0) +
   theme_bw(base_size = 14) +
   ylab("Sequencing Depth (Millions)") +
   xlab("") +
@@ -100,13 +141,13 @@ fig3 <- ggplot(alignResult, aes(x = Histone, y = AlignmentRate, fill = Histone))
   ggtitle("Alignment Rate per Histone") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
-fig4 <- ggplot(alignResult, aes(x = Histone, y = UnalignedRate, fill = Histone)) +
+fig4 <- ggplot(alignResult, aes(x = Histone, y = UniqueMappedRate, fill = Histone)) +
   geom_boxplot() +
   geom_jitter(aes(color = Replicate), width = 0.2) +
   theme_bw(base_size = 14) +
-  ylab("Unaligned Rate (%)") +
+  ylab("Unique Concordant Alignment Rate (%)") +
   xlab("") +
-  ggtitle("Unaligned Rate per Histone") +
+  ggtitle("Uniquely Mapped Concordant Pairs per Histone") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
 # -------------------------
