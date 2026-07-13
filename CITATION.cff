@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below and cite the original CUT&Tag processing tutorial."
+message: "If you use this software, please cite it as below and also cite the original CUT&Tag processing tutorial."
 title: "CutandTag_Alignment_QC"
 type: software
 version: 2.0.0
@@ -14,4 +14,5 @@ authors:
     orcid: "https://orcid.org/0000-0001-5617-7065"
     affiliation: Oklahoma Medical Research Foundation
 repository-code: "https://github.com/KirklandLab/CutandTag_Alignment_QC"
+doi: 10.5281/zenodo.15232228
 license: Apache-2.0
