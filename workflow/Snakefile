@@ -8,8 +8,8 @@ configfile: "config/config.yml"
 # Email: kevinboyd76@gmail.com
 # GitHub: https://github.com/kevinboyd76
 # Date Created: October 18, 2024
-# Last Modified: July 1, 2026
-# Version: 2.0.0
+# Last Modified: July 15, 2026
+# Version: 2.0.2
 #
 # Description: This Snakemake workflow processes CUT&Tag sequencing data
 # from raw paired-end FASTQ files through optional raw FASTQ quality control,
@@ -669,6 +669,8 @@ rule align_with_bowtie2:
     envmodules:
         config["bowtie2"]
     threads: 16
+    log:
+        "results/logs/snakelogs/align_with_bowtie2.{sample}.log"
     shell:
         """
         mkdir -p results/alignment/sam/bowtie2_summary
@@ -678,7 +680,9 @@ rule align_with_bowtie2:
             -p {threads} \
             -x {params.bowtie2_genome} \
             -1 {input.fq1} -2 {input.fq2} -S {output.sam_file} \
-            &> {output.bowtie2_summary}
+            &> {log}
+
+        cp {log} {output.bowtie2_summary}
         """
 
 ##################################################################
