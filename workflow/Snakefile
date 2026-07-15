@@ -670,7 +670,7 @@ rule align_with_bowtie2:
         config["bowtie2"]
     threads: 16
     log:
-        "results/logs/snakelogs/align_with_bowtie2.{sample}.log"
+        "results/logs/align_with_bowtie2.{sample}.log"
     shell:
         """
         mkdir -p results/alignment/sam/bowtie2_summary
