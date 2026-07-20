@@ -8,7 +8,7 @@ configfile: "config/config.yml"
 # Email: kevinboyd76@gmail.com
 # GitHub: https://github.com/kevinboyd76
 # Date Created: October 18, 2024
-# Last Modified: July 15, 2026
+# Last Modified: July 20, 2026
 # Version: 2.0.2
 #
 # Description: This Snakemake workflow processes CUT&Tag sequencing data
@@ -663,6 +663,7 @@ rule align_with_bowtie2:
     output:
         sam_file="results/alignment/sam/{sample}_bowtie2.sam",
         bowtie2_summary="results/alignment/sam/bowtie2_summary/{sample}_bowtie2.txt"
+    retries: 2
     params:
         bowtie2_genome=config["bowtie2_genome"],
         alignment_mode=BOWTIE2_ALIGNMENT_MODE
