@@ -9,7 +9,7 @@ configfile: "config/config.yml"
 # GitHub: https://github.com/kevinboyd76
 # Date Created: October 18, 2024
 # Last Modified: July 20, 2026
-# Version: 2.0.2
+# Version: 2.1.1
 #
 # Description: This Snakemake workflow processes CUT&Tag sequencing data
 # from raw paired-end FASTQ files through optional raw FASTQ quality control,
@@ -21,7 +21,7 @@ configfile: "config/config.yml"
 # summaries, duplicate/downsampling summaries, and plots to assess sample quality 
 # and replicate consistency.
 #
-# Update Version 2.0.0 (July 2026): This workflow now includes config controlled 
+# Update Version 2.1.1 (July 2026): This workflow now includes config controlled 
 # toggles for raw FASTQ QC, adapter trimming, duplicate capping, and random 
 # downsampling. This version adds optional paired-end adapter trimming using Cutadapt. 
 # When trimming is enabled, Bowtie2 uses trimmed FASTQs and local alignment mode. 
@@ -420,19 +420,19 @@ DUP_CAP_METRICS = (
     if USE_DUP_CAP else []
 )
 
-DOWNSAMPLE_BAMS = (
-    expand("results/alignment/bam/analysis/{sample}.analysis.bam", sample=SAMPLES)
-    if USE_DOWNSAMPLING else []
+ANALYSIS_BAMS = expand(
+    "results/alignment/bam/analysis/{sample}.analysis.bam",
+    sample=SAMPLES
 )
 
-DOWNSAMPLE_BAIS = (
-    expand("results/alignment/bam/analysis/{sample}.analysis.bam.bai", sample=SAMPLES)
-    if USE_DOWNSAMPLING else []
+ANALYSIS_BAIS = expand(
+    "results/alignment/bam/analysis/{sample}.analysis.bam.bai",
+    sample=SAMPLES
 )
 
-DOWNSAMPLE_METRICS = (
-    expand("results/qc/downsampling/{sample}.downsample_metrics.txt", sample=SAMPLES)
-    if USE_DOWNSAMPLING else []
+DOWNSAMPLE_METRICS = expand(
+    "results/qc/downsampling/{sample}.downsample_metrics.txt",
+    sample=SAMPLES
 )
 
 DOWNSAMPLE_TARGET_FILE = ["results/qc/downsampling/downsample_target.txt"]
@@ -445,7 +445,6 @@ DUP_DOWNSAMPLE_SUMMARY_FILES = (
     if (USE_DUP_CAP or USE_DOWNSAMPLING) else []
 )
 
-
 def post_dup_bam(wildcards):
     """
     BAM used as input to downsampling.
@@ -456,25 +455,21 @@ def post_dup_bam(wildcards):
         return f"results/alignment/bam/dedup_cap/{wildcards.sample}.dupCap.bam"
     return f"results/alignment/bam/{wildcards.sample}.sorted.bam"
 
-
 def post_dup_bai(wildcards):
     if USE_DUP_CAP:
         return f"results/alignment/bam/dedup_cap/{wildcards.sample}.dupCap.bam.bai"
     return f"results/alignment/bam/{wildcards.sample}.sorted.bam.bai"
 
-
 def final_analysis_bam(wildcards):
     """
-    Final BAM used by bigWig, MACS2, final fragment length, BEDPE, FRiP, and correlation.
-    If downsampling is enabled, use analysis.bam.
-    Else if duplicate capping is enabled, use dupCap.bam.
-    Else use sorted.bam directly.
+    Standardized final BAM used by BigWig generation, MACS2,
+    final fragment length analysis, BEDPE processing, FRiP,
+    and fragment-count correlation.
     """
-    if USE_DOWNSAMPLING:
-        return f"results/alignment/bam/analysis/{wildcards.sample}.analysis.bam"
-    if USE_DUP_CAP:
-        return f"results/alignment/bam/dedup_cap/{wildcards.sample}.dupCap.bam"
-    return f"results/alignment/bam/{wildcards.sample}.sorted.bam"
+    return (
+        f"results/alignment/bam/analysis/"
+        f"{wildcards.sample}.analysis.bam"
+    )
 
 ##################################################################
 ##                          Rule All                            ##
@@ -493,8 +488,8 @@ rule all:
         DUP_CAP_BAMS,
         DUP_CAP_BAIS,
         DUP_CAP_METRICS,
-        DOWNSAMPLE_BAMS,
-        DOWNSAMPLE_BAIS,
+        ANALYSIS_BAMS,
+        ANALYSIS_BAIS,
         DOWNSAMPLE_METRICS,
         DOWNSAMPLE_TARGET_FILE,
         DUP_DOWNSAMPLE_SUMMARY_FILES,
@@ -847,7 +842,7 @@ rule calculate_downsample_target:
         """
 
 ##################################################################
-##             Optional: Downsampling After Dup Cap             ##
+##     Create Final Analysis BAM with Optional Downsampling     ##
 ##################################################################
 
 rule downsample_analysis_bam:
