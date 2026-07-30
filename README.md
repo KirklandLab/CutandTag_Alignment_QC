@@ -799,10 +799,10 @@ Restricting the calculation to shared occupied bins conditions the analysis on r
 ### 11A. Download version controlled repository
 
 ```bash
-wget https://github.com/KirklandLab/CutandTag_Alignment_QC/releases/download/v2.1.0/CutandTag_Alignment_QC-2.1.0.tar.gz
-tar -xzf CutandTag_Alignment_QC-2.1.0.tar.gz
-rm CutandTag_Alignment_QC-2.1.0.tar.gz
-cd CutandTag_Alignment_QC-2.1.0
+wget https://github.com/KirklandLab/CutandTag_Alignment_QC/releases/download/v2.1.1/CutandTag_Alignment_QC-2.1.1.tar.gz
+tar -xzf CutandTag_Alignment_QC-2.1.1.tar.gz
+rm CutandTag_Alignment_QC-2.1.1.tar.gz
+cd CutandTag_Alignment_QC-2.1.1
 ```
 
 ### 11B. Load modules
@@ -832,6 +832,8 @@ Submit the full workflow using the included Slurm submission script:
 sbatch run_workflow.sbatch
 ```
 
+*Note: When no target is provided, Snakemake runs the default `rule all` and completes the full workflow.*
+
 ### 11F. Unlock a workflow directory if needed
 
 If a previous Snakemake run was interrupted, unlock the directory before rerunning:
@@ -845,12 +847,36 @@ To run the workflow to a specific file and its required upstream rules, provide 
 ```bash
 sbatch run_workflow.sbatch results/plots/alignment_summary_plot.png
 ```
+
 Also the rule itself can be targeted by name:
 ```bash
 sbatch run_workflow.sbatch generate_alignment_plots
 ```
 
-*Note: When no target is provided, Snakemake runs the default `rule all` and completes the full workflow.*
+### 11H. Resume after a failed or interrupted run
+
+After identifying and correcting the cause of the failure, resubmit the workflow with the --rerun-incomplete flag:
+
+```bash
+sbatch run_workflow.sbatch --rerun-incomplete
+```
+
+Snakemake will preserve successfully completed outputs and rerun jobs whose outputs were marked as incomplete.
+
+If the workflow directory is locked, unlock it first:
+
+```bash
+snakemake --unlock
+sbatch run_workflow.sbatch --rerun-incomplete
+```
+
+A specific target can also be retried:
+
+```bash
+sbatch run_workflow.sbatch --rerun-incomplete results/plots/alignment_summary_plot.png
+```
+
+*Note: Correct the underlying problem, such as insufficient wall time or memory, before retrying. Do not use --cleanup-metadata when output files are genuinely incomplete.*
 
 ---
 
