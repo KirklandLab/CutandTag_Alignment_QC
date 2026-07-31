@@ -38,7 +38,7 @@ trim_reads_cutadapt:
 
 align_with_bowtie2:
     mem: 64G
-    time: 12:00:00
+    time: "12:00:00"
     name: "{rule}.{wildcards.sample}"
     output: results/logs/{rule}.{wildcards.sample}.%j.log
     error: results/logs/{rule}.{wildcards.sample}.%j.err
