@@ -799,10 +799,10 @@ Restricting the calculation to shared occupied bins conditions the analysis on r
 ### 11A. Download version controlled repository
 
 ```bash
-wget https://github.com/KirklandLab/CutandTag_Alignment_QC/releases/download/v2.1.1/CutandTag_Alignment_QC-2.1.1.tar.gz
-tar -xzf CutandTag_Alignment_QC-2.1.1.tar.gz
-rm CutandTag_Alignment_QC-2.1.1.tar.gz
-cd CutandTag_Alignment_QC-2.1.1
+wget https://github.com/KirklandLab/CutandTag_Alignment_QC/releases/download/v2.1.2/CutandTag_Alignment_QC-2.1.2.tar.gz
+tar -xzf CutandTag_Alignment_QC-2.1.2.tar.gz
+rm CutandTag_Alignment_QC-2.1.2.tar.gz
+cd CutandTag_Alignment_QC-2.1.2
 ```
 
 ### 11B. Load modules
