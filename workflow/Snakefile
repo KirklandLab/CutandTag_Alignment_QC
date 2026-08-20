@@ -230,11 +230,23 @@ USE_TRIMMING = get_config_bool("use_trimming", False)
 USE_BLACKLIST = get_config_bool("use_blacklist", False)
 BLACKLIST_FILE = str(config.get("blacklist", "")).strip()
 
-if USE_BLACKLIST and not BLACKLIST_FILE:
-    raise ValueError(
-        "blacklist must contain a valid BED file path when "
-        "use_blacklist is true."
-    )
+if USE_BLACKLIST:
+    if not BLACKLIST_FILE:
+        raise ValueError(
+            "blacklist must contain a BED file path when "
+            "use_blacklist is true."
+        )
+
+    if not os.path.isfile(BLACKLIST_FILE):
+        raise FileNotFoundError(
+            f"Blacklist BED file does not exist or is not accessible: "
+            f"{BLACKLIST_FILE}"
+        )
+
+    if os.path.getsize(BLACKLIST_FILE) == 0:
+        raise ValueError(
+            f"Blacklist BED file is empty: {BLACKLIST_FILE}"
+        )
 
 CUTADAPT_ADAPTER_R1 = str(
     config.get("cutadapt_adapter_r1", "CTGTCTCTTATACACATCT")
