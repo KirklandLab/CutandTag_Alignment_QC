@@ -22,7 +22,7 @@ cutadapt_minimum_overlap: 5
 # ALIGNMENT
 # -----------------------------------------------------------------------------------------
 # Bowtie2 genome index path
-bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm39"       # mm10 genome index file path = "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"
+bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"       # mm10 genome index file path = "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"
                                                                                  # mm39 genome index file path = "/hpc-prj/kirkland/shared/scripts/mm39_bowtie2_index/mm39"
                                                                                  # GRCh38 genome index file path = "/hpc-prj/kirkland/shared/scripts/hg38_bowtie2_index/hg38"
 # blacklist Option
@@ -94,7 +94,7 @@ effective_genome_size: 2652783500                                            # m
 # 3) Text options such as "manual", "lowest_with_floor", "lowest", and "random" should remain quoted exactly as shown.
 # 4) Settings associated with a disabled feature are not used by that processing step. Their values are still read when the workflow is initialized and should remain
 #    valid. For example, duplicate_cap_max does not affect results when use_duplicate_cap is false, but it should still be entered as an integer.
-# 5) The Bowtie2 index, MACS2 genome size, and deepTools effective genome size must all correspond to the same reference genome assembly.
+# 5) The Bowtie2 index, blacklist BED file, MACS2 genome size, and deepTools effective genome size must all correspond to the same reference genome assembly.
 # 6) Input sample names, FASTQ paths, target/group labels, and replicate labels are defined separately in config/samples.csv.
 # 7) When comparing different blacklists, duplicate-cap, trimming, or downsampling settings, run each configuration in a separate output directory to avoid mixing results.
 # 8) Effective genome size is not used by the current raw, CPM, or fragment depth scaled BigWigs. It is retained for an optional RPGC-normalized track to be added later.
