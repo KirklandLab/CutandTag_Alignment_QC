@@ -22,16 +22,16 @@ cutadapt_minimum_overlap: 5
 # ALIGNMENT
 # -----------------------------------------------------------------------------------------
 # Bowtie2 genome index path
-bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"   # mm10 genome index file path = "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"
-                                                                             # mm39 genome index file path = "/hpc-prj/kirkland/shared/scripts/mm39_bowtie2_index/mm39"
-                                                                             # GRCh38 genome index file path = "/hpc-prj/kirkland/shared/scripts/hg38_bowtie2_index/hg38"
+bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm39"       # mm10 genome index file path = "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm10"
+                                                                                 # mm39 genome index file path = "/hpc-prj/kirkland/shared/scripts/mm39_bowtie2_index/mm39"
+                                                                                 # GRCh38 genome index file path = "/hpc-prj/kirkland/shared/scripts/hg38_bowtie2_index/hg38"
 # blacklist Option
 use_blacklist: true
 
 # blacklist file path
-blacklist: "/hpc-prj/kirkland/shared/scripts/mm39_blacklist"                 # mm10 blacklist file path = "/hpc-prj/kirkland/shared/scripts/"
-                                                                             # mm39 blacklist file path = "/hpc-prj/kirkland/shared/scripts/"
-                                                                             # hg38 blacklist file path = "/hpc-prj/kirkland/shared/scripts/"
+blacklist: "/hpc-prj/kirkland/shared/scripts/blacklists/mm39_blacklist.bed"      # mm10 blacklist file path = "/hpc-prj/kirkland/shared/scripts/"
+                                                                                 # mm39 blacklist file path = "/hpc-prj/kirkland/shared/scripts/"
+                                                                                 # hg38 blacklist file path = "/hpc-prj/kirkland/shared/scripts/"
 
 # -----------------------------------------------------------------------------------------
 # RAW FASTQ QUALITY CONTROL
