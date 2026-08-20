@@ -227,6 +227,15 @@ def get_config_bool(name, default):
 USE_FASTQ_QC = get_config_bool("use_fastq_qc", True)
 USE_TRIMMING = get_config_bool("use_trimming", False)
 
+USE_BLACKLIST = get_config_bool("use_blacklist", False)
+BLACKLIST_FILE = str(config.get("blacklist", "")).strip()
+
+if USE_BLACKLIST and not BLACKLIST_FILE:
+    raise ValueError(
+        "blacklist must contain a valid BED file path when "
+        "use_blacklist is true."
+    )
+
 CUTADAPT_ADAPTER_R1 = str(
     config.get("cutadapt_adapter_r1", "CTGTCTCTTATACACATCT")
 ).strip()
@@ -406,6 +415,32 @@ FASTQ_SCREEN_OUTPUTS = (
     if USE_FASTQ_QC else []
 )
 
+BLACKLIST_BAMS = (
+    expand(
+        "results/alignment/bam/blacklist_filtered/"
+        "{sample}.blacklistFiltered.bam",
+        sample=SAMPLES
+    )
+    if USE_BLACKLIST else []
+)
+
+BLACKLIST_BAIS = (
+    expand(
+        "results/alignment/bam/blacklist_filtered/"
+        "{sample}.blacklistFiltered.bam.bai",
+        sample=SAMPLES
+    )
+    if USE_BLACKLIST else []
+)
+
+BLACKLIST_METRICS = (
+    expand(
+        "results/qc/blacklist/{sample}.blacklist_metrics.txt",
+        sample=SAMPLES
+    )
+    if USE_BLACKLIST else []
+)
+
 DUP_CAP_BAMS = (
     expand("results/alignment/bam/dedup_cap/{sample}.dupCap.bam", sample=SAMPLES)
     if USE_DUP_CAP else []
@@ -446,20 +481,66 @@ DUP_DOWNSAMPLE_SUMMARY_FILES = (
     if (USE_DUP_CAP or USE_DOWNSAMPLING) else []
 )
 
-def post_dup_bam(wildcards):
+def post_blacklist_bam_for_sample(sample):
+    """
+    BAM used after optional blacklist filtering.
+    """
+    if USE_BLACKLIST:
+        return (
+            "results/alignment/bam/blacklist_filtered/"
+            f"{sample}.blacklistFiltered.bam"
+        )
+
+    return f"results/alignment/bam/{sample}.sorted.bam"
+
+
+def post_blacklist_bai_for_sample(sample):
+    if USE_BLACKLIST:
+        return (
+            "results/alignment/bam/blacklist_filtered/"
+            f"{sample}.blacklistFiltered.bam.bai"
+        )
+
+    return f"results/alignment/bam/{sample}.sorted.bam.bai"
+
+
+def post_blacklist_bam(wildcards):
+    return post_blacklist_bam_for_sample(wildcards.sample)
+
+
+def post_blacklist_bai(wildcards):
+    return post_blacklist_bai_for_sample(wildcards.sample)
+
+
+def post_dup_bam_for_sample(sample):
     """
     BAM used as input to downsampling.
-    If duplicate capping is enabled, use dupCap.bam.
-    Otherwise use the original coordinate-sorted BAM.
     """
     if USE_DUP_CAP:
-        return f"results/alignment/bam/dedup_cap/{wildcards.sample}.dupCap.bam"
-    return f"results/alignment/bam/{wildcards.sample}.sorted.bam"
+        return (
+            "results/alignment/bam/dedup_cap/"
+            f"{sample}.dupCap.bam"
+        )
+
+    return post_blacklist_bam_for_sample(sample)
+
+
+def post_dup_bai_for_sample(sample):
+    if USE_DUP_CAP:
+        return (
+            "results/alignment/bam/dedup_cap/"
+            f"{sample}.dupCap.bam.bai"
+        )
+
+    return post_blacklist_bai_for_sample(sample)
+
+
+def post_dup_bam(wildcards):
+    return post_dup_bam_for_sample(wildcards.sample)
+
 
 def post_dup_bai(wildcards):
-    if USE_DUP_CAP:
-        return f"results/alignment/bam/dedup_cap/{wildcards.sample}.dupCap.bam.bai"
-    return f"results/alignment/bam/{wildcards.sample}.sorted.bam.bai"
+    return post_dup_bai_for_sample(wildcards.sample)
 
 def final_analysis_bam(wildcards):
     """
@@ -486,6 +567,9 @@ rule all:
         expand("results/alignment/sam/{sample}_bowtie2.sam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}_bowtie2.bam", sample=samples_table.index),
         expand("results/alignment/bam/{sample}.sorted.bam", sample=samples_table.index),
+        BLACKLIST_BAMS,
+        BLACKLIST_BAIS,
+        BLACKLIST_METRICS,
         DUP_CAP_BAMS,
         DUP_CAP_BAIS,
         DUP_CAP_METRICS,
@@ -723,13 +807,83 @@ rule sort_bam:
         """
 
 ##################################################################
+##                 Optional: Blacklist Filtering                ##
+##################################################################
+
+rule filter_blacklist_bam:
+    input:
+        bam="results/alignment/bam/{sample}.sorted.bam",
+        bai="results/alignment/bam/{sample}.sorted.bam.bai",
+        blacklist=lambda wildcards: BLACKLIST_FILE
+    output:
+        bam=("results/alignment/bam/blacklist_filtered/{sample}.blacklistFiltered.bam"),
+        bai=("results/alignment/bam/blacklist_filtered/{sample}.blacklistFiltered.bam.bai"),
+        removed_names=temp("results/qc/blacklist/{sample}.blacklist_removed_names.txt"),
+        metrics="results/qc/blacklist/{sample}.blacklist_metrics.txt"
+    envmodules:
+        config["samtools"]
+    threads: 4
+    shell:
+        """
+        mkdir -p \
+            results/alignment/bam/blacklist_filtered \
+            results/qc/blacklist
+
+        # Identify every read-pair name for which at least one alignment
+        # overlaps a blacklist interval.
+        samtools view \
+            -@ {threads} \
+            -M \
+            -L "{input.blacklist}" \
+            "{input.bam}" | \
+        cut -f1 | \
+        LC_ALL=C sort -u > "{output.removed_names}"
+
+        # Select the overlapping read names and send all unselected records
+        # to the blacklist-filtered BAM. This removes both mates whenever
+        # either mate overlaps a blacklist interval.
+        samtools view \
+            -@ {threads} \
+            -b \
+            -N "{output.removed_names}" \
+            -U "{output.bam}" \
+            -o /dev/null \
+            "{input.bam}"
+
+        samtools quickcheck -v "{output.bam}"
+        samtools index -@ {threads} "{output.bam}" "{output.bai}"
+
+        fragments_before=$(samtools view \
+            -@ {threads} -c -f 0x42 -F 0x90C "{input.bam}")
+
+        fragments_after=$(samtools view \
+            -@ {threads} -c -f 0x42 -F 0x90C "{output.bam}")
+
+        fragments_removed=$((fragments_before - fragments_after))
+        pair_names_removed=$(wc -l < "{output.removed_names}")
+
+        if [ "$fragments_before" -gt 0 ]; then
+            percent_removed=$(awk \
+                -v removed="$fragments_removed" \
+                -v before="$fragments_before" \
+                'BEGIN {{printf "%.4f", (removed / before) * 100}}')
+        else
+            percent_removed="0.0000"
+        fi
+
+        echo -e "Sample\\tBlacklistFile\\tFragmentsBeforeBlacklist\\tFragmentsAfterBlacklist\\tFragmentsRemoved\\tPercentFragmentsRemoved\\tReadPairNamesRemoved" > "{output.metrics}"
+
+        echo -e "{wildcards.sample}\\t{input.blacklist}\\t$fragments_before\\t$fragments_after\\t$fragments_removed\\t$percent_removed\\t$pair_names_removed" >> "{output.metrics}"
+        """
+
+##################################################################
 ##      Optional: Duplicate Capping by Fragment Coordinate      ##
 ##################################################################
 
 rule cap_duplicate_fragments:
     input:
-        sorted_bam="results/alignment/bam/{sample}.sorted.bam",
-        bai="results/alignment/bam/{sample}.sorted.bam.bai"
+        sorted_bam=post_blacklist_bam,
+        bai=post_blacklist_bai
     output:
         bam="results/alignment/bam/dedup_cap/{sample}.dupCap.bam",
         bai="results/alignment/bam/dedup_cap/{sample}.dupCap.bam.bai",
@@ -764,9 +918,7 @@ rule cap_duplicate_fragments:
 rule calculate_downsample_target:
     input:
         bams=lambda wildcards: [
-            f"results/alignment/bam/dedup_cap/{sample}.dupCap.bam"
-            if USE_DUP_CAP else
-            f"results/alignment/bam/{sample}.sorted.bam"
+            post_dup_bam_for_sample(sample)
             for sample in samples_table.index
         ]
     output:
