@@ -57,6 +57,13 @@ sort_bam:
     output: results/logs/{rule}.{wildcards.sample}.%j.log
     error: results/logs/{rule}.{wildcards.sample}.%j.err
 
+filter_blacklist_bam:
+    mem: 32G
+    time: 03:00:00
+    name: "{rule}.{wildcards.sample}"
+    output: results/logs/{rule}.{wildcards.sample}.%j.log
+    error: results/logs/{rule}.{wildcards.sample}.%j.err
+    
 cap_duplicate_fragments:
     mem: 32G
     time: 03:00:00
