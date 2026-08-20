@@ -9,7 +9,7 @@ configfile: "config/config.yml"
 # GitHub: https://github.com/kevinboyd76
 # Date Created: October 18, 2024
 # Last Modified: July 20, 2026
-# Version: 2.1.1
+# Version: 2.2.0
 #
 # Description: This Snakemake workflow processes CUT&Tag sequencing data
 # from raw paired-end FASTQ files through optional raw FASTQ quality control,
@@ -48,12 +48,12 @@ configfile: "config/config.yml"
 # 6) Optionally cap duplicate fragments by exact fragment coordinates
 # 7) Optionally downsample post-cap or aligned BAMs to a defined fragment target
 # 8) Define the final analysis BAM for each sample
-# 9) Generate raw, CPM-normalized, and target-scaled BigWig signal tracks from the final analysis BAM
+# 9) Generate raw, CPM-normalized, and target scaled BigWig signal tracks from the final analysis BAM
 # 10) Calculate final analysis fragment counts and BigWig scale factors
 # 11) Call peaks using MACS2 with configured q-value threshold (per sample)
 # 12) Extract raw and final fragment lengths from BAM files (per sample)
 # 13) Final fragment length distributions
-# 14) Process final analysis BAMs to BEDPE/BED-style fragment data for QC
+# 14) Process final analysis BAMs to BEDPE/BED style fragment data for QC
 # 15) Calculate FRiP scores (Fraction of Reads, or in our case, fragments in Peaks) for QC per sample
 # 16) Generate correlation plot of binned fragment counts across samples
 # 17) Create summary plots of alignment, duplicate/downsampling behavior, peak counts, and FRiP scores
@@ -62,11 +62,12 @@ configfile: "config/config.yml"
 #    • Optional: FastQC and MultiQC HTML reports
 #    • Optional: FastQ Screen PNG plots
 #    • Optional: Cutadapt trimmed paired end FASTQ files
-#    • Optional: Per-sample Cutadapt trimming reports
+#    • Optional: Per sample Cutadapt trimming reports
+#    • Optional: Include a blacklist
 #    • Bowtie2 alignment summaries
 #    • Optional: Duplicate capping with manually set value
 #    • Optional: Downsampling with three options; manual, lowest with floor, or lowest
-#    • Optional: Duplicate-capping and downsampling metrics, when either option is enabled
+#    • Optional: Duplicate capping and downsampling metrics, when either option is enabled
 #    • Final analysis BAM files and their associated sorted BAM files
 #    • Raw, CPM-normalized, and target-scaled BigWig files
 #    • MACS2 peak files (narrowPeak)
