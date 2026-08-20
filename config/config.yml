@@ -29,9 +29,9 @@ bowtie2_genome: "/hpc-prj/kirkland/shared/scripts/mm10_bowtie2_index/mm39"      
 use_blacklist: true
 
 # blacklist file path
-blacklist: "/hpc-prj/kirkland/shared/scripts/blacklists/mm39_blacklist.bed"      # mm10 blacklist file path = "/hpc-prj/kirkland/shared/scripts/"
-                                                                                 # mm39 blacklist file path = "/hpc-prj/kirkland/shared/scripts/"
-                                                                                 # hg38 blacklist file path = "/hpc-prj/kirkland/shared/scripts/"
+blacklist: "/hpc-prj/kirkland/shared/scripts/blacklists/mm10-blacklist.v2.bed"   # mm10 = "/hpc-prj/kirkland/shared/scripts/blacklists/mm10-blacklist.v2.bed"
+                                                                                 # mm39 = "/hpc-prj/kirkland/shared/scripts/blacklists/mm39.excluderanges.bed"
+                                                                                 # hg38 = "/hpc-prj/kirkland/shared/scripts/blacklists/hg38-blacklist.v2.bed"
 
 # -----------------------------------------------------------------------------------------
 # RAW FASTQ QUALITY CONTROL
