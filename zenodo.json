@@ -1,7 +1,7 @@
 {
   "title": "CutandTag_Alignment_QC: A reproducible Snakemake workflow for alignment, quality control, and signal generation from CUT&Tag sequencing data",
   "upload_type": "software",
-  "version": "2.0.0",
+  "version": "2.2.1",
   "access_right": "open",
   "language": "eng",
   "description": "CutandTag_Alignment_QC is a Snakemake workflow for initial processing and quality assessment of paired-end CUT&Tag sequencing data. The workflow performs optional raw FASTQ quality control with FastQC, MultiQC, and FastQ Screen; paired-end read alignment with Bowtie2; SAM/BAM conversion, sorting, and indexing with SAMtools; optional fragment-coordinate duplicate capping; optional random downsampling using configurable target-selection modes and reproducible or randomly generated seeds; generation of raw, CPM-normalized, and target-scaled BigWig tracks with deepTools; per-sample peak calling with MACS2 in paired-end BAM mode; fragment-length analysis; per-sample FRiP calculation; fragment-count correlation; and QC summary plotting. Final analysis BAM selection is determined by the duplicate-capping and downsampling settings. The workflow is designed for Slurm-managed HPC execution with Snakemake and environment modules and is intended for alignment, preprocessing, signal generation, and sample-level QC before downstream replicate-aware analysis.",
@@ -13,7 +13,7 @@
     },
     {
       "name": "Kirkland, Jacob",
-      "affiliation": "Oklahoma Medical Research Foundation"
+      "affiliation": "Oklahoma Medical Research Foundation",
       "orcid": "0000-0001-5617-7065"
     }
   ],
