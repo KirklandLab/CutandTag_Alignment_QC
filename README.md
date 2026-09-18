@@ -143,6 +143,8 @@ All parameters and module versions are specified in `config/config.yml`.
 + `cutadapt_minimum_length`: minimum read length retained after trimming
 + `cutadapt_error_rate`: maximum allowed adapter-matching error rate
 + `cutadapt_minimum_overlap`: minimum adapter overlap required for trimming
++ `use_blacklist`: whether to exclude read pairs overlapping blacklist regions
++ `blacklist`: path to a BED file for the same reference assembly used for alignment
 + `bowtie2_genome`: path to the Bowtie2 index for the reference genome, such as mm10 or hg38
 + `effective_genome_size`: effective genome size used by DeepTools for coverage normalization
 + `genome_size`: genome size string used by MACS2, such as `mm` or `hs`
@@ -415,19 +417,11 @@ Sample 5 is the lowest sample so it set the target for all other samples.
 
 ### **How Final Analysis BAMs Are Defined**
 
-The final analysis BAM depends on the duplicate capping and downsampling settings.
+The final analysis BAM depends on the duplicate capping, blacklist usage, and downsampling settings.
 
-+ If duplicate capping is enabled and downsampling is enabled:
-  + Final BAM = duplicate capped BAM after downsampling
-
-+ If duplicate capping is enabled and downsampling is disabled:
-  + Final BAM = duplicate capped BAM
-
-+ If duplicate capping is disabled and downsampling is enabled:
-  + Final BAM = aligned sorted BAM after downsampling
-
-+ If duplicate capping is disabled and downsampling is disabled:
-  + Final BAM = aligned sorted BAM
++ Every sample has a final BAM at `results/alignment/bam/analysis/{sample}.analysis.bam`, regardless of which optional steps are enabled.  
++ The workflow creates `sorted.bam` after alignment. If `use_blacklist: true`, it removes read pairs when either mate overlaps a region in the configured blacklist BED file. Optional duplicate capping and downsampling then operate on the resulting BAM before the workflow creates `analysis.bam`.  
++ Use `analysis.bam` for downstream analysis. `sorted.bam` is an intermediate file created before blacklist filtering, duplicate capping, and downsampling. It can contain reads excluded from `analysis.bam`.  
 
 These final analysis BAMs are used for:
 
@@ -447,16 +441,19 @@ The workflow includes preconfigured settings for the mouse mm10 and mm39 genome 
 
 + To switch from mm10 to hg38:
   + Update `bowtie2_genome` path to the new hg38 Bowtie2 index
+  + Update `blacklist` to the hg38 assembly's BED file when `use_blacklist: true`
   + Change `effective_genome_size` to the appropriate value, such as `2913022398` for hg38
   + Set `genome_size` to `hs` for human in MACS2 peak calling
  
 + To switch from mm10 to mm39:
   + Update `bowtie2_genome` path to the new mm39 Bowtie2 index
+  + Update `blacklist` to the mm39 assembly's BED file when `use_blacklist: true`
   + Change `effective_genome_size` to the appropriate value, such as `2654621783` for mm39
   + Keep `genome_size` set to `mm` for mouse in MACS2 peak calling
  
 + Other organisms or genome assemblies can also be used:
   + Build or obtain a compatible Bowtie2 index
+  + Update `blacklist` to the corresponding assembly's BED file when `use_blacklist: true`; confirm its chromosome names match the alignment reference
   + Update `bowtie2_genome` to the location of the new index
   + Update `effective_genome_size` for DeepTools normalization
   + Set the MACS2 `genome_size` option to one of the built-in codes:
@@ -557,7 +554,8 @@ Example FASTQ names to **not** use:
 | **Duplicate Capping Metrics**      | `results/qc/duplicates/`                                                              |
 | **Downsampling Metrics**           | `results/qc/downsampling/`                                                            |
 | **Duplicate/Downsampling Summary** | `results/qc/duplicates_downsampling/`, `results/plots/duplicate_downsampling_summary.png` |
-| **Final Analysis BAMs**            | `results/alignment/bam/analysis/` when downsampling is enabled; otherwise selected final BAM path depends on config |
+| **Final Analysis BAMs**            | `results/alignment/bam/analysis/{sample}.analysis.bam` for every sample               |
+| **Optional Blacklist Outputs**     | `results/alignment/bam/blacklist_filtered/` and `results/qc/blacklist/`               |
 | **BigWig Tracks**                  | `results/alignment/bigwig/`                                                           |
 | **Peak Calls**                     | `results/peakCalling/` `.narrowPeak` files                                            |
 | **Fragment Length Files**          | Raw and final fragment length text files                                              |
@@ -570,6 +568,7 @@ This pipeline generates three types of BigWig tracks for genome browser visualiz
 
 + **Analysis BigWig**
   + Direct coverage from the final analysis BAM which could be
+    + blacklist filtered
     + aligned sorted raw BAM
     + aligned sorted BAM after downsampling
     + duplicate capped BAM
